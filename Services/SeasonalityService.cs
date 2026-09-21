@@ -623,7 +623,9 @@ public sealed class SeasonalityService
         var processedAssets = 0;
         foreach (var asset in pendingAssets)
         {
-            _logger.LogInformation("Sezonalita {Index}/{Total}: {Ticker}", ++processedAssets, pendingAssets.Length, asset.Key);
+            var current = ++processedAssets;
+            var percent = (int)Math.Round(current * 100d / pendingAssets.Length);
+            _logger.LogInformation("Sezonalita {Index}/{Total} ({Percent}%): {Ticker}", current, pendingAssets.Length, percent, asset.Key);
             var cached = await _context.SeasonalityPrices
                 .Where(item => item.AssetKey == asset.Key)
                 .ToDictionaryAsync(item => item.Date, cancellationToken);
@@ -669,8 +671,13 @@ public sealed class SeasonalityService
             var cached = await _turso.LoadAllAsync(cancellationToken);
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.UserAgent.ParseAdd("TradingJournal-Seasonality/1.0");
-            foreach (var asset in Assets.Where(a => !onlyMissing || !cached.ContainsKey(a.Key)))
+            var pendingAssets = Assets.Where(a => !onlyMissing || !cached.ContainsKey(a.Key)).ToArray();
+            var processedAssets = 0;
+            foreach (var asset in pendingAssets)
             {
+                var current = ++processedAssets;
+                var percent = (int)Math.Round(current * 100d / pendingAssets.Length);
+                _logger.LogInformation("Sezonalita {Index}/{Total} ({Percent}%): {Ticker}", current, pendingAssets.Length, percent, asset.Key);
                 var existing = cached.GetValueOrDefault(asset.Key) ?? [];
                 var existingDates = existing.Select(p => p.Date).ToHashSet();
                 var period1 = existing.Count == 0 ? 0 : new DateTimeOffset(existing.Max(p => p.Date).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero).AddDays(-1).ToUnixTimeSeconds();
