@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TradingJournal.Services;
-using SeasonalityApp.ViewModels;
+using TradingJournal.ViewModels;
 
 namespace SeasonalityApp.Controllers;
 

@@ -1,6 +1,6 @@
 using TradingJournal.Models;
 
-namespace SeasonalityApp.ViewModels;
+namespace TradingJournal.ViewModels;
 
 public sealed class SeasonalityViewModel
 {

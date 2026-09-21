@@ -5,9 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TradingJournal\TradingJournal\TradingJournal.csproj" />
-    <None Include="..\TradingJournal\TradingJournal\wwwroot\css\site.css" Link="wwwroot\css\site.css" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\TradingJournal\TradingJournal\wwwroot\js\seasonality.js" Link="wwwroot\js\seasonality.js" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\TradingJournal\TradingJournal\wwwroot\js\seasonality-geometry.js" Link="wwwroot\js\seasonality-geometry.js" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
   </ItemGroup>
 </Project>

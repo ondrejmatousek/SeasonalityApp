@@ -14,7 +14,7 @@ builder.Logging.AddConsole();
 var connection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connection));
+builder.Services.AddDbContext<SeasonalityDbContext>(options => options.UseSqlServer(connection));
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<TursoSeasonalityStore>();
 builder.Services.AddScoped<SeasonalityService>();
@@ -29,8 +29,13 @@ builder.Services.AddControllersWithViews().ConfigureApplicationPartManager(parts
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<SeasonalityDbContext>();
     await db.Database.EnsureCreatedAsync();
+    if (args.Contains("--update-once", StringComparer.OrdinalIgnoreCase))
+    {
+        await scope.ServiceProvider.GetRequiredService<SeasonalityService>().UpdateAsync();
+        return;
+    }
 }
 if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Home/Error");
 app.UseStaticFiles();
