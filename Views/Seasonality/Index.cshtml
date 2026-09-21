@@ -1,2 +1,63 @@
 @model TradingJournal.ViewModels.SeasonalityViewModel
-<!doctype html><html lang="cs"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Sezonalita</title><link rel="stylesheet" href="~/css/site.css" /></head><body><main class="container"><h1>Sezonalita</h1><p>Historická sezónnost cen. Data se aktualizují automaticky jednou denně.</p><label for="asset">Akcie / aktivum</label><select id="asset">@foreach (var a in Model.Assets) { <option value="@a.Key">@a.Name (@a.Key)</option> }</select><div id="status" aria-live="polite">@(Model.IsUpdating ? "Aktualizace probíhá…" : "Připraveno")</div><canvas id="seasonality-chart" height="300"></canvas><pre id="seasonality-data" hidden>@System.Text.Json.JsonSerializer.Serialize(Model.Prices)</pre></main><script src="~/js/seasonality-geometry.js"></script><script src="~/js/seasonality.js"></script></body></html>
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Seasonality";
+    ViewData["BodyClass"] = "journal-shell";
+    var assets = Model.Assets.Select(asset => new { key = asset.Key, name = asset.Name });
+    var data = Model.Prices.ToDictionary(pair => pair.Key, pair => pair.Value.Select(item => new { date = item.Date.ToString("yyyy-MM-dd"), close = item.Close }));
+}
+<div class="seasonality-page" data-updating="@Model.IsUpdating.ToString().ToLowerInvariant()" data-data-url="@Url.Action("Data", "Seasonality")">
+    <div class="seasonality-wrap">
+        <header class="seasonality-header">
+            <div><p class="seasonality-eyebrow">CALENDAR PATTERNS</p><h1>Seasonality Dashboard</h1><p>Historické sezonní chování pro výběr období a assetu.</p></div>
+            <div class="seasonality-asset-search">
+                <input id="seasonality-asset-search" type="search" value="@Model.Assets.FirstOrDefault()?.Name" autocomplete="off" spellcheck="false" aria-label="Vyhledat asset" aria-controls="seasonality-asset-suggestions" aria-expanded="false">
+                <span id="seasonality-asset-loading" class="seasonality-asset-loading" aria-hidden="true"></span>
+                <div id="seasonality-asset-suggestions" class="seasonality-asset-suggestions" role="listbox" hidden></div>
+                <span id="seasonality-asset-status" class="seasonality-asset-status" role="status"></span>
+            </div>
+        </header>
+        <nav class="seasonality-tabs" aria-label="Seasonality views">
+            <button type="button" class="is-active" data-seasonality-tab="curve">Sezónní křivka</button>
+            <button type="button" data-seasonality-tab="monthly">Měsíční přehled</button>
+        </nav>
+        <section id="seasonality-monthly-view" class="seasonality-monthly-view" hidden>
+            <div class="seasonality-monthly-toolbar">
+                <label>Lookback <select id="seasonality-monthly-years" aria-label="Měsíční lookback"><option value="5">5 let</option><option value="10" selected>10 let</option><option value="20">20 let</option><option value="30">30 let</option><option value="all">Všechna dostupná data</option></select></label>
+                <span id="seasonality-monthly-subtitle"></span>
+            </div>
+            <div class="seasonality-monthly-summary" id="seasonality-monthly-summary"></div>
+            <div class="seasonality-monthly-panel"><div class="seasonality-detail-title">Průměrný měsíční výnos a win rate</div><canvas id="seasonality-monthly-canvas"></canvas><div class="seasonality-monthly-legend"><span><i class="is-positive"></i> Průměrný výnos</span><span><i class="is-win"></i> Podíl kladných měsíců</span></div></div>
+            <div class="seasonality-monthly-table-wrap"><table class="seasonality-monthly-table"><thead><tr><th>Měsíc</th><th>Průměr</th><th>Win rate</th><th>Nejlepší rok</th><th>Nejhorší rok</th><th>Počet let</th></tr></thead><tbody id="seasonality-monthly-table"></tbody></table></div>
+        </section>
+        <div id="seasonality-curve-view">
+        <section class="seasonality-filters">
+            <div class="seasonality-filter-row"><label>Historie <select id="seasonality-years"><option value="5">5 let</option><option value="10">10 let</option><option value="15">15 let</option><option value="20">20 let</option><option value="25">25 let</option><option value="30">30 let</option><option value="all" selected>Všechna dostupná data</option></select></label><button type="button" id="seasonality-all">Vše</button><button type="button" id="seasonality-none">Nic</button></div>
+            <div class="seasonality-filter-group"><span>Market trend</span><button type="button" data-trend="bullish">Bullish</button><button type="button" data-trend="bearish">Bearish</button></div>
+            <div class="seasonality-filter-group"><span>2-year cycle</span><button type="button" data-cycle="even">Sudé roky</button><button type="button" data-cycle="odd">Liché roky</button></div>
+            <div class="seasonality-filter-group"><span>US election cycle</span><button type="button" data-election="election">Election</button><button type="button" data-election="pre">Pre-election</button><button type="button" data-election="post">Post-election</button><button type="button" data-election="midterm">Midterm</button></div>
+            <div id="seasonality-year-list" class="seasonality-years-list"></div>
+        </section>
+        <section class="seasonality-analysis-layout">
+            <section class="seasonality-chart-panel"><div class="seasonality-chart-head"><div><strong id="seasonality-title"></strong><span id="seasonality-subtitle"></span></div><div class="seasonality-chart-actions"><button type="button" class="seasonality-chart-help" aria-label="Vysvětlení grafu">?<span class="seasonality-chart-help-popover" role="tooltip"><strong>Jak číst graf?</strong><br>Tyrkysová čára ukazuje průměrné sezonní chování vybraných roků. Výběrem úseku grafu zobrazíš výnos za dané období.</span></button><button type="button" id="seasonality-reset">Reset filtrů</button></div></div><div id="seasonality-sync-status" class="seasonality-sync-status"></div><div class="seasonality-chart-wrap"><canvas id="seasonality-canvas"></canvas><div id="seasonality-drag-preview" class="seasonality-drag-preview" hidden></div><div id="seasonality-tooltip" class="seasonality-tooltip" role="status"></div></div><div class="seasonality-axis"><span>1. leden</span><span>31. prosinec</span></div></section>
+            <aside class="seasonality-interval-card">
+                <div class="seasonality-detail-title">Analýza intervalu</div>
+                <p>Vyber období v grafu nebo nastav datum ručně.</p>
+                <div class="seasonality-date-grid"><label>Od<input id="seasonality-start-date" type="date"></label><label>Do<input id="seasonality-end-date" type="date"></label></div>
+                <button type="button" id="seasonality-apply-interval">Použít interval</button>
+                <button type="button" id="seasonality-clear-interval" class="seasonality-secondary-action">Celý rok</button>
+                <div id="seasonality-interval-label" class="seasonality-interval-label">Interval není vybraný</div>
+                <div id="seasonality-interval-metrics" class="seasonality-interval-metrics"></div>
+            </aside>
+        </section>
+        <section class="seasonality-stats" id="seasonality-stats"></section>
+        <section class="seasonality-detail-grid">
+            <div class="seasonality-detail-panel"><div class="seasonality-detail-title">Výnos podle roku</div><canvas id="seasonality-returns-canvas"></canvas></div>
+            <div class="seasonality-detail-panel"><div class="seasonality-detail-title">Kumulativní průběh průměrné křivky</div><canvas id="seasonality-cumulative-canvas"></canvas></div>
+        </section>
+        <section class="seasonality-table-panel"><div class="seasonality-detail-title">Výsledky vybraných let</div><div class="seasonality-table-wrap"><table><thead><tr><th>Rok</th><th>Začátek</th><th>Konec</th><th>Výnos</th><th>Max růst</th><th>Max pokles</th></tr></thead><tbody id="seasonality-year-table"></tbody></table></div></section>
+        </div>
+    </div>
+</div>
+<script id="seasonality-assets" type="application/json">@Html.Raw(JsonSerializer.Serialize(assets))</script>
+<script id="seasonality-data" type="application/json">@Html.Raw(JsonSerializer.Serialize(data))</script>

@@ -1,8 +1,6 @@
 name: Update seasonality data
 
 on:
-  push:
-    branches: [ master ]
   schedule:
     - cron: '15 5 * * *'
   workflow_dispatch:

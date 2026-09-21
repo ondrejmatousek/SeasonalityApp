@@ -1,16 +1,16 @@
 # SeasonalityApp
 
-Samostatná MVC aplikace bez přihlašování. Používá existující `SeasonalityService`, instrumenty, parsery a updater z TradingJournal.
+Samostatná MVC aplikace bez přihlašování. Historické ceny čte z Azure SQL a používá převzatou logiku sezonnosti z TradingJournal.
 
 ## Spuštění
 
-Nastav `ConnectionStrings__DefaultConnection` na Azure SQL connection string a spusť:
+Nastav `ConnectionStrings__DefaultConnection` na připojovací řetězec k Azure SQL (nebo jej pro lokální vývoj ulož do ignorovaného `appsettings.Development.json`) a spusť:
 
 ```powershell
-dotnet run --project SeasonalityApp/SeasonalityApp.csproj
+dotnet run --project SeasonalityApp.csproj
 ```
 
-Aplikace sama neprovádí migrace celé původní databáze. Azure SQL musí obsahovat tabulku `SeasonalityPrices` podle modelu TradingJournal. Denní worker při startu doplní chybějící historii a potom ji obnovuje jednou za 24 hodin.
+Aplikace sama nestahuje historické ceny při spuštění. Azure SQL musí obsahovat tabulku `SeasonalityPrices`. Denní aktualizace se spouští plánovaným GitHub Actions workflow, případně ručně přes `workflow_dispatch`; spuštění webu ani push ji nespouštějí.
 
 ## Azure SQL Free
 

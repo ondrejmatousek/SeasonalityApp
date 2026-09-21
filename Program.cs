@@ -4,11 +4,7 @@ using TradingJournal.Data;
 using TradingJournal.Services;
 using SeasonalityApp.Controllers;
 
-var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-{
-    Args = args,
-    WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot")
-});
+var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 var connection = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -17,10 +13,8 @@ var connection = builder.Configuration.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<SeasonalityDbContext>(options => options.UseSqlServer(connection, sql =>
     sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), null)));
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<TursoSeasonalityStore>();
 builder.Services.AddScoped<SeasonalityService>();
 builder.Services.AddSingleton<SeasonalityUpdateState>();
-builder.Services.AddHostedService<SeasonalityUpdateHostedService>();
 builder.Services.AddControllersWithViews().ConfigureApplicationPartManager(parts =>
 {
     foreach (var part in parts.ApplicationParts.OfType<AssemblyPart>().Where(part => part.Assembly != typeof(SeasonalityController).Assembly).ToList())

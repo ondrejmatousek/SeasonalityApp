@@ -1,0 +1,78 @@
+/* Shared responsive shell. Page styles load before this stylesheet. */
+.app-mobile-sections { display: none; }
+.app-navbar .navbar-toggler { color: #e6edf6; border: 1px solid #677181; min-width: 44px; min-height: 44px; }
+.app-menu-icon { display: grid; gap: 5px; width: 22px; }
+.app-menu-icon span { height: 2px; background: currentColor; display: block; }
+.app-navbar :focus-visible, .responsive-table-region:focus-visible { outline: 2px solid #20c7b9; outline-offset: 3px; }
+.responsive-table-region { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+main, main > *, fieldset { min-width: 0; }
+img { max-width: 100%; }
+.invoice-field-wrapper { display: contents; }
+.invoice-field-wrapper > span { display: none; }
+.invoice-vat-field:has(input.d-none) { display: none; }
+@media screen and (max-width: 991.98px) {
+    body.app-section-shell, body.marketing-shell { height: auto; min-height: 100dvh; overflow: visible; margin-bottom: 0; }
+    .app-workspace { display: block; height: auto; min-height: calc(100dvh - 64px); overflow: visible; }
+    .app-workspace-main, .marketing-shell .app-fullbleed, .marketing-shell main { height: auto; overflow: visible; }
+    .app-sidebar { display: none; }
+    .app-mobile-sections { display: block; width: 100%; border-block: 1px solid var(--tj-border); margin-block: 8px; padding-block: 8px; }
+    .app-navbar { padding: 8px 12px; }
+    #app-navigation { max-height: calc(100dvh - 76px); overflow-y: auto; }
+    .app-navbar .nav-link { min-height: 44px; display: flex; align-items: center; white-space: normal; overflow-wrap: anywhere; }
+    .app-nav-actions { align-items: stretch; }
+    .app-navbar .navbar-nav, .app-navbar .nav-item { width: 100%; }
+    .app-navbar .navbar-brand { word-break: normal; }
+    .journal-page, .screening-page, .insiders-page, .planner, .cot-page { padding: 16px; min-height: 0; }
+    .journal-wrap, .cot-wrap, .cot-dashboard-wrap { width: 100%; min-width: 0; }
+    .page-header, .page-actions, .journal-toolbar, .planner-heading, .planner-toolbar, .planner-chart-heading,
+    .screening-header, .insiders-header { flex-wrap: wrap; gap: 12px; }
+    .planner-grid, .detail-grid, .analysis-grid, .strategy-layout, .company-grid, .invoice-detail-grid,
+    .cot-grid, .cot-dashboard-grid, .auth-stage { grid-template-columns: minmax(0, 1fr); }
+    .planner { height: auto; }
+    .planner-inputs { grid-row: auto; }
+    .planner-main { min-height: 0; }
+    .planner-chart-card { min-height: 0; }
+    #plan-chart { height: auto; min-height: 200px; }
+    .screening-table, .insiders-table, .journal-trade-table-wrap, .table-responsive { max-width: 100%; overscroll-behavior-x: contain; }
+    dialog, .modal-dialog { max-width: calc(100vw - 24px); }
+}
+@media screen and (max-width: 600px) {
+    .journal-page, .screening-page, .insiders-page, .planner, .cot-page { padding: 12px; }
+    main h1 { font-size: clamp(24px, 7vw, 32px); overflow-wrap: anywhere; }
+    main h2, main p, main dd, main legend { overflow-wrap: anywhere; }
+    main input:not([type=checkbox]):not([type=radio]):not([type=range]), main select, main textarea { font-size: 16px; max-width: 100%; min-width: 0; }
+    main button, main .btn, .sidebar-link { min-height: 44px; }
+    .screening-filters, .insiders-filters, .screening-actions, .page-actions { width: 100%; }
+    .screening-filters label, .insiders-filters label { min-width: 0; width: 100%; }
+    .screening-filters input, .screening-filters select, .insiders-filters input, .insiders-filters select { width: 100%; }
+    .insiders-freshness { min-width: 0; width: 100%; }
+    .screening-pagination, .insiders-pages { flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .screening-page dialog { width: calc(100vw - 24px); padding: 14px; max-height: calc(100dvh - 24px); }
+    .screening-dialog-header { gap: 8px; align-items: flex-start; }
+    .screening-dialog-header h2 { min-width: 0; overflow-wrap: anywhere; }
+    .screening-dialog-header button { flex-shrink: 0; }
+    .screening-summary, .screening-pillars, .research-fields, .evidence-entry, .insiders-summary,
+    .metric-grid, .form-grid, .analysis-grid.compact, .strategy-mini-grid, .strategy-workflow-grid,
+    .seasonality-stats, .seasonality-monthly-summary, .seasonality-detail-grid,
+    .setup-review-analysis-grid, .quality-factor-grid.two { grid-template-columns: minmax(0, 1fr); }
+    .planner-heading, .planner-chart-heading { flex-direction: column; align-items: stretch; }
+    .planner-stats { grid-template-columns: minmax(0, 1fr); }
+    .planner-stats strong { white-space: normal; }
+    .planner-scenarios { flex-wrap: wrap; }
+    .planner-legend { flex-wrap: wrap; }
+    .planner-field > div { flex-wrap: wrap; }
+    .seasonality-filter-row, .seasonality-filter-group { flex-wrap: wrap; min-width: 0; }
+    .auth-stage, .auth-card { padding: 16px; min-width: 0; }
+    .auth-card { width: 100%; }
+    .invoice-form-grid, .invoice-form-grid.no-vat, .timesheet-import-head, .timesheet-import-row { grid-template-columns: minmax(0, 1fr); }
+    .invoice-form-grid-head { display: none; }
+    .invoice-field-wrapper { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .invoice-field-wrapper > span { display: block; font-size: 13px; color: var(--tj-muted); }
+    .invoice-item-input { border-bottom: 1px solid var(--tj-border); padding-bottom: 16px; }
+    .journal-calendar-day { min-width: 0; padding: 6px 2px; min-height: 80px; }
+    .journal-calendar-weekday { padding: 8px 2px; font-size: 11px; }
+    .journal-calendar-result { font-size: 11px; overflow-wrap: anywhere; }
+    .journal-calendar-count { font-size: 10px; overflow-wrap: anywhere; }
+    .footer { position: static; white-space: normal; line-height: 1.6; padding-block: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .collapsing { transition: none; } }

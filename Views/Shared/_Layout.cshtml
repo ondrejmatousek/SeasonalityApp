@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seasonality Dashboard</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true" />
+</head>
+<body class="journal-shell app-section-shell">
+    <header>
+        <nav class="navbar navbar-expand-lg app-navbar">
+            <div class="container-fluid">
+                <a class="navbar-brand app-brand" href="/Seasonality">
+                    <span class="brand-mark">SA</span>
+                    <span>SeasonalityApp</span>
+                </a>
+                <div class="navbar-nav"><a class="nav-link active" href="/Seasonality">Sezonalita</a></div>
+            </div>
+        </nav>
+    </header>
+    <div class="app-workspace">
+        <aside class="app-sidebar">
+            <div class="sidebar-title">Sezonalita</div>
+            <a class="sidebar-link active" href="/Seasonality">Seasonality</a>
+        </aside>
+        <main role="main" class="app-workspace-main">@RenderBody()</main>
+    </div>
+    <script src="~/js/seasonality-geometry.js" asp-append-version="true"></script>
+    <script src="~/js/seasonality.js" asp-append-version="true"></script>
+</body>
+</html>

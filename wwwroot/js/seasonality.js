@@ -12,6 +12,7 @@
     const years = document.querySelector('#seasonality-years');
     const list = document.querySelector('#seasonality-year-list');
     const canvas = document.querySelector('#seasonality-canvas');
+    const dragPreview = document.querySelector('#seasonality-drag-preview');
     const ctx = canvas.getContext('2d');
     const returnsCanvas = document.querySelector('#seasonality-returns-canvas');
     const cumulativeCanvas = document.querySelector('#seasonality-cumulative-canvas');
@@ -32,6 +33,7 @@
     let pollTimer = null;
     let interval = null;
     let dragStart = null;
+    let dragPointerId = null;
     let hoverDay = null;
     let activeAsset = assets[0];
     let assetSearchTimer = null;
@@ -75,7 +77,7 @@
         }
         const status = rows().length ? `${rows().length} záznamů`
             : failedAssets.has(activeAsset.key) ? 'načtení selhalo'
-            : loadedAssets.has(activeAsset.key) ? 'v databázi nejsou uložená data' : 'data se načítají';
+            : loadedAssets.has(activeAsset.key) ? 'data nejsou v databázi' : 'data se načítají';
         assetStatus.textContent = `${activeAsset.name} · ${status}`;
     };
     const setSyncStatus = (isUpdating, error) => {
@@ -106,12 +108,8 @@
             const payloadKey = payload.assetKey || assetKey;
             data[payloadKey] = payload.prices || [];
             loadedAssets.add(payloadKey);
-            setSyncStatus(Boolean(payload.isUpdating), payload.error);
-            if (activeAsset?.key === payloadKey && !data[payloadKey].length && !payload.isUpdating && !payload.error) {
-                document.querySelector('#seasonality-sync-status').textContent = 'Pro tento asset nejsou v připojené databázi ceny. Ověř připojení aplikace k Turso a výsledek denní aktualizace.';
-            }
-
             if (activeAsset?.key === payloadKey) {
+                setSyncStatus(Boolean(payload.isUpdating), payload.error);
                 root.classList.toggle('is-loading', Boolean(payload.isUpdating && !rows().length));
                 updateAssetStatus();
                 refreshActiveViews();
@@ -181,6 +179,7 @@
         updateAssetStatus();
         hideAssetSuggestions();
         if (changed) {
+            setSyncStatus(false, null);
             root.classList.toggle('is-loading', !rows().length);
             refreshActiveViews();
             loadAssetData(next);
@@ -198,6 +197,7 @@
         updateAssetStatus();
         if (showSuggestions) renderAssetSuggestions();
         if (changed) {
+            setSyncStatus(false, null);
             root.classList.toggle('is-loading', !rows().length);
             refreshActiveViews();
             loadAssetData(next);
@@ -368,16 +368,6 @@
             .sort((a, b) => a[0] - b[0])
             .map(([day, values]) => [day, values.reduce((sum, value) => sum + value, 0) / values.length]);
         const points = rawPoints;
-        const quantile = (values, level) => {
-            const sorted = [...values].sort((a, b) => a - b);
-            const position = (sorted.length - 1) * level;
-            const lower = Math.floor(position);
-            const upper = Math.ceil(position);
-            return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
-        };
-        const band = [...grouped]
-            .sort((a, b) => a[0] - b[0])
-            .map(([day, values]) => [day, quantile(values, .2), quantile(values, .8)]);
         const selectedIntervalStats = intervalYearStats(byYear);
         const rect = canvas.getBoundingClientRect();
         const width = Math.max(400, rect.width);
@@ -387,10 +377,22 @@
         canvas.height = height * dpr;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, width, height);
+        const hasPrices = rows().length > 0;
+        const missingPrices = !hasPrices && activeAsset && loadedAssets.has(activeAsset.key) && !failedAssets.has(activeAsset.key);
+        document.querySelector('#seasonality-title').textContent = activeAsset
+            ? missingPrices ? `${activeAsset.name} · ${activeAsset.key} — data nejsou v databázi` : `${activeAsset.name} · ${activeAsset.key}`
+            : 'Asset';
+        document.querySelector('#seasonality-subtitle').textContent = missingPrices
+            ? 'Pro toto aktivum nejsou v Azure SQL uloženy ceny.'
+            : `${selected.size} vybraných let · průměr podle obchodních dnů · index 100 = začátek roku`;
         if (!points.length) {
             ctx.fillStyle = '#8794a4';
             ctx.font = '14px sans-serif';
-            ctx.fillText(root.classList.contains('is-loading') ? 'Načítám historická data…' : 'Pro zvolené filtry nejsou k dispozici žádná data.', 36, 60);
+            const emptyMessage = root.classList.contains('is-loading') ? 'Načítám historická data…'
+                : failedAssets.has(activeAsset?.key) ? 'Ceny se nepodařilo načíst.'
+                : missingPrices ? `${activeAsset.name} (${activeAsset.key}): data nejsou v databázi.`
+                : 'Pro zvolené filtry nejsou k dispozici žádná data.';
+            ctx.fillText(emptyMessage, 36, 60);
             updateStats([], [], 0);
             return;
         }
@@ -441,18 +443,6 @@
             ctx.stroke();
         });
 
-        ctx.beginPath();
-        points.forEach((point, index) => {
-            const x = xFor(point[0]);
-            const y = yFor(point[1]);
-            index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-        });
-        ctx.lineTo(xFor(points[points.length - 1][0]), bottom);
-        ctx.lineTo(xFor(points[0][0]), bottom);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(36,223,207,.10)';
-        ctx.fill();
-
         if (interval) {
             const startX = xFor(interval.startDay);
             const endX = xFor(interval.endDay);
@@ -470,19 +460,6 @@
             ctx.restore();
         }
 
-        if (band.length) {
-            ctx.beginPath();
-            band.forEach((point, index) => {
-                const x = xFor(point[0]);
-                const y = yFor(point[2]);
-                index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-            });
-            [...band].reverse().forEach(point => ctx.lineTo(xFor(point[0]), yFor(point[1])));
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(36,223,207,.12)';
-            ctx.fill();
-        }
-
         ctx.strokeStyle = '#24dfcf';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -493,9 +470,6 @@
         });
         ctx.stroke();
 
-        document.querySelector('#seasonality-title').textContent = activeAsset ? `${activeAsset.name} · ${activeAsset.key}` : 'Asset';
-        document.querySelector('#seasonality-subtitle').textContent =
-            `${selected.size} vybraných let · průměr podle obchodních dnů · index 100 = začátek roku`;
         updateStats(points, selectedIntervalStats.length ? selectedIntervalStats : yearStats, selected.size);
     }
 
@@ -763,26 +737,51 @@
         const rect = canvas.getBoundingClientRect();
         return chartGeometry.dayForX(rect.width, event.clientX - rect.left);
     };
+    const showDragPreview = endDay => {
+        const rect = canvas.getBoundingClientRect();
+        const startX = chartGeometry.xFor(rect.width, dragStart);
+        const endX = chartGeometry.xFor(rect.width, endDay);
+        dragPreview.style.left = `${canvas.offsetLeft + Math.min(startX, endX)}px`;
+        dragPreview.style.top = `${canvas.offsetTop}px`;
+        dragPreview.style.width = `${Math.max(Math.abs(endX - startX), 2)}px`;
+        dragPreview.style.height = `${rect.height}px`;
+        dragPreview.hidden = false;
+    };
+    const clearDragPreview = () => {
+        dragStart = null;
+        dragPointerId = null;
+        dragPreview.hidden = true;
+    };
     canvas.addEventListener('pointermove', event => {
         hoverDay = pointerDay(event);
-        tooltip.textContent = `${formatDayLabel(hoverDay)} · kalendářní den ${hoverDay + 1}`;
+        if (dragStart !== null && event.pointerId === dragPointerId) showDragPreview(hoverDay);
+        tooltip.textContent = dragStart === null
+            ? `${formatDayLabel(hoverDay)} · kalendářní den ${hoverDay + 1}`
+            : `${formatDayLabel(Math.min(dragStart, hoverDay))} – ${formatDayLabel(Math.max(dragStart, hoverDay))}`;
         tooltip.style.left = `${Math.min(event.offsetX + 14, canvas.clientWidth - 190)}px`;
         tooltip.style.top = `${Math.max(event.offsetY - 36, 8)}px`;
         tooltip.classList.add('is-visible');
     });
     canvas.addEventListener('pointerleave', () => tooltip.classList.remove('is-visible'));
     canvas.addEventListener('pointerdown', event => {
+        if (!event.isPrimary || event.button !== 0) return;
+        event.preventDefault();
         dragStart = pointerDay(event);
+        dragPointerId = event.pointerId;
         canvas.setPointerCapture(event.pointerId);
+        showDragPreview(dragStart);
     });
     canvas.addEventListener('pointerup', event => {
-        if (dragStart === null) return;
+        if (dragStart === null || event.pointerId !== dragPointerId) return;
         const dragEnd = pointerDay(event);
         interval = { startDay: Math.min(dragStart, dragEnd), endDay: Math.max(dragStart, dragEnd) };
         startDateInput.value = dateForDay(interval.startDay);
         endDateInput.value = dateForDay(interval.endDay);
-        dragStart = null;
+        clearDragPreview();
         draw();
+    });
+    canvas.addEventListener('pointercancel', event => {
+        if (event.pointerId === dragPointerId) clearDragPreview();
     });
     document.querySelector('#seasonality-apply-interval').onclick = () => {
         const next = inputInterval();
