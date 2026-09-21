@@ -14,7 +14,8 @@ builder.Logging.AddConsole();
 var connection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
 
-builder.Services.AddDbContext<SeasonalityDbContext>(options => options.UseSqlServer(connection));
+builder.Services.AddDbContext<SeasonalityDbContext>(options => options.UseSqlServer(connection, sql =>
+    sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), null)));
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<TursoSeasonalityStore>();
 builder.Services.AddScoped<SeasonalityService>();
