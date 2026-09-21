@@ -760,28 +760,29 @@ public sealed class SeasonalityService
 
     private async Task UpsertAsync(string assetKey, string source, IReadOnlyList<SeasonalityPrice> prices, Dictionary<DateOnly, SeasonalityPriceEntity> cached, CancellationToken cancellationToken)
     {
+        var added = 0;
+        var skipped = 0;
         foreach (var price in prices.DistinctBy(price => price.Date))
         {
-            if (cached.TryGetValue(price.Date, out var existing))
+            if (cached.ContainsKey(price.Date))
             {
-                existing.Close = price.Close;
-                existing.Source = source;
-                existing.UpdatedAt = DateTimeOffset.UtcNow;
+                skipped++;
+                continue;
             }
-            else
+
+            _context!.SeasonalityPrices.Add(new SeasonalityPriceEntity
             {
-                _context!.SeasonalityPrices.Add(new SeasonalityPriceEntity
-                {
-                    AssetKey = assetKey,
-                    Date = price.Date,
-                    Close = price.Close,
-                    Source = source,
-                    UpdatedAt = DateTimeOffset.UtcNow
-                });
-            }
+                AssetKey = assetKey,
+                Date = price.Date,
+                Close = price.Close,
+                Source = source,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            cached[price.Date] = new SeasonalityPriceEntity { AssetKey = assetKey, Date = price.Date };
+            added++;
         }
         var changes = await _context!.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Sezonalita {Ticker}: přijato {Received} cen od {Source}, uloženo {Changes} změn.", assetKey, prices.Count, source, changes);
+        _logger.LogInformation("Sezonalita {Ticker}: přijato {Received} cen od {Source}, nové {Added}, přeskočeno {Skipped}, uloženo {Changes} změn.", assetKey, prices.Count, source, added, skipped, changes);
     }
 
     public static IReadOnlyList<SeasonalityPrice> ParseStooq(string csv)
