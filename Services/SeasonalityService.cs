@@ -23,6 +23,7 @@ public sealed class SeasonalityService
                 new("AUDUSD", "AUD/USD", "AUDUSD=X", "audusd"),
                 new("NZDUSD", "NZD/USD", "NZDUSD=X", "nzdusd"),
                 new("USDCAD", "USD/CAD", "CAD=X", "usdcad"),
+                new("DXY", "US Dollar Index / DXY", "DX-Y.NYB", "dx.f"),
                 new("XAUUSD", "Gold / XAU/USD", "GC=F", "xauusd"),
                 new("SILVER", "Silver", "SI=F", "si.f"),
                 new("COPPER", "Copper", "HG=F", "hg.f"),
@@ -524,9 +525,9 @@ public sealed class SeasonalityService
             throw new InvalidOperationException($"Duplicate seasonality asset key: {duplicateKey.Key}");
         }
 
-        if (assets.Length != 500)
+        if (assets.Length != 501)
         {
-            throw new InvalidOperationException($"Expected 500 seasonality assets, got {assets.Length}.");
+            throw new InvalidOperationException($"Expected 501 seasonality assets, got {assets.Length}.");
         }
 
         return assets;
