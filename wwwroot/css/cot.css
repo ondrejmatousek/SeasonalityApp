@@ -11,7 +11,9 @@
 .market-view-tabs button.is-active { color:#24dfcf; background:rgba(36,223,207,.12); border-color:rgba(36,223,207,.4); }
 .market-view-tabs button:focus-visible,.cot-analysis button:focus-visible { outline:2px solid #24dfcf; outline-offset:3px; }
 .market-seasonality-view { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; min-width:0; }
-#seasonality-curve-view,.seasonality-monthly-view { min-width:0; grid-template-columns:minmax(0,1fr); }
+.seasonality-monthly-view { min-width:0; grid-template-columns:minmax(0,1fr); }
+#seasonality-curve-view { min-width:0; grid-template-columns:minmax(0,1fr) 260px; }
+#seasonality-curve-view>.seasonality-filters,#seasonality-curve-view>.seasonality-table-panel { grid-column:1 / -1; }
 .seasonality-table-panel,.seasonality-monthly-table-wrap { min-width:0; }
 .seasonality-tabs { gap:4px; }
 .seasonality-tabs button { padding:.4rem .7rem; font-size:.8rem; }
@@ -24,7 +26,10 @@
 .seasonality-filter-options { display:flex; flex-wrap:wrap; gap:12px 20px; padding:12px; border:1px solid #ffffff12; border-radius:6px; background:#171b1d; }
 .seasonality-filter-group { width:auto; min-width:0; margin:0; font-size:.75rem; }
 .seasonality-years-list { flex-basis:100%; font-size:.75rem; padding-top:10px; }
-.seasonality-analysis-layout { grid-template-columns:minmax(0,1fr) 260px; gap:16px; }
+.seasonality-analysis-layout { display:contents; }
+.seasonality-analysis-layout>.seasonality-chart-panel { grid-column:1; }
+.seasonality-analysis-layout>.seasonality-interval-card { grid-column:2; grid-row:2 / span 2; }
+#seasonality-curve-view>.seasonality-detail-grid { grid-column:1; }
 .seasonality-chart-panel,.seasonality-detail-panel,.seasonality-interval-card { background:#15191c; padding:16px; min-width:0; }
 .seasonality-chart-head>div { text-align:left; min-width:0; }
 #seasonality-title { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
@@ -102,7 +107,8 @@
     .seasonality-detail-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media(max-width:900px) {
-    .seasonality-analysis-layout { grid-template-columns:1fr; }
+    #seasonality-curve-view { grid-template-columns:minmax(0,1fr); }
+    .seasonality-analysis-layout>.seasonality-interval-card { grid-column:1; grid-row:auto; }
     .seasonality-interval-card .seasonality-date-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .seasonality-interval-card .seasonality-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
