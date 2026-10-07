@@ -73,6 +73,7 @@
         byId('cot-report-meta').textContent = 'CFTC Legacy · Futures Only';
         byId('cot-market-switch').replaceChildren();
         byId('cot-market-note').textContent = '';
+        byId('cot-market-note').hidden = true;
         content.hidden = true;
         status.textContent = 'Načítám COT reporty…';
         status.classList.remove('is-error');
@@ -107,6 +108,7 @@
     function render() {
         if (!payload) return;
         byId('cot-market-note').textContent = payload.note || '';
+        byId('cot-market-note').hidden = !payload.note;
         const switcher = byId('cot-market-switch');
         switcher.replaceChildren();
         payload.markets.forEach(item => {
@@ -119,7 +121,7 @@
         });
         const selectedMarket = market();
         if (!selectedMarket) {
-            status.textContent = 'COT není pro tento instrument v aplikaci dostupné. Vyber hlavní forexový pár nebo DXY.';
+            status.textContent = 'Odpovídající COT report není dostupný. Podporujeme forex, DXY, komodity, vybrané indexy, kryptoměny a ETF s označeným futures proxy.';
             content.hidden = true;
             retry.hidden = true;
             return;
@@ -135,7 +137,12 @@
         const latest = reports[reports.length - 1];
         const ageDays = Math.floor((Date.now() - Date.parse(`${latest.date}T00:00:00Z`)) / 86400000);
         byId('cot-report-meta').textContent = `${payload.reportType} · ${selectedMarket.name} · CFTC ${selectedMarket.contractCode} · pozice k ${dateLabel(latest.date)}`;
-        status.textContent = ageDays > 14 ? `Poslední report je starý ${ageDays} dní. Zkontroluj aktualizaci dat nebo zveřejnění CFTC.` : '';
+        const notices = [];
+        if (selectedMarket.key === 'LUMBEROLD') notices.push('Historická řada ukončeného kontraktu; nové reporty zde nepřibývají.');
+        else if (ageDays > 14) notices.push(`Poslední report je starý ${ageDays} dní. CFTC nemusí tento trh zveřejňovat každý týden; zkontroluj také aktualizaci dat.`);
+        if (latest.commercial.index == null && latest.nonCommercial.index == null && latest.nonReportable.index == null)
+            notices.push(`COT index není dostupný: potřebuje ${lookback.value} reportů a nenulový rozsah čistých pozic.`);
+        status.textContent = notices.join(' ');
         content.hidden = false;
         const cutoff = new Date(`${latest.date}T00:00:00Z`);
         cutoff.setUTCFullYear(cutoff.getUTCFullYear() - Number(history.value));

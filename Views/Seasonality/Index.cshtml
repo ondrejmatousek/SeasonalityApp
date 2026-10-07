@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Seasonality & COT";
     ViewData["BodyClass"] = "journal-shell";
-    var assets = Model.Assets.Select(asset => new { key = asset.Key, name = asset.Name });
+    var assets = Model.Assets.Select(asset => new { key = asset.Key, name = asset.Name, aliases = TradingJournal.Services.SeasonalityService.SearchAliases(asset.Key) });
     var data = Model.Prices.ToDictionary(pair => pair.Key, pair => pair.Value.Select(item => new { date = item.Date.ToString("yyyy-MM-dd"), close = item.Close }));
 }
 <div class="seasonality-page" data-updating="@Model.IsUpdating.ToString().ToLowerInvariant()" data-data-url="@Url.Action("Data", "Seasonality")" data-cot-url="@Url.Action("CotData", "Seasonality")">
@@ -70,12 +70,13 @@
         </section>
         <section id="market-cot-view" class="cot-analysis" role="tabpanel" aria-labelledby="market-tab-cot" hidden>
             <div class="cot-toolbar">
-                <div><h2 id="cot-asset-title" class="visually-hidden">COT</h2><div id="cot-market-switch" class="cot-market-switch" aria-label="Měna COT reportu"></div><p id="cot-report-meta">CFTC Legacy · Futures Only</p></div>
+                <div><h2 id="cot-asset-title" class="visually-hidden">COT</h2><div id="cot-market-switch" class="cot-market-switch" aria-label="Trh COT reportu"></div><p id="cot-report-meta">CFTC Legacy · Futures Only</p></div>
                 <div class="cot-controls">
                     <label>Historie grafů<select id="cot-history" aria-label="Historie grafů"><option value="1">1 rok</option><option value="3" selected>3 roky</option><option value="5">5 let</option><option value="10">10 let</option><option value="all">Vše</option></select></label>
                     <label>COT index lookback<select id="cot-lookback" aria-label="COT index lookback"><option value="26">26 reportů</option><option value="52" selected>52 reportů</option><option value="156">156 reportů</option></select></label>
                 </div>
             </div>
+            <p id="cot-market-note" class="cot-market-note" hidden></p>
             <div id="cot-status" class="cot-status" role="status" aria-live="polite"></div>
             <button id="cot-retry" type="button" class="cot-retry" hidden>Zkusit znovu</button>
             <div id="cot-content" hidden>
@@ -99,7 +100,6 @@
                     </article>
                 </div>
                 <details class="cot-methodology"><summary>Jak číst COT a co znamenají jednotlivé grafy?</summary>
-                    <p id="cot-market-note" class="cot-market-note"></p>
                     <p>Čisté pozice = long − short (počet futures kontraktů). Sloupce ukazují změnu proti minulému týdnu. Při chybějícím týdenním reportu změnu nezobrazujeme.</p>
                     <p>COT index = 100 × (aktuální čistá pozice − minimum) / (maximum − minimum) v nastaveném počtu reportů včetně aktuálního. Bez dostatečné historie nebo při stejném minimu a maximu index není definovaný. Hranice 20 a 80 zvýrazňují relativní extrémy; nejsou samy o sobě obchodním signálem.</p>
                     <p>Non-reportable jsou pozice pod ohlašovacími limity, nikoli přesný ukazatel retailu. Commercials a non-commercials jsou kategorie Legacy reportu; nelze je zaměňovat s kategoriemi jiných CFTC reportů. Spread vykazujeme samostatně u non-commercials.</p>

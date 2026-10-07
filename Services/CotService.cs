@@ -8,26 +8,8 @@ namespace TradingJournal.Services;
 
 public sealed class CotService(SeasonalityDbContext db, IHttpClientFactory clients, ILogger<CotService> logger)
 {
-    public static IReadOnlyList<CotMarket> Markets { get; } =
-    [
-        new("EUR", "Euro", "099741"),
-        new("GBP", "Britská libra", "096742"),
-        new("JPY", "Japonský jen", "097741"),
-        new("CHF", "Švýcarský frank", "092741"),
-        new("CAD", "Kanadský dolar", "090741"),
-        new("AUD", "Australský dolar", "232741"),
-        new("NZD", "Novozélandský dolar", "112741"),
-        new("USD", "US Dollar Index (DXY)", "098662")
-    ];
-
-    public static IReadOnlyList<CotMarket> MarketsForAsset(string key)
-    {
-        if (key == "DXY") return [Markets.Single(x => x.Key == "USD")];
-        if (key.Length != 6) return [];
-        var currencies = new[] { key[..3], key[3..] };
-        if (currencies.Any(currency => !Markets.Any(m => m.Key == currency))) return [];
-        return currencies.Select(currency => Markets.Single(m => m.Key == currency)).ToArray();
-    }
+    public static IReadOnlyList<CotMarket> Markets => CotCatalog.Markets;
+    public static IReadOnlyList<CotMarket> MarketsForAsset(string key) => CotCatalog.MarketsForAsset(key);
 
     public async Task<CotData> LoadAsync(SeasonalityAsset asset, int lookbackWeeks, CancellationToken ct)
     {
@@ -39,17 +21,10 @@ public sealed class CotService(SeasonalityDbContext db, IHttpClientFactory clien
                 .Where(x => x.ContractCode == market.ContractCode)
                 .OrderBy(x => x.ReportDate).ToListAsync(ct);
             series.Add(new CotSeries(market.Key, market.Name, market.ContractCode,
-                market.Key == "USD", asset.Key != "DXY" && asset.Key[3..] == market.Key,
+                market.Key == "USD", CotCatalog.IsForexPair(asset.Key) && asset.Key[3..] == market.Key,
                 BuildPoints(reports, lookbackWeeks)));
         }
-        string? note = markets.Count == 0
-            ? "Pro tento instrument zatím není COT mapování. Dostupné jsou hlavní forexové páry a DXY."
-            : asset.Key == "DXY" ? "Pozice se vztahují k futures na US Dollar Index."
-            : "COT popisuje futures na jednotlivé měny, nikoli pozice v celém spotovém páru. Long kotované měny působí vůči páru opačně. "
-                + (markets.Any(x => x.Key == "USD")
-                    ? "USD zde zastupuje US Dollar Index (DXY), nikoli samostatný spotový USD report. " : "")
-                + "JPY, CHF a CAD futures jsou kotované v USD za jednotku měny, opačně než USD/JPY, USD/CHF a USD/CAD.";
-        return new CotData(asset.Key, asset.Name, "CFTC Legacy · Futures Only", lookbackWeeks, note, series);
+        return new CotData(asset.Key, asset.Name, "CFTC Legacy · Futures Only", lookbackWeeks, CotCatalog.NoteForAsset(asset.Key), series);
     }
 
     public static IReadOnlyList<CotPoint> BuildPoints(IReadOnlyList<CotReportEntity> reports, int lookbackWeeks)
@@ -91,9 +66,12 @@ public sealed class CotService(SeasonalityDbContext db, IHttpClientFactory clien
         var client = clients.CreateClient("CFTC");
         foreach (var market in Markets)
         {
-            var cached = await db.CotReports.Where(x => x.ContractCode == market.ContractCode)
+            // Read only the correction window on daily runs, not every historical row.
+            var latest = await db.CotReports.Where(x => x.ContractCode == market.ContractCode)
+                .MaxAsync(x => (DateOnly?)x.ReportDate, ct);
+            var from = latest?.AddDays(-35) ?? new DateOnly(1986, 1, 1);
+            var cached = await db.CotReports.Where(x => x.ContractCode == market.ContractCode && x.ReportDate >= from)
                 .ToDictionaryAsync(x => x.ReportDate, ct);
-            var from = cached.Count == 0 ? new DateOnly(1986, 1, 1) : cached.Keys.Max().AddDays(-35);
             var reports = await DownloadAsync(client, market, from, ct);
             if (reports.Count == 0 && cached.Count == 0)
                 throw new InvalidOperationException($"CFTC returned no history for {market.Key} ({market.ContractCode}).");
@@ -109,7 +87,7 @@ public sealed class CotService(SeasonalityDbContext db, IHttpClientFactory clien
             }
             await db.SaveChangesAsync(ct);
             db.ChangeTracker.Clear();
-            logger.LogInformation("COT {Currency} ({Code}): {Count} reports received, latest {Date}.",
+            logger.LogInformation("COT {Market} ({Code}): {Count} reports received, latest {Date}.",
                 market.Key, market.ContractCode, reports.Count, cached.Count == 0 ? null : cached.Keys.Max().ToString());
         }
     }

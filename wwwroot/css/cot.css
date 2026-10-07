@@ -59,7 +59,7 @@
 .cot-market-switch { display:flex; flex-wrap:wrap; gap:.6rem; }
 .cot-market-switch button,.cot-retry { border:1px solid rgba(255,255,255,.14); border-radius:6px; background:rgba(255,255,255,.04); padding:.5rem .8rem; color:#aeb9c7; cursor:pointer; font-size:.8rem; }
 .cot-market-switch button.is-active { border-color:#24dfcf; color:#24dfcf; background:rgba(36,223,207,.1); }
-.cot-market-note { color:#9ba8b7; font-size:.78rem; line-height:1.65; padding:.85rem 1rem; border-left:2px solid #416f84; background:rgba(65,111,132,.1); margin:0; }
+.cot-market-note { color:#9ba8b7; font-size:.72rem; line-height:1.6; padding:8px 12px; border-left:2px solid #416f84; background:rgba(65,111,132,.1); margin:0; }
 .cot-status { color:#aeb9c7; font-size:.85rem; }
 .cot-status:empty { display:none; }
 .cot-status.is-error { color:#f28aa8; }

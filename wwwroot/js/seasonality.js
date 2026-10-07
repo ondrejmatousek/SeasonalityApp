@@ -52,9 +52,10 @@
             .map(item => {
                 const key = normalizeSearch(item.key);
                 const name = normalizeSearch(item.name);
-                const exact = key === term || name === term;
-                const starts = key.startsWith(term) || name.startsWith(term);
-                const includes = key.includes(term) || name.includes(term);
+                const aliases = (item.aliases || []).map(normalizeSearch);
+                const exact = key === term || name === term || aliases.includes(term);
+                const starts = key.startsWith(term) || name.startsWith(term) || aliases.some(alias => alias.startsWith(term));
+                const includes = key.includes(term) || name.includes(term) || aliases.some(alias => alias.includes(term));
                 return { item, score: exact ? 0 : starts ? 1 : includes ? 2 : 3 };
             })
             .filter(match => match.score < 3)

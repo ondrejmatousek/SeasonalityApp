@@ -12,6 +12,14 @@ public sealed class SeasonalityService
     private static readonly SemaphoreSlim UpdateGate = new(1, 1);
     public static IReadOnlyList<SeasonalityAsset> Assets { get; } = BuildAssets();
 
+    // Search aliases resolve to existing assets; they do not create duplicate price histories.
+    public static IReadOnlyList<string> SearchAliases(string key) => key switch
+    {
+        "NDX" => ["NQ"], "SPX" => ["ES"], "DJI" => ["YM"], "RUT" => ["RTY"],
+        "XAUUSD" => ["XAU", "GC"], "SILVER" => ["XAG", "SI"],
+        "WTI" => ["CL"], "NATGAS" => ["NG"], _ => []
+    };
+
     private static IReadOnlyList<SeasonalityAsset> BuildAssets()
     {
         SeasonalityAsset[] assets =

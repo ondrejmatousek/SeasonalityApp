@@ -18,9 +18,17 @@ V Azure Portal vytvoř SQL Database na SQL serveru s nejnižší dostupnou bezpl
 
 ## COT
 
-Společné vyhledávání instrumentu ovládá záložky Seasonality a COT. COT podporuje 28 hlavních forexových párů (USD, EUR, GBP, JPY, CHF, CAD, AUD, NZD) a DXY. Cross pár zobrazuje reporty jednotlivých měn; USD používá explicitně označený proxy report US Dollar Index. COT není reportem o celém spotovém páru. Pro ostatní instrumenty se zobrazí informace o chybějícím mapování.
+Společné vyhledávání instrumentu ovládá záložky Seasonality a COT. COT podporuje 91 instrumentů prostřednictvím 58 samostatných futures reportů. Vyhledávání přijímá i aliasy NQ → NDX, ES → SPX, YM → DJI, RTY → RUT, XAU / GC → XAUUSD, XAG / SI → SILVER, CL → WTI a NG → NATGAS; nevytváří duplicitní cenové instrumenty.
 
-Zdroj: [CFTC Legacy – Futures Only](https://publicreporting.cftc.gov/Legacy-Reports/Legacy-Futures-Only/6dca-aqww). Import načítá dostupnou historii od roku 1986, po prvním běhu stahuje posledních pět týdnů. Při startu se bezpečně přidá tabulka `CotReports` i do existující databáze; tabulka cen se nemění. Web čte pouze uložené reporty. Datum v grafu označuje datum pozic, nikoli zveřejnění. CFTC obvykle publikuje v pátek úterní stav; denní aktualizace tak nemusí přinést nový report.
+- 28 hlavních forexových párů a DXY. Cross pár zobrazuje reporty jednotlivých měn; USD používá explicitně označený proxy report US Dollar Index. COT není reportem o celém spotovém páru.
+- Všech 26 komodit v katalogu: kovy, energie, zemědělské plodiny, hospodářská zvířata a dřevo. Brent používá NYMEX Brent Last Day (06765T), nikoli jiný ICE kontrakt. Nový Lumber (058644) a historický Random Length Lumber / LBS (058643, poslední report 2023) jsou dvě přepínatelné řady; nespojují se.
+- SPX, NDX (NQ), DJI, RUT, VIX a NIKKEI225: uvedené podkladové futures, nikoli hotovostní index. Nepřičítáme micro ani konsolidované kontrakty.
+- BTCUSD, ETHUSD, SOLUSD a XRPUSD: futures CME, nikoli pozice na spotových kryptoburzách. BNB nemá odpovídající report v použitém zdroji.
+- 26 ETF s jasně označeným proxy: SPY, QQQ, DIA, IWM, EFA, EEM, TLT, IEF, GLD, SLV, USO, UNG, CPER, WEAT, CORNETF, SOYBETF, CANE a devět SPDR sektorů. U sektorů jde o příslušné [S&P Select Sector futures](https://www.cmegroup.com/markets/equities/select-sectors.html), nikoli pozice v samotném ETF; TLT / IEF používají Ultra Treasury Bond / 10Y Note futures s odlišnou durací a splatnostmi. Některé sektorové reporty mají velmi krátkou nebo nepravidelnou historii.
+
+Kódy jsou explicitně ověřené v [oficiálním katalogu CFTC](https://publicreporting.cftc.gov/Legacy-Reports/Legacy-Futures-Only/6dca-aqww) a uložené v `Services/CotCatalog.cs`. Jednotlivé akcie, diverzifikované košové fondy (např. DBC, DBA, VT), DAX, FTSE100, HSI a STOXX50E bez odpovídajícího reportu v tomto zdroji zůstávají bez COT. Nepoužíváme pro ně nesouvisející index a nesyntetizujeme fiktivní agregované pozice.
+
+Zdroj: [CFTC Legacy – Futures Only](https://publicreporting.cftc.gov/Legacy-Reports/Legacy-Futures-Only/6dca-aqww). Import načítá dostupnou historii od roku 1986, po prvním běhu stahuje a z SQL čte jen posledních pět týdnů pro opravy. Každý kontrakt aktualizuje jednou, i když se zobrazuje u více ETF / instrumentů. Při startu se bezpečně přidá tabulka `CotReports` i do existující databáze; tabulka cen se nemění. Web čte pouze uložené reporty vybraného instrumentu. Datum v grafu označuje datum pozic, nikoli zveřejnění. CFTC obvykle publikuje v pátek úterní stav; denní aktualizace tak nemusí přinést nový report.
 
 Workflow `Update seasonality data` obsahuje nezávislé joby pro ceny a COT, oba běží po pushi na `master`, denně i při ručním spuštění. Výpadek CFTC neblokuje aktualizaci cen. První import COT lze spustit samostatně:
 
@@ -36,4 +44,10 @@ Ověření parseru a výpočtů (bez databáze a bez dalších testovacích bal�
 
 ```powershell
 dotnet run --project Tools/CotChecks/CotChecks.csproj -c Release
+```
+
+Volitelná read-only kontrola všech 91 podporovaných instrumentů proti spuštěné aplikaci a reálně importovaným datům:
+
+```powershell
+dotnet run --project Tools/CotChecks/CotChecks.csproj -c Release -- --live-url http://127.0.0.1:54128/
 ```

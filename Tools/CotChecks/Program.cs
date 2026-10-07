@@ -1,5 +1,6 @@
 using TradingJournal.Models;
 using TradingJournal.Services;
+using System.Net.Http.Json;
 
 static void Check(bool condition, string message)
 {
@@ -28,7 +29,24 @@ Check(points[2].NonReportable.Index is null, "A flat window must not divide by z
 Check(CotService.MarketsForAsset("GBPJPY").Select(x => x.Key).SequenceEqual(new[] { "GBP", "JPY" }), "Cross pairs must map both currencies.");
 Check(CotService.MarketsForAsset("USDJPY")[0].ContractCode == "098662", "USD must explicitly use the DXY market.");
 Check(CotService.MarketsForAsset("DXY").Count == 1, "DXY must resolve to one report.");
-Check(CotService.MarketsForAsset("BTCUSD").Count == 0 && CotService.MarketsForAsset("AAPL").Count == 0, "Unsupported instruments must not silently map to USD.");
+Check(CotService.MarketsForAsset("XAUUSD").Single().ContractCode == "088691", "Gold must map to COMEX, not USD.");
+Check(CotService.MarketsForAsset("NDX").Single().ContractCode == "209742", "Nasdaq must use the mini contract, not a micro/consolidated series.");
+Check(CotService.MarketsForAsset("QQQ").SequenceEqual(CotService.MarketsForAsset("NDX")), "ETF must reuse its underlying report without importing it twice.");
+Check(CotCatalog.NoteForAsset("QQQ").StartsWith("Proxy:") && CotCatalog.NoteForAsset("TLT").Contains("durace"), "ETF proxy and bond maturity differences must be explicit.");
+Check(!CotCatalog.IsForexPair("BTCUSD") && !CotCatalog.IsForexPair("XAUUSD") && !CotCatalog.IsForexPair("SPX"), "Non-FX keys must not be sliced/interpreted as currency pairs.");
+foreach (var (key, code) in new[] { ("BTCUSD", "133741"), ("ETHUSD", "146021"), ("SOLUSD", "177741"), ("XRPUSD", "176740") })
+    Check(CotService.MarketsForAsset(key).Single().ContractCode == code, "Crypto must map only to its own CME contract.");
+foreach (var key in new[] { "AAPL", "NVDA", "BNBUSD", "DAX", "FTSE100", "STOXX50E", "HSI", "DBC", "PDBC", "DBA", "DBE", "DBB", "VT", "VTI", "VNQ", "ARKK" })
+    Check(CotService.MarketsForAsset(key).Count == 0, "Unsupported instruments must not silently use unrelated COT data: " + key);
+Check(CotService.MarketsForAsset("LUMBER").Select(x => x.ContractCode).SequenceEqual(new[] { "058644", "058643" }), "Old/new lumber history must remain separate.");
+Check(CotService.MarketsForAsset("xauusd").Single().Key == "GOLD", "Mapping must be case-insensitive.");
+Check(CotService.Markets.Count == CotService.Markets.Select(x => x.ContractCode).Distinct().Count(), "Each contract must be imported only once.");
+var supported = SeasonalityService.Assets.Where(x => CotService.MarketsForAsset(x.Key).Count > 0).ToArray();
+Check(supported.Length == 91, "Expected COT coverage: 28 FX + DXY + 26 commodities + 6 indices + 4 crypto + 26 ETF.");
+Check(supported.SelectMany(x => CotService.MarketsForAsset(x.Key)).Select(x => x.Key).Distinct().Count() == CotService.Markets.Count, "Do not import unused markets.");
+foreach (var asset in SeasonalityService.Assets.Where(x => x.YahooSymbol.EndsWith("=F")))
+    Check(CotService.MarketsForAsset(asset.Key).Count > 0, "Every catalog commodity futures asset must have a mapping: " + asset.Key);
+Check(SeasonalityService.SearchAliases("NDX").Contains("NQ") && SeasonalityService.SearchAliases("XAUUSD").Contains("XAU"), "Common NQ/XAU search aliases must resolve existing assets.");
 
 const string sample = """
     [{"cftc_contract_market_code":"096742","futonly_or_combined":"FutOnly",
@@ -46,4 +64,29 @@ Reject(() => CotService.ParseReports(sample.Replace("\"50\"", "\"-50\""), "09674
 var warnings = new List<string>();
 var invalidHistory = CotService.ParseReports(sample.Replace("\"50\"", "\"-50\""), "096742", warnings.Add);
 Check(invalidHistory.Count == 0 && warnings.Count == 1 && warnings[0].Contains("2026-01-06"), "An omitted historical record must be reported with its date.");
-Console.WriteLine("COT checks passed: net changes, normalized extremes, missing weeks, flat/incomplete windows, pair mapping and CFTC input validation.");
+Console.WriteLine($"COT checks passed: {supported.Length} supported assets, {CotService.Markets.Count} unique contracts, proxy/FX mapping, net/index calculations and strict CFTC input validation.");
+
+// Optional read-only integration check against a running app with imported history.
+if (args.Length == 2 && args[0] == "--live-url")
+{
+    using var client = new HttpClient { BaseAddress = new Uri(args[1].TrimEnd('/') + "/") };
+    var contracts = new HashSet<string>();
+    foreach (var asset in supported)
+    {
+        var response = await client.GetFromJsonAsync<CotData>($"Seasonality/CotData?assetKey={Uri.EscapeDataString(asset.Key)}&lookbackWeeks=52");
+        Check(response is not null && response.AssetKey == asset.Key && response.Note == CotCatalog.NoteForAsset(asset.Key), "Invalid live response/note: " + asset.Key);
+        var actual = response!.Markets;
+        Check(actual.Select(x => x.ContractCode).SequenceEqual(CotService.MarketsForAsset(asset.Key).Select(x => x.ContractCode)), "Wrong live contracts: " + asset.Key);
+        foreach (var market in actual)
+        {
+            Check(market.Reports.Count > 0, "Missing imported history: " + asset.Key + "/" + market.ContractCode);
+            Check(market.IsQuoteCurrency == (CotCatalog.IsForexPair(asset.Key) && asset.Key[3..] == market.Key), "Wrong currency orientation: " + asset.Key);
+            Check(market.Reports.Select(x => x.Date).Distinct().Count() == market.Reports.Count, "Duplicate report dates: " + market.ContractCode);
+            contracts.Add(market.ContractCode);
+        }
+    }
+    Check(contracts.Count == CotService.Markets.Count, "Live check must cover every imported contract.");
+    var unsupported = await client.GetFromJsonAsync<CotData>("Seasonality/CotData?assetKey=AAPL");
+    Check(unsupported?.Markets.Count == 0, "Unsupported stocks must not return unrelated reports.");
+    Console.WriteLine($"Live COT checks passed: {supported.Length} assets, {contracts.Count} populated contracts, exposure notes and FX orientation.");
+}
