@@ -86,6 +86,7 @@
             : error ? `Aktualizace se nepodařila: ${error}` : '';
     };
     function refreshActiveViews() {
+        document.querySelector('#market-instrument-title').textContent = activeAsset?.name || 'Instrument';
         rebuild();
         if (!document.querySelector('#seasonality-monthly-view').hidden) drawMonthly();
         root.dispatchEvent(new CustomEvent('asset-change', { detail: activeAsset }));
@@ -371,8 +372,8 @@
         const points = rawPoints;
         const selectedIntervalStats = intervalYearStats(byYear);
         const rect = canvas.getBoundingClientRect();
-        const width = Math.max(400, rect.width);
-        const height = 500;
+        const width = Math.max(280, rect.width);
+        const height = rect.height || 380;
         const dpr = window.devicePixelRatio || 1;
         canvas.width = width * dpr;
         canvas.height = height * dpr;
@@ -436,7 +437,7 @@
         ctx.fillStyle = '#8794a4';
         months.forEach((month, index) => {
             const x = chartGeometry.xFor(width, index / 12 * plot.lastDay);
-            ctx.fillText(month, x, height - 10);
+            if (width >= 480 || index % 2 === 0) ctx.fillText(month, x, height - 10);
             ctx.strokeStyle = 'rgba(255,255,255,.06)';
             ctx.beginPath();
             ctx.moveTo(x, pad);
