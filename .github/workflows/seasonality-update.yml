@@ -13,6 +13,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  cot-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet restore SeasonalityApp.csproj
+      - name: Update CFTC COT history
+        run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-restore -- --update-cot-once
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
   update:
     runs-on: ubuntu-latest
     steps:

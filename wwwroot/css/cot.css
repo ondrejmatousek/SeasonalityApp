@@ -1,0 +1,56 @@
+.seasonality-header { display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,420px); padding-right:0; min-height:0; align-items:center; gap:1.5rem; padding-top:1.5rem; }
+.seasonality-header>div { min-width:0; }
+.seasonality-header h1 { font-size:clamp(1.8rem,3vw,3rem); }
+.seasonality-asset-search { position:relative; width:100%; right:auto; bottom:auto; }
+.market-view-tabs { display:flex; gap:.4rem; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:.8rem; }
+.market-view-tabs button { border:1px solid transparent; background:transparent; color:#aeb9c7; padding:.7rem 1.1rem; border-radius:7px; font-weight:700; cursor:pointer; }
+.market-view-tabs button span { font-weight:400; font-size:.72rem; margin-left:.5rem; }
+.market-view-tabs button.is-active { color:#24dfcf; background:rgba(36,223,207,.12); border-color:rgba(36,223,207,.4); }
+.market-view-tabs button:focus-visible,.cot-analysis button:focus-visible { outline:2px solid #24dfcf; outline-offset:3px; }
+.market-seasonality-view { display:grid; gap:1rem; }
+.seasonality-page [hidden] { display:none !important; }
+.cot-analysis { display:grid; gap:1rem; min-width:0; }
+.cot-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.cot-toolbar h2 { margin:.3rem 0; font-size:1.6rem; color:#e5e9ee; }
+.cot-toolbar p { margin:0; color:#8794a4; font-size:.8rem; }
+.cot-controls { display:flex; gap:1rem; }
+.cot-controls label { display:grid; gap:.35rem; font-size:.75rem; color:#aeb9c7; }
+.cot-controls select { background:#252b2e; color:#e5e9ee; border:1px solid rgba(255,255,255,.18); border-radius:6px; padding:.55rem; color-scheme:dark; }
+.cot-market-switch { display:flex; flex-wrap:wrap; gap:.6rem; }
+.cot-market-switch button,.cot-retry { border:1px solid rgba(255,255,255,.14); border-radius:6px; background:rgba(255,255,255,.04); padding:.65rem 1rem; color:#aeb9c7; cursor:pointer; }
+.cot-market-switch button.is-active { border-color:#24dfcf; color:#24dfcf; background:rgba(36,223,207,.1); }
+.cot-market-note { color:#9ba8b7; font-size:.78rem; line-height:1.65; padding:.85rem 1rem; border-left:2px solid #416f84; background:rgba(65,111,132,.1); margin:0; }
+.cot-status { color:#aeb9c7; font-size:.85rem; }
+.cot-status.is-error { color:#f28aa8; }
+.cot-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; margin-bottom:1rem; }
+.cot-summary-card { padding:1rem; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.1); border-radius:8px; }
+.cot-summary-card h3 { font-size:.9rem; color:#dce3e9; margin:0 0 .9rem; }
+.cot-summary-values { display:flex; align-items:center; gap:1rem; }
+.cot-donut { width:80px; height:80px; flex-shrink:0; border-radius:50%; position:relative; background:conic-gradient(#24dfcf 0 var(--long),#f28aa8 var(--long) var(--short),#566575 var(--short) 100%); }
+.cot-donut:after { content:''; position:absolute; inset:15px; border-radius:50%; background:#20282c; }
+.cot-summary-card strong { display:block; font-size:1.3rem; color:#dce3e9; }
+.cot-summary-card p { font-size:.75rem; color:#9ba8b7; margin:.25rem 0; }
+.cot-summary-card dl { display:grid; grid-template-columns:1fr auto; gap:.35rem; margin:1rem 0 0; font-size:.75rem; }
+.cot-summary-card dt { color:#8794a4; font-weight:400; }
+.cot-summary-card dd { text-align:right; margin:0; color:#dce3e9; }
+.cot-summary-card footer { color:#8794a4; font-size:.65rem; line-height:1.5; margin-top:.7rem; }
+.cot-chart-stack { display:grid; gap:1rem; }
+.cot-chart-card { background:#171e22; border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:1rem; min-width:0; }
+.cot-chart-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.6rem; margin-bottom:.75rem; }
+.cot-chart-heading h3 { margin:0; font-size:.95rem; color:#dce3e9; }
+.cot-chart-heading h3 span { font-size:.72rem; font-weight:400; color:#8794a4; margin-left:.5rem; }
+.cot-legend { display:flex; flex-wrap:wrap; gap:.8rem; color:#8794a4; font-size:.7rem; }
+.cot-color-small { color:#f28aa8; }
+.cot-color-commercial { color:#24dfcf; }
+.cot-color-large { color:#7098ff; }
+.cot-chart-card canvas { display:block; height:260px; width:100%; cursor:crosshair; }
+.cot-chart-tooltip { position:fixed; z-index:30; pointer-events:none; background:#202b33; color:#e5e9ee; border:1px solid #52697a; border-radius:6px; padding:.7rem; white-space:pre-line; line-height:1.6; font-size:.75rem; box-shadow:0 8px 30px #0008; }
+.cot-methodology,.cot-history-table { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:1rem; color:#9ba8b7; margin-top:1rem; font-size:.8rem; line-height:1.7; }
+.cot-analysis summary { cursor:pointer; color:#dce3e9; }
+.cot-analysis a { color:#24dfcf; }
+.cot-analysis table { border-collapse:collapse; font-size:.75rem; width:100%; }
+.cot-analysis th,.cot-analysis td { text-align:right; padding:.55rem; white-space:nowrap; border-bottom:1px solid #ffffff12; }
+.cot-analysis th:first-child,.cot-analysis td:first-child { text-align:left; }
+@media(max-width:1400px) { .seasonality-header { grid-template-columns:1fr; } .seasonality-asset-search { max-width:600px; } }
+@media(max-width:1000px) { .cot-toolbar { align-items:flex-start; flex-direction:column; } .cot-summary-values { flex-direction:column; align-items:flex-start; } }
+@media(max-width:650px) { .market-view-tabs button span { display:none; } .cot-summary { grid-template-columns:1fr; } .cot-summary-values { flex-direction:row; align-items:center; } .cot-controls { width:100%; flex-wrap:wrap; } .cot-controls label { flex:1; } .cot-chart-heading { align-items:flex-start; flex-direction:column; } .cot-chart-card { padding:.75rem; } }

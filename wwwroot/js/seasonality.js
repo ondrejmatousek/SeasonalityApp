@@ -88,6 +88,7 @@
     function refreshActiveViews() {
         rebuild();
         if (!document.querySelector('#seasonality-monthly-view').hidden) drawMonthly();
+        root.dispatchEvent(new CustomEvent('asset-change', { detail: activeAsset }));
     }
     async function loadAssetData(asset) {
         if (!asset || rows().length && activeAsset?.key === asset.key) return;
@@ -795,7 +796,12 @@
         endDateInput.value = '';
         draw();
     };
-    new ResizeObserver(() => { draw(); if (!document.querySelector('#seasonality-monthly-view').hidden) drawMonthly(); }).observe(canvas.parentElement);
+    root.addEventListener('seasonality-visible', refreshActiveViews);
+    new ResizeObserver(() => {
+        if (document.querySelector('#market-seasonality-view').hidden) return;
+        draw();
+        if (!document.querySelector('#seasonality-monthly-view').hidden) drawMonthly();
+    }).observe(canvas.parentElement);
     applyAssetSearch();
     rebuild();
     setSyncStatus(root.dataset.updating === 'true', null);

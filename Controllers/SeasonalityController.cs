@@ -4,8 +4,18 @@ using TradingJournal.ViewModels;
 
 namespace SeasonalityApp.Controllers;
 
-public sealed class SeasonalityController(SeasonalityService service, SeasonalityUpdateState state) : Controller
+public sealed class SeasonalityController(SeasonalityService service, SeasonalityUpdateState state, CotService cot) : Controller
 {
+    [HttpGet]
+    public async Task<IActionResult> CotData(string? assetKey, int lookbackWeeks = 52, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(assetKey)) return BadRequest(new { message = "Missing assetKey." });
+        if (lookbackWeeks is not (26 or 52 or 156)) return BadRequest(new { message = "Lookback must be 26, 52 or 156 weeks." });
+        var asset = SeasonalityService.Assets.FirstOrDefault(x => string.Equals(x.Key, assetKey, StringComparison.OrdinalIgnoreCase));
+        if (asset is null) return NotFound(new { message = "Unknown asset." });
+        return Json(await cot.LoadAsync(asset, lookbackWeeks, ct));
+    }
+
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
