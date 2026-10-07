@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Seasonality &amp; COT</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true" />
@@ -28,8 +29,10 @@
         </aside>
         <main role="main" class="app-workspace-main">@RenderBody()</main>
     </div>
+    <script src="~/js/market-chart-ui.js" asp-append-version="true"></script>
     <script src="~/js/seasonality-geometry.js" asp-append-version="true"></script>
     <script src="~/js/cot.js" asp-append-version="true"></script>
     <script src="~/js/seasonality.js" asp-append-version="true"></script>
+    <script src="~/js/market-export.js" asp-append-version="true"></script>
 </body>
 </html>

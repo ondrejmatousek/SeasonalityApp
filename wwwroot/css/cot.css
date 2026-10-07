@@ -17,6 +17,13 @@
 .seasonality-table-panel,.seasonality-monthly-table-wrap { min-width:0; }
 .seasonality-tabs { gap:4px; }
 .seasonality-tabs button { padding:.4rem .7rem; font-size:.8rem; }
+.seasonality-tabs .market-export-button { margin-left:auto; }
+.market-export-button { display:inline-flex; align-items:center; justify-content:center; align-self:center; flex-shrink:0; width:38px; height:36px; padding:8px; border:1px solid #ffffff24; border-radius:6px; background:#172025; color:#24dfcf; cursor:pointer; }
+.market-export-button svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linejoin:round; }
+.market-export-button:disabled { opacity:.4; cursor:default; }
+.market-export-button[aria-busy=true] { opacity:.6; }
+.market-export-status { font-size:.75rem; color:#9ba8b7; margin:0; }
+.market-export-status:empty { display:none; }
 .seasonality-filters { display:flex; flex-wrap:wrap; align-items:center; gap:8px 20px; padding:0; border:0; background:transparent; }
 .seasonality-filters select { padding:.45rem .65rem; font-size:.8rem; }
 .seasonality-filter-row { margin:0; font-size:.8rem; }
@@ -87,8 +94,14 @@
 .cot-color-small { color:#f28aa8; }
 .cot-color-commercial { color:#24dfcf; }
 .cot-color-large { color:#7098ff; }
+.cot-index-controls { gap:6px; align-items:center; }
+.cot-index-controls button { border:1px solid currentColor; border-radius:5px; background:transparent; padding:4px 8px; font-size:.72rem; cursor:pointer; }
+.cot-index-controls button[aria-pressed=false] { opacity:.45; border-color:transparent; }
+.cot-index-controls button[aria-pressed=true] { background:#ffffff09; }
+.cot-index-hint { font-size:.7rem; color:#8794a4; margin:0 0 8px; }
+#cot-index-chart { height:340px; }
 .cot-chart-card canvas { display:block; height:260px; width:100%; cursor:crosshair; }
-.cot-chart-tooltip { position:fixed; z-index:30; pointer-events:none; background:#202b33; color:#e5e9ee; border:1px solid #52697a; border-radius:6px; padding:.7rem; white-space:pre-line; line-height:1.6; font-size:.75rem; box-shadow:0 8px 30px #0008; }
+.cot-chart-tooltip { position:fixed; transform:none; max-width:min(300px,calc(100vw - 16px)); max-height:calc(100vh - 48px); overflow:hidden; z-index:30; pointer-events:none; background:#202b33; color:#e5e9ee; border:1px solid #52697a; border-radius:6px; padding:.7rem; white-space:pre-line; line-height:1.6; font-size:.75rem; box-shadow:0 8px 30px #0008; }
 .cot-methodology,.cot-history-table { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:1rem; color:#9ba8b7; margin-top:1rem; font-size:.8rem; line-height:1.7; }
 .cot-analysis summary { cursor:pointer; color:#dce3e9; }
 .cot-analysis a { color:#24dfcf; }

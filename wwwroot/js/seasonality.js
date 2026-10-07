@@ -88,6 +88,7 @@
     };
     function refreshActiveViews() {
         document.querySelector('#market-instrument-title').textContent = activeAsset?.name || 'Instrument';
+        root.dataset.assetKey = activeAsset?.key || '';
         rebuild();
         if (!document.querySelector('#seasonality-monthly-view').hidden) drawMonthly();
         root.dispatchEvent(new CustomEvent('asset-change', { detail: activeAsset }));
@@ -371,6 +372,8 @@
             .sort((a, b) => a[0] - b[0])
             .map(([day, values]) => [day, values.reduce((sum, value) => sum + value, 0) / values.length]);
         const points = rawPoints;
+        if (document.querySelector('#seasonality-monthly-view').hidden)
+            document.querySelector('#seasonality-export').disabled = !points.length;
         const selectedIntervalStats = intervalYearStats(byYear);
         const rect = canvas.getBoundingClientRect();
         const width = Math.max(280, rect.width);
@@ -560,6 +563,7 @@
 
     function drawMonthly() {
         const { selectedYears, stats } = monthlyStats();
+        document.querySelector('#seasonality-export').disabled = !stats.some(item => item.returns.length);
         const monthNames = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
         const summaries = stats.map(item => {
             const values = item.returns.map(row => row.value);
@@ -700,6 +704,7 @@
         document.querySelector('#seasonality-curve-view').hidden = monthly;
         document.querySelector('#seasonality-monthly-view').hidden = !monthly;
         if (monthly) drawMonthly();
+        else draw();
     });
     document.querySelector('#seasonality-all').onclick = () => {
         list.querySelectorAll('input').forEach(input => {

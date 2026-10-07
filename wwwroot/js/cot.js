@@ -10,6 +10,9 @@
     const history = byId('cot-history');
     const lookback = byId('cot-lookback');
     const retry = byId('cot-retry');
+    const exportButton = byId('cot-export');
+    const indexGroups = new Set(['commercial', 'nonCommercial', 'nonReportable']);
+    const indexButtons = [...root.querySelectorAll('[data-cot-index-group]')];
     const tabs = [...root.querySelectorAll('[data-market-tab]')];
     const groups = [
         { key: 'nonReportable', name: 'Malí obchodníci', color: '#f28aa8', chart: 'cot-small-chart' },
@@ -75,6 +78,7 @@
         byId('cot-market-note').textContent = '';
         byId('cot-market-note').hidden = true;
         content.hidden = true;
+        exportButton.disabled = true;
         status.textContent = 'Načítám COT reporty…';
         status.classList.remove('is-error');
         retry.hidden = true;
@@ -144,6 +148,13 @@
             notices.push(`COT index není dostupný: potřebuje ${lookback.value} reportů a nenulový rozsah čistých pozic.`);
         status.textContent = notices.join(' ');
         content.hidden = false;
+        exportButton.disabled = false;
+        root.dataset.cotMarket = selectedMarket.key;
+        indexButtons.forEach(button => {
+            const group = groups.find(item => item.key === button.dataset.cotIndexGroup);
+            const names = { nonReportable: 'Malí', commercial: 'Komerční', nonCommercial: 'Velcí' };
+            button.textContent = `${names[group.key]} · ${number(latest[group.key].index)}`;
+        });
         const cutoff = new Date(`${latest.date}T00:00:00Z`);
         cutoff.setUTCFullYear(cutoff.getUTCFullYear() - Number(history.value));
         points = history.value === 'all' ? reports : reports.filter(row => Date.parse(`${row.date}T00:00:00Z`) >= cutoff.getTime());
@@ -194,19 +205,20 @@
 
     function chart(canvas, indexChart = false, group = null) {
         const width = Math.max(280, canvas.getBoundingClientRect().width);
-        const height = 260;
+        const height = canvas.getBoundingClientRect().height || (indexChart ? 340 : 260);
         const ratio = window.devicePixelRatio || 1;
         canvas.width = Math.round(width * ratio);
         canvas.height = Math.round(height * ratio);
         const context = canvas.getContext('2d');
         context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        const pad = { left: 62, right: 18, top: 14, bottom: 32 };
+        const pad = { left: width < 500 ? 48 : 62, right: 24, top: 22, bottom: 36 };
         const w = width - pad.left - pad.right, h = height - pad.top - pad.bottom;
         if (!points.length) return;
         const values = indexChart ? [0, 100] : points.flatMap(row => [row[group.key].net, row[group.key].change ?? 0]);
         let min = Math.min(0, ...values), max = Math.max(0, ...values);
         if (min === max) { min -= 1; max += 1; }
-        if (!indexChart) { const margin = (max - min) * .12; min -= margin; max += margin; }
+        if (indexChart) ({ min, max } = window.MarketChartUi.indexRange);
+        else { const margin = (max - min) * .12; min -= margin; max += margin; }
         const first = Date.parse(points[0].date), last = Date.parse(points[points.length - 1].date);
         const x = row => pad.left + (last === first ? .5 : (Date.parse(row.date) - first) / (last - first)) * w;
         const y = value => pad.top + (max - value) / (max - min) * h;
@@ -214,11 +226,13 @@
         context.lineWidth = 1;
         const ticks = indexChart ? [0, 20, 40, 60, 80, 100] : Array.from({ length: 5 }, (_, i) => min + (max - min) * i / 4);
         ticks.forEach(value => {
-            context.strokeStyle = indexChart && [20, 80].includes(value) ? '#7098ff88' : '#ffffff13';
+            context.strokeStyle = indexChart && [20, 80].includes(value) ? '#a3b5c066' : '#ffffff13';
+            context.setLineDash(indexChart && [20, 80].includes(value) ? [5, 5] : []);
             context.beginPath(); context.moveTo(pad.left, y(value)); context.lineTo(width - pad.right, y(value)); context.stroke();
             context.fillStyle = '#8794a4'; context.textAlign = 'right';
             context.fillText(indexChart ? String(value) : Intl.NumberFormat('cs-CZ', { notation: 'compact', maximumFractionDigits: 1 }).format(value), pad.left - 9, y(value) + 4);
         });
+        context.setLineDash([]);
         if (indexChart) {
             context.fillStyle = '#f28aa80b'; context.fillRect(pad.left, y(100), w, y(80) - y(100));
             context.fillStyle = '#24dfcf0b'; context.fillRect(pad.left, y(20), w, y(0) - y(20));
@@ -233,7 +247,9 @@
             });
         }
         const line = (field, color, indexed) => {
-            context.strokeStyle = color; context.lineWidth = 1.7; context.beginPath();
+            context.strokeStyle = color; context.lineWidth = indexed ? 1.5 : 1.7;
+            context.setLineDash([]);
+            context.lineJoin = 'round'; context.lineCap = 'round'; context.beginPath();
             let started = false;
             let previousDate = null;
             points.forEach(row => {
@@ -246,13 +262,15 @@
                 started = true;
             });
             context.stroke();
+            context.setLineDash([]);
             // A single report should still be visible.
             if (points.length === 1) {
                 const value = points[0][field][indexed ? 'index' : 'net'];
                 if (value != null) { context.fillStyle = color; context.beginPath(); context.arc(x(points[0]), y(value), 3, 0, 2 * Math.PI); context.fill(); }
             }
         };
-        if (indexChart) groups.forEach(item => line(item.key, item.color, true));
+        const visibleGroups = indexChart ? groups.filter(item => indexGroups.has(item.key)) : [group];
+        if (indexChart) visibleGroups.forEach(item => line(item.key, item.color, true));
         else line(group.key, group.color, false);
         context.fillStyle = '#8794a4'; context.textAlign = 'center';
         const count = width < 500 ? 3 : 6;
@@ -261,20 +279,44 @@
             const date = new Date(first + (last - first) * position);
             context.fillText(date.toLocaleDateString('cs-CZ', { month: 'short', year: '2-digit', timeZone: 'UTC' }), pad.left + position * w, height - 8);
         }
+        // Reuse the drawn chart while hovering; do not rerender the entire history
+        // on every pointer movement. The crosshair pinpoints the actual report.
+        const base = document.createElement('canvas');
+        base.width = canvas.width; base.height = canvas.height;
+        base.getContext('2d').drawImage(canvas, 0, 0);
+        const restore = () => { context.clearRect(0, 0, width, height); context.drawImage(base, 0, 0, width, height); };
         canvas.onpointermove = event => {
             const rect = canvas.getBoundingClientRect();
+            if (!points.length || !market() || event.clientX < rect.left + pad.left || event.clientX > rect.left + width - pad.right
+                || event.clientY < rect.top + pad.top || event.clientY > rect.top + height - pad.bottom) {
+                restore(); tooltip.hidden = true; return;
+            }
             const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left - pad.left) / w));
             const timestamp = first + fraction * (last - first);
             const row = points.reduce((a, b) => Math.abs(Date.parse(a.date) - timestamp) < Math.abs(Date.parse(b.date) - timestamp) ? a : b);
             const text = indexChart
-                ? groups.map(item => `${item.name}: ${row[item.key].index == null ? '—' : number(row[item.key].index)}`).join('\n')
+                ? visibleGroups.map(item => `${item.name}: ${row[item.key].index == null ? '—' : number(row[item.key].index)}`).join('\n')
                 : `${group.name}\nNet: ${signed(row[group.key].net)} kontraktů\nΔ týdně: ${signed(row[group.key].change)}\nLong: ${number(row[group.key].long)} · Short: ${number(row[group.key].short)}`;
             tooltip.textContent = `${market().key} · pozice k ${dateLabel(row.date)}\n${text}`;
+            restore();
+            context.save();
+            context.strokeStyle = '#cedae080'; context.lineWidth = 1; context.setLineDash([4, 4]);
+            context.beginPath(); context.moveTo(x(row), pad.top); context.lineTo(x(row), height - pad.bottom); context.stroke();
+            context.setLineDash([]);
+            visibleGroups.forEach(item => {
+                const value = row[item.key][indexChart ? 'index' : 'net'];
+                if (value == null) return;
+                context.fillStyle = item.color; context.strokeStyle = '#15191c'; context.lineWidth = 2;
+                context.beginPath(); context.arc(x(row), y(value), 4, 0, 2 * Math.PI); context.fill(); context.stroke();
+            });
+            context.restore();
             tooltip.hidden = false;
-            tooltip.style.left = `${Math.max(8, Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8))}px`;
-            tooltip.style.top = `${Math.max(8, Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8))}px`;
+            const position = window.MarketChartUi.tooltipPosition(event.clientX, event.clientY,
+                tooltip.offsetWidth, tooltip.offsetHeight, window.innerWidth, window.innerHeight);
+            tooltip.style.left = `${position.left}px`;
+            tooltip.style.top = `${position.top}px`;
         };
-        canvas.onpointerleave = () => { tooltip.hidden = true; };
+        canvas.onpointerleave = () => { restore(); tooltip.hidden = true; };
     }
 
     function draw() {
@@ -292,5 +334,19 @@
     history.onchange = render;
     lookback.onchange = () => load();
     retry.onclick = () => load(true);
+    indexButtons.forEach(button => {
+        button.onclick = () => {
+            const key = button.dataset.cotIndexGroup;
+            if (indexGroups.has(key)) {
+                if (indexGroups.size === 1) return;
+                indexGroups.delete(key);
+            } else indexGroups.add(key);
+            indexButtons.forEach(item => item.setAttribute('aria-pressed', String(indexGroups.has(item.dataset.cotIndexGroup))));
+            tooltip.hidden = true;
+            draw();
+        };
+    });
+    document.addEventListener('scroll', () => { tooltip.hidden = true; }, true);
+    window.addEventListener('resize', () => { tooltip.hidden = true; });
     new ResizeObserver(draw).observe(panel);
 })();
