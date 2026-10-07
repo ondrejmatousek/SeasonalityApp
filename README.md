@@ -10,7 +10,7 @@ Nastav `ConnectionStrings__DefaultConnection` na připojovací řetězec k Azure
 dotnet run --project SeasonalityApp.csproj
 ```
 
-Aplikace sama nestahuje historické ceny při spuštění. Azure SQL musí obsahovat tabulku `SeasonalityPrices`. Denní aktualizace se spouští plánovaným GitHub Actions workflow, případně ručně přes `workflow_dispatch`; spuštění webu ani push ji nespouštějí.
+Aplikace sama nestahuje historické ceny při spuštění. Azure SQL musí obsahovat tabulku `SeasonalityPrices`. Aktualizace dat se spouští GitHub Actions workflow `Update seasonality data` po každém pushi na `master`, jednou denně v 05:15 UTC nebo ručně přes `workflow_dispatch`. Po pushi běží aktualizace dat souběžně s nasazením webu. Běhy aktualizace dat se navzájem nepřekrývají a probíhající aktualizace se novým pushem neruší. Workflow používá secret `SEASONALITY_CONNECTION_STRING`.
 
 ## Azure SQL Free
 

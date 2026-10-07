@@ -1,9 +1,16 @@
 name: Update seasonality data
 
 on:
+  push:
+    branches:
+      - master
   schedule:
     - cron: '15 5 * * *'
   workflow_dispatch:
+
+concurrency:
+  group: seasonality-data-update
+  cancel-in-progress: false
 
 jobs:
   update:
