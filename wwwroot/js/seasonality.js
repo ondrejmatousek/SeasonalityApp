@@ -12,6 +12,8 @@
     const years = document.querySelector('#seasonality-years');
     const list = document.querySelector('#seasonality-year-list');
     const canvas = document.querySelector('#seasonality-canvas');
+    const hoverMarker = document.querySelector('#seasonality-hover-marker');
+    const hoverGuide = document.querySelector('#seasonality-hover-guide');
     const dragPreview = document.querySelector('#seasonality-drag-preview');
     const ctx = canvas.getContext('2d');
     const returnsCanvas = document.querySelector('#seasonality-returns-canvas');
@@ -35,6 +37,7 @@
     let dragStart = null;
     let dragPointerId = null;
     let hoverDay = null;
+    let hoverPlot = null;
     let activeAsset = assets[0];
     let assetSearchTimer = null;
     let highlightedAssetIndex = 0;
@@ -314,6 +317,8 @@
     };
 
     function draw() {
+        clearHover();
+        hoverPlot = null;
         const byYear = new Map();
         filtered().forEach(row => {
             const year = new Date(row.date).getFullYear();
@@ -476,6 +481,9 @@
         });
         ctx.stroke();
 
+        // Reuse the plotted values and geometry; moving the pointer must not
+        // recompute seasonality or repaint the full chart and statistics.
+        hoverPlot = { points, width, top: pad, bottom, left: plot.left, right: plot.right, xFor, yFor };
         updateStats(points, selectedIntervalStats.length ? selectedIntervalStats : yearStats, selected.size);
     }
 
@@ -760,17 +768,42 @@
         dragPointerId = null;
         dragPreview.hidden = true;
     };
+    function clearHover() {
+        hoverDay = null;
+        hoverMarker.hidden = true;
+        hoverGuide.hidden = true;
+        tooltip.classList.remove('is-visible');
+    }
     canvas.addEventListener('pointermove', event => {
         hoverDay = pointerDay(event);
         if (dragStart !== null && event.pointerId === dragPointerId) showDragPreview(hoverDay);
+        const rect = canvas.getBoundingClientRect();
+        const pointerX = event.clientX - rect.left, pointerY = event.clientY - rect.top;
+        if (!hoverPlot || pointerX < hoverPlot.left || pointerX > hoverPlot.right
+            || pointerY < hoverPlot.top || pointerY > hoverPlot.bottom) {
+            clearHover();
+            return;
+        }
+        const point = chartGeometry.nearestPoint(hoverPlot.points, hoverDay);
+        const x = canvas.offsetLeft + hoverPlot.xFor(point[0]);
+        const y = canvas.offsetTop + hoverPlot.yFor(point[1]);
+        hoverMarker.style.left = `${x}px`;
+        hoverMarker.style.top = `${y}px`;
+        hoverMarker.hidden = false;
+        hoverGuide.style.left = `${x}px`;
+        hoverGuide.style.top = `${canvas.offsetTop + hoverPlot.top}px`;
+        hoverGuide.style.height = `${hoverPlot.bottom - hoverPlot.top}px`;
+        hoverGuide.hidden = false;
         tooltip.textContent = dragStart === null
-            ? `${formatDayLabel(hoverDay)} · kalendářní den ${hoverDay + 1}`
+            ? `${formatDayLabel(point[0])} · index ${point[1].toLocaleString('cs-CZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             : `${formatDayLabel(Math.min(dragStart, hoverDay))} – ${formatDayLabel(Math.max(dragStart, hoverDay))}`;
-        tooltip.style.left = `${Math.min(event.offsetX + 14, canvas.clientWidth - 190)}px`;
-        tooltip.style.top = `${Math.max(event.offsetY - 36, 8)}px`;
         tooltip.classList.add('is-visible');
+        const position = window.MarketChartUi.tooltipPosition(event.clientX, event.clientY,
+            tooltip.offsetWidth, tooltip.offsetHeight, window.innerWidth, window.innerHeight);
+        tooltip.style.left = `${position.left}px`;
+        tooltip.style.top = `${position.top}px`;
     });
-    canvas.addEventListener('pointerleave', () => tooltip.classList.remove('is-visible'));
+    canvas.addEventListener('pointerleave', clearHover);
     canvas.addEventListener('pointerdown', event => {
         if (!event.isPrimary || event.button !== 0) return;
         event.preventDefault();
@@ -790,7 +823,10 @@
     });
     canvas.addEventListener('pointercancel', event => {
         if (event.pointerId === dragPointerId) clearDragPreview();
+        clearHover();
     });
+    document.addEventListener('scroll', clearHover, true);
+    window.addEventListener('resize', clearHover);
     document.querySelector('#seasonality-apply-interval').onclick = () => {
         const next = inputInterval();
         if (!next) return;

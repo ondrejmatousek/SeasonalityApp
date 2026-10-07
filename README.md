@@ -4,6 +4,8 @@ Samostatná MVC aplikace bez přihlašování. Historické ceny čte z Azure SQL
 
 ## Grafy a export PNG
 
+Hlavní sezónní křivka při přejetí ukazuje tyrkysový bod a přerušovanou svislici na nejbližší hodnotě křivky. Tooltip uvádí datum a index a zůstává mimo kurzor. Výběr intervalu tažením zůstává zachovaný; pohyb myši nepřepočítává data ani statistiky. Bod a svislice se nezahrnují do PNG exportu.
+
 COT index má vizuální rezervu nad 100 / pod 0 a vyšší graf, takže se krajní hodnoty neořezávají. Samotné hodnoty indexu zůstávají 0–100 a nevyhlazují se. Ve výchozím stavu se zobrazují všechny tři skupiny tenkými souvislými čarami odlišenými barvou; kliknutím na skupiny v legendě lze volitelně některé skrýt. Alespoň jedna skupina zůstává zapnutá. Tooltip se umisťuje nad / vedle kurzoru a u pravého okraje překlápí doleva; přerušovaná svislice a bod označují vybraný report.
 
 Na obou hlavních záložkách je tlačítko fotoaparátu pro stažení PNG aktuální analýzy: vybraný instrument, filtry, grafy a viditelné statistiky. Seasonality zahrnuje sezónní křivku i spodní grafy (nebo právě otevřený měsíční přehled); COT zahrnuje všechny čtyři grafy vybraného futures kontraktu a nastavené skupiny indexu. Export není omezen na viditelnou výšku obrazovky. Neobsahuje navigaci aplikace, vyhledávání, tooltipy ani dlouhé historické tabulky. Název souboru obsahuje ticker, pohled a datum. Export běží lokálně v prohlížeči s vendorizovaným MIT balíčkem html2canvas 1.4.1 (`wwwroot/lib/html2canvas`, licence přiložena); knihovna se načítá až při prvním exportu. Nevyžaduje externí screenshot službu ani další SQL dotaz. Prohlížeč používá vlastní grafovou SVG ikonu.

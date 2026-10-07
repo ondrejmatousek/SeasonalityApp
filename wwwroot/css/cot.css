@@ -15,15 +15,19 @@
 #seasonality-curve-view { min-width:0; grid-template-columns:minmax(0,1fr) 260px; }
 #seasonality-curve-view>.seasonality-filters,#seasonality-curve-view>.seasonality-table-panel { grid-column:1 / -1; }
 .seasonality-table-panel,.seasonality-monthly-table-wrap { min-width:0; }
-.seasonality-tabs { gap:4px; }
+.seasonality-tabs { gap:4px; align-items:center; }
 .seasonality-tabs button { padding:.4rem .7rem; font-size:.8rem; }
 .seasonality-tabs .market-export-button { margin-left:auto; }
-.market-export-button { display:inline-flex; align-items:center; justify-content:center; align-self:center; flex-shrink:0; width:38px; height:36px; padding:8px; border:1px solid #ffffff24; border-radius:6px; background:#172025; color:#24dfcf; cursor:pointer; }
-.market-export-button svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linejoin:round; }
+.seasonality-page button.market-export-button { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; box-sizing:border-box; width:40px; height:40px; padding:8px; border:1px solid #ffffff24; border-radius:6px; background:#172025; color:#24dfcf; cursor:pointer; }
+.seasonality-page button.market-export-button:hover { border-color:#24dfcf; background:#24dfcf1f; color:#24dfcf; }
+.market-export-button svg { flex-shrink:0; width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linejoin:round; }
 .market-export-button:disabled { opacity:.4; cursor:default; }
 .market-export-button[aria-busy=true] { opacity:.6; }
 .market-export-status { font-size:.75rem; color:#9ba8b7; margin:0; }
 .market-export-status:empty { display:none; }
+.seasonality-hover-marker { position:absolute; width:10px; height:10px; box-sizing:border-box; border:2px solid #15191c; border-radius:50%; background:#24dfcf; transform:translate(-50%,-50%); z-index:3; pointer-events:none; }
+.seasonality-hover-guide { position:absolute; border-left:1px dashed #cedae080; z-index:1; pointer-events:none; }
+.seasonality-tooltip { position:fixed; transform:none; z-index:30; max-width:calc(100vw - 16px); white-space:normal; }
 .seasonality-filters { display:flex; flex-wrap:wrap; align-items:center; gap:8px 20px; padding:0; border:0; background:transparent; }
 .seasonality-filters select { padding:.45rem .65rem; font-size:.8rem; }
 .seasonality-filter-row { margin:0; font-size:.8rem; }
@@ -60,9 +64,9 @@
 .cot-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding-bottom:4px; }
 .cot-toolbar h2 { margin:.3rem 0; font-size:1.6rem; color:#e5e9ee; }
 .cot-toolbar p { margin:8px 0 0; color:#8794a4; font-size:.7rem; }
-.cot-controls { display:flex; gap:1rem; }
+.cot-controls { display:flex; align-items:flex-end; gap:1rem; }
 .cot-controls label { display:grid; gap:.35rem; font-size:.75rem; color:#aeb9c7; }
-.cot-controls select { background:#252b2e; color:#e5e9ee; border:1px solid rgba(255,255,255,.18); border-radius:6px; padding:.55rem; color-scheme:dark; }
+.cot-controls select { box-sizing:border-box; height:40px; background:#252b2e; color:#e5e9ee; border:1px solid rgba(255,255,255,.18); border-radius:6px; padding:.55rem; color-scheme:dark; }
 .cot-market-switch { display:flex; flex-wrap:wrap; gap:.6rem; }
 .cot-market-switch button,.cot-retry { border:1px solid rgba(255,255,255,.14); border-radius:6px; background:rgba(255,255,255,.04); padding:.5rem .8rem; color:#aeb9c7; cursor:pointer; font-size:.8rem; }
 .cot-market-switch button.is-active { border-color:#24dfcf; color:#24dfcf; background:rgba(36,223,207,.1); }

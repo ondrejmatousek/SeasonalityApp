@@ -22,5 +22,10 @@
         return Math.round((boundedX - plot.left) / plot.span * plot.lastDay);
     }
 
-    return { forWidth, xFor, dayForX };
+    function nearestPoint(points, day) {
+        return points.reduce((nearest, point) =>
+            !nearest || Math.abs(point[0] - day) < Math.abs(nearest[0] - day) ? point : nearest, null);
+    }
+
+    return { forWidth, xFor, dayForX, nearestPoint };
 }));

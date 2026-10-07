@@ -1,5 +1,18 @@
 const assert = require('node:assert/strict');
 const { indexRange, tooltipPosition, exportScale, pngFilename } = require('../wwwroot/js/market-chart-ui.js');
+const geometry = require('../wwwroot/js/seasonality-geometry.js');
+const seasonalPoints = [[0, 100], [182, 105.25], [364, 99.5]];
+assert.equal(geometry.nearestPoint([], 100), null);
+assert.deepEqual(geometry.nearestPoint(seasonalPoints, 0), seasonalPoints[0]);
+assert.deepEqual(geometry.nearestPoint(seasonalPoints, 181), seasonalPoints[1]);
+assert.deepEqual(geometry.nearestPoint(seasonalPoints, 364), seasonalPoints[2]);
+for (const width of [280, 650, 1200]) {
+    for (const point of seasonalPoints) {
+        const day = geometry.dayForX(width, geometry.xFor(width, point[0]));
+        assert.equal(day, point[0], 'Hover and interval selection must share the curve geometry');
+        assert.deepEqual(geometry.nearestPoint(seasonalPoints, day), point);
+    }
+}
 assert.ok(indexRange.min < 0 && indexRange.max > 100, 'Index extrema need visual padding, not data smoothing');
 for (const viewport of [[1280, 720], [390, 844], [320, 568]]) {
     const [vw, vh] = viewport;
@@ -15,4 +28,4 @@ assert.equal(exportScale(1200, 1800), 2);
 const scale = exportScale(1440, 12000);
 assert.ok(1440 * 12000 * scale * scale <= 12000001 && 12000 * scale <= 8192, 'PNG must respect memory/dimension limits');
 assert.equal(pngFilename('XAU/USD', 'COT-GOLD', '2026-10-07'), 'XAU-USD-COT-GOLD-2026-10-07.png');
-console.log('Chart UI checks passed: index headroom, tooltip edge/cursor placement, PNG limits and safe filenames.');
+console.log('Chart UI checks passed: seasonality hover/curve alignment, index headroom, tooltip edge/cursor placement, PNG limits and safe filenames.');
