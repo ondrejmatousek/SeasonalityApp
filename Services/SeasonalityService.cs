@@ -23,6 +23,27 @@ public sealed class SeasonalityService
                 new("AUDUSD", "AUD/USD", "AUDUSD=X", "audusd"),
                 new("NZDUSD", "NZD/USD", "NZDUSD=X", "nzdusd"),
                 new("USDCAD", "USD/CAD", "CAD=X", "usdcad"),
+                new("EURGBP", "EUR/GBP", "EURGBP=X", "eurgbp"),
+                new("EURJPY", "EUR/JPY", "EURJPY=X", "eurjpy"),
+                new("EURCHF", "EUR/CHF", "EURCHF=X", "eurchf"),
+                new("EURAUD", "EUR/AUD", "EURAUD=X", "euraud"),
+                new("EURCAD", "EUR/CAD", "EURCAD=X", "eurcad"),
+                new("EURNZD", "EUR/NZD", "EURNZD=X", "eurnzd"),
+                new("GBPJPY", "GBP/JPY", "GBPJPY=X", "gbpjpy"),
+                new("GBPCHF", "GBP/CHF", "GBPCHF=X", "gbpchf"),
+                new("GBPAUD", "GBP/AUD", "GBPAUD=X", "gbpaud"),
+                new("GBPCAD", "GBP/CAD", "GBPCAD=X", "gbpcad"),
+                new("GBPNZD", "GBP/NZD", "GBPNZD=X", "gbpnzd"),
+                new("AUDJPY", "AUD/JPY", "AUDJPY=X", "audjpy"),
+                new("AUDNZD", "AUD/NZD", "AUDNZD=X", "audnzd"),
+                new("AUDCAD", "AUD/CAD", "AUDCAD=X", "audcad"),
+                new("AUDCHF", "AUD/CHF", "AUDCHF=X", "audchf"),
+                new("NZDJPY", "NZD/JPY", "NZDJPY=X", "nzdjpy"),
+                new("NZDCAD", "NZD/CAD", "NZDCAD=X", "nzdcad"),
+                new("NZDCHF", "NZD/CHF", "NZDCHF=X", "nzdchf"),
+                new("CADJPY", "CAD/JPY", "CADJPY=X", "cadjpy"),
+                new("CADCHF", "CAD/CHF", "CADCHF=X", "cadchf"),
+                new("CHFJPY", "CHF/JPY", "CHFJPY=X", "chfjpy"),
                 new("DXY", "US Dollar Index / DXY", "DX-Y.NYB", "dx.f"),
                 new("XAUUSD", "Gold / XAU/USD", "GC=F", "xauusd"),
                 new("SILVER", "Silver", "SI=F", "si.f"),
@@ -525,9 +546,9 @@ public sealed class SeasonalityService
             throw new InvalidOperationException($"Duplicate seasonality asset key: {duplicateKey.Key}");
         }
 
-        if (assets.Length != 501)
+        if (assets.Length != 522)
         {
-            throw new InvalidOperationException($"Expected 501 seasonality assets, got {assets.Length}.");
+            throw new InvalidOperationException($"Expected 522 seasonality assets, got {assets.Length}.");
         }
 
         return assets;
