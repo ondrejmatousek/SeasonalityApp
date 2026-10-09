@@ -60,7 +60,7 @@
 .seasonality-detail-grid { gap:16px; }
 .seasonality-monthly-toolbar { padding:10px 14px; background:transparent; }
 .seasonality-page [hidden] { display:none !important; }
-.cot-analysis { display:grid; gap:12px; min-width:0; width:100%; max-width:1200px; margin:0 auto; }
+.cot-analysis { display:grid; gap:12px; min-width:0; width:100%; max-width:none; margin:0; }
 .cot-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding-bottom:4px; }
 .cot-toolbar h2 { margin:.3rem 0; font-size:1.6rem; color:#e5e9ee; }
 .cot-toolbar p { margin:8px 0 0; color:#8794a4; font-size:.7rem; }
