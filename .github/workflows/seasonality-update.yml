@@ -75,6 +75,7 @@ jobs:
           compression-level: 9
   deploy-static:
     needs: export-static
+    if: ${{ !cancelled() && needs['export-static'].result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
