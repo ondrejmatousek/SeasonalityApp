@@ -51,13 +51,35 @@ function exportChecks(directory) {
     assert.ok(Number.isFinite(Date.parse(manifest.exportedAt)));
     const seen = new Set();
     function checkHash(url) {
-        assert.match(url, /^\/data\/(prices|cot)\/[A-Za-z0-9_-]+\.[a-f0-9]{20}\.json$/);
+        assert.match(url, /^\/data\/(prices|cot|screener)\/[A-Za-z0-9_-]+\.[a-f0-9]{20}\.json$/);
         const bytes = fs.readFileSync(path.join(root, url.slice(1)));
         assert.ok(url.includes('.' + crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 20) + '.json'));
         seen.add(url);
         return JSON.parse(bytes);
     }
     let totalPrices = 0, supported = 0;
+    if (manifest.screener) {
+        const screener=checkHash(manifest.screener.path);
+        assert.equal(screener.schemaVersion,1);
+        assert.equal(screener.assets.length,manifest.assets.length);
+        assert.equal(screener.asOf,manifest.screener.asOf);
+        assert.equal(screener.exportedAt,manifest.exportedAt);
+        const {summarize}=require('../wwwroot/js/screener-metrics.js');
+        for (let i=0;i<screener.assets.length;i++) {
+            const asset=screener.assets[i],catalog=manifest.assets[i];
+            assert.equal(asset.key,catalog.key);
+            const prices=read(catalog.prices.path).prices;
+            for(const days of [14,30,60])for(const years of ['10','20','all'])
+                assert.deepEqual(asset.windows[`${days}:${years}`],summarize(prices,screener.asOf,days,years));
+            for(const cot of asset.cot) {
+                const market=catalog.cot.markets.find(m=>m.key===cot.key);
+                assert.ok(market);
+                const latest=read(manifest.contracts[market.contractCode].files['52']).reports.filter(r=>r.date<=screener.asOf).at(-1);
+                assert.equal(cot.index,latest?.commercial.index ?? null);
+                assert.equal(cot.change,latest?.commercial.change ?? null);
+            }
+        }
+    }
     for (const asset of manifest.assets) {
         const payload = checkHash(asset.prices.path);
         assert.equal(payload.assetKey, asset.key);

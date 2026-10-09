@@ -34,6 +34,7 @@
     let election = null;
     let pollTimer = null;
     let interval = null;
+    let screenerYears = null;
     let dragStart = null;
     let dragPointerId = null;
     let hoverDay = null;
@@ -278,8 +279,13 @@
         const visibleYears = years.value === 'all' ? availableYears : availableYears.slice(0, Number(years.value));
         selected.clear();
         visibleYears.forEach(year => selected.add(year));
+        if (screenerYears && rows().length) {
+            selected.clear();
+            screenerYears.forEach(year => { if (availableYears.includes(year)) selected.add(year); });
+            screenerYears = null;
+        }
         list.innerHTML = visibleYears.map(year =>
-            `<label><input type="checkbox" value="${year}" checked> ${year}</label>`).join('');
+            `<label><input type="checkbox" value="${year}" ${selected.has(year) ? 'checked' : ''}> ${year}</label>`).join('');
         list.querySelectorAll('input').forEach(input => input.onchange = () => {
             input.checked ? selected.add(Number(input.value)) : selected.delete(Number(input.value));
             draw();
@@ -838,7 +844,33 @@
         endDateInput.value = '';
         draw();
     };
-    root.addEventListener('seasonality-visible', refreshActiveViews);
+    root.addEventListener('screener-open', event => {
+        const { key, asOf, days, sampleYears } = event.detail;
+        if (!assets.some(item => item.key === key) || ![14,30,60].includes(days) || !/^\d{4}-\d{2}-\d{2}$/.test(asOf)) return;
+        trend = null; cycle = null; election = null;
+        years.value = 'all';
+        screenerYears = null;
+        const end = new Date(asOf + 'T00:00:00Z'); end.setUTCDate(end.getUTCDate() + days);
+        startDateInput.value = asOf; endDateInput.value = end.toISOString().slice(0,10);
+        interval = inputInterval();
+        // The curve selects a within-year range. A year-crossing screener window
+        // must not silently become an inverted January–December interval.
+        if (end.getUTCFullYear() !== Number(asOf.slice(0,4))) {
+            interval = null; startDateInput.value = ''; endDateInput.value = '';
+        }
+        document.querySelector('[data-seasonality-tab="curve"]').click();
+        document.querySelector('#market-tab-seasonality').click();
+        assetSearch.value = key; applyAssetSearch();
+        screenerYears = Array.isArray(sampleYears) ? sampleYears : null;
+        // A cached/current instrument may not trigger a data load; apply the
+        // exact historical sample explicitly in that case.
+        if (screenerYears && rows().length) rebuild();
+        if (!interval) document.querySelector('#seasonality-sync-status').textContent = 'Screener období překračuje konec roku. Zobrazen je celý rok; statistiky přes přelom roku jsou ve Screeneru.';
+    });
+    root.addEventListener('seasonality-visible', () => {
+        draw();
+        if (!document.querySelector('#seasonality-monthly-view').hidden) drawMonthly();
+    });
     new ResizeObserver(() => {
         if (document.querySelector('#market-seasonality-view').hidden) return;
         draw();

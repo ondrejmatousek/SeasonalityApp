@@ -20,6 +20,7 @@ Použij stávající SQL konfiguraci a **nový** podadresář `artifacts/` (exis
 ```powershell
 dotnet build SeasonalityApp.slnx -c Release
 dotnet run --project SeasonalityApp.csproj -c Release --no-build -- --export-static --output artifacts/static-site
+node Tools/build-screener.cjs artifacts/static-site
 node Tools/static-site-checks.cjs artifacts/static-site
 node Tools/serve-static.cjs artifacts/static-site 54129
 ```
@@ -60,6 +61,16 @@ Kontrola geometrie, umístění tooltipu a limitů PNG:
 ```powershell
 node Tools/chart-ui-checks.cjs
 ```
+
+## Screener
+
+Nová záložka porovnává historická období začínající dnešním datem (Europe/Prague) pro 14, 30 a 60 kalendářních dní. Souhrn se předpočítává při exportu (`Tools/build-screener.cjs`); návštěvník stahuje pouze jeden kompaktní soubor, nikoli cenovou historii všech instrumentů. Podporuje historii 10 / 20 / všech let, řazení, hledání, směr mediánu a minimum vzorku. Zobrazuje průměr, medián, podíl kladných roků a medián maximálního poklesu od vstupní ceny.
+
+Výpočty používají jen dokončené historické intervaly, vynechávají aktuální rok, neúplné cenové okraje a vnitřní mezery delší než 7 dní. COT je pouze současný kontext (komerční index 52 reportů a týdenní změna), ne historický obchodní signál. U FX ukazuje oba futures kontrakty zvlášť, bez syntetického párového skóre. Starší ceny/reporty a vzorek pod 10 let jsou označené. Vypočtené statistiky nezahrnují náklady obchodování ani korekci na hledání mnoha patternů.
+
+Tlačítko Otevřít přepne na Seasonality, vybere historické roky vzorku a interval. U intervalu přes konec roku zobrazí celý rok s upozorněním; statistiky přes přelom roku zůstávají ve Screeneru. Souhrn má datum exportu; na další den se přepočítá denním workflow, nikoli při každé návštěvě. Původní MVC režim bez exportu zobrazí informaci, že Screener vyžaduje statickou verzi.
+
+Ověření výpočtů: `node Tools/screener-checks.cjs`. Kontrola statického exportu přepočítává všech devět kombinací pro každý ticker a porovnává COT s původními snapshoty.
 
 ## Spuštění
 

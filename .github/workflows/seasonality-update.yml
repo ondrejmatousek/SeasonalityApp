@@ -61,10 +61,13 @@ jobs:
       - run: dotnet build SeasonalityApp.slnx --configuration Release
       - run: dotnet run --project Tools/CotChecks/CotChecks.csproj --configuration Release
       - run: node Tools/chart-ui-checks.cjs
+      - run: node Tools/screener-checks.cjs
       - name: Export read-only SQL snapshot to static HTML and JSON
         run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --export-static --output artifacts/static-site --Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command=Warning
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+      - name: Build compact screener snapshot
+        run: node Tools/build-screener.cjs artifacts/static-site
       - name: Validate every exported ticker, COT index and immutable file
         run: node Tools/static-site-checks.cjs artifacts/static-site
       - uses: actions/upload-artifact@v4

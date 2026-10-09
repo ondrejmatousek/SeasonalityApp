@@ -66,6 +66,24 @@
 .seasonality-detail-grid { gap:16px; }
 .seasonality-monthly-toolbar { padding:10px 14px; background:transparent; }
 .seasonality-page [hidden] { display:none !important; }
+.market-screener-view { min-width:0; display:grid; gap:16px; }
+.is-screener .seasonality-asset-search { display:none; }
+.screener-intro h2 { font-size:1.25rem; margin:0 0 8px; }
+.screener-intro p,.screener-methodology,#screener-status { color:#9ba8b7; font-size:.8rem; }
+.screener-controls { display:flex; flex-wrap:wrap; gap:12px; }
+.screener-controls label { display:grid; gap:6px; color:#aeb9c7; font-size:.75rem; }
+.screener-controls select,.screener-controls input { background:#252b2e; color:#e5e9ee; padding:8px; border:1px solid #ffffff24; border-radius:6px; min-height:40px; }
+.screener-table-wrap { border:1px solid #ffffff18; border-radius:8px; background:#15191c; }
+.screener-table { width:100%; border-collapse:collapse; font-size:.78rem; }
+.screener-table th,.screener-table td { padding:12px; border-bottom:1px solid #ffffff12; text-align:right; white-space:nowrap; }
+.screener-table th:first-child,.screener-table td:first-child { text-align:left; white-space:normal; min-width:180px; }
+.screener-table th { color:#dce3e9; }
+.screener-table small { display:block; color:#8794a4; font-size:.65rem; }
+.screener-table .screener-positive { color:#24dfcf; }
+.screener-table .screener-negative { color:#ef7075; }
+.screener-table .screener-warning { color:#eac782; }
+.screener-table button,#screener-retry { color:#24dfcf; border:1px solid #24dfcf70; background:#24dfcf12; border-radius:6px; padding:7px 10px; cursor:pointer; }
+.screener-methodology { line-height:1.6; border-top:1px solid #ffffff18; padding-top:12px; }
 .cot-analysis { display:grid; gap:12px; min-width:0; width:100%; max-width:none; margin:0; }
 .cot-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding-bottom:4px; }
 .cot-toolbar h2 { margin:.3rem 0; font-size:1.6rem; color:#e5e9ee; }
@@ -136,6 +154,8 @@
     .seasonality-interval-card .seasonality-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
 @media(max-width:650px) {
+    .seasonality-header { grid-template-columns:minmax(0,1fr); }
+    .market-view-tabs { justify-self:start; max-width:100%; }
     .seasonality-toolbar-history { order:2; flex-basis:100%; margin-left:0; }
     .seasonality-page { padding:16px 12px 28px; }
     .seasonality-header h1 { font-size:1rem; }

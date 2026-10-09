@@ -13,6 +13,7 @@
             <nav class="market-view-tabs" role="tablist" aria-label="Analýza instrumentu">
                 <button id="market-tab-seasonality" type="button" role="tab" aria-selected="true" aria-controls="market-seasonality-view" tabindex="0" class="is-active" data-market-tab="seasonality">Seasonality</button>
                 <button id="market-tab-cot" type="button" role="tab" aria-selected="false" aria-controls="market-cot-view" tabindex="-1" data-market-tab="cot">COT</button>
+                <button id="market-tab-screener" type="button" role="tab" aria-selected="false" aria-controls="market-screener-view" tabindex="-1" data-market-tab="screener">Screener</button>
             </nav>
             <div class="seasonality-asset-search" data-export-omit>
                 <input id="seasonality-asset-search" type="search" value="@Model.Assets.FirstOrDefault()?.Name" autocomplete="off" spellcheck="false" aria-label="Vyhledat asset" aria-controls="seasonality-asset-suggestions" aria-expanded="false">
@@ -113,6 +114,20 @@
                 <details class="cot-history-table" data-export-omit><summary>Historické reporty</summary><div class="seasonality-table-wrap"><table><thead><tr><th>Datum pozic</th><th>Malí net</th><th>Δ týdně</th><th>Komerční net</th><th>Δ týdně</th><th>Velcí net</th><th>Δ týdně</th><th>Open interest</th></tr></thead><tbody id="cot-report-table"></tbody></table></div></details>
             </div>
             <div id="cot-chart-tooltip" class="cot-chart-tooltip" data-export-omit hidden></div>
+        </section>
+        <section id="market-screener-view" class="market-screener-view" role="tabpanel" aria-labelledby="market-tab-screener" hidden>
+            <div class="screener-intro"><h2>Sezonální příležitosti</h2><p>Historický vývoj v období začínajícím datem aktualizace. Vyber instrument a otevři jeho sezonální graf.</p></div>
+            <div class="screener-controls">
+                <label>Období<select id="screener-horizon"><option value="14">Příštích 14 dní</option><option value="30" selected>Příštích 30 dní</option><option value="60">Příštích 60 dní</option></select></label>
+                <label>Historie<select id="screener-lookback"><option value="10" selected>Posledních 10 let</option><option value="20">Posledních 20 let</option><option value="all">Všechna data</option></select></label>
+                <label>Vývoj<select id="screener-direction"><option value="all">Růst i pokles</option><option value="up">Kladný medián</option><option value="down">Záporný medián</option></select></label>
+                <label>Minimum let<select id="screener-minimum"><option value="8" selected>8 let</option><option value="5">5 let</option><option value="3">3 roky</option></select></label>
+                <label>Řazení<select id="screener-sort"><option value="median">Medián: od nejvyššího</option><option value="lowest">Medián: od nejnižšího</option><option value="wins">Podíl kladných let</option><option value="count">Počet let</option></select></label>
+                <label>Hledat<input id="screener-search" type="search" placeholder="Ticker nebo název" /></label>
+            </div>
+            <p id="screener-status" role="status" aria-live="polite"></p><button id="screener-retry" type="button" hidden>Zkusit znovu</button>
+            <div class="seasonality-table-wrap screener-table-wrap"><table class="screener-table"><thead><tr><th>Instrument</th><th>Let</th><th>Průměr</th><th>Medián</th><th>Kladné roky</th><th>Typický max. pokles</th><th>COT komerční · index 52</th><th></th></tr></thead><tbody id="screener-results"></tbody></table></div>
+            <details class="screener-methodology" open><summary>Metodika a omezení</summary><p>Období má 14, 30 nebo 60 kalendářních dní. V každém historickém roce použijeme první dostupnou cenu od začátku a poslední cenu nejpozději v konci období. Neúplná období, mezery delší než 7 dní a letošní rok se vynechávají. Kladné roky = podíl výnosů nad nulou; typický max. pokles = medián největšího poklesu od vstupní ceny v daném období (long pohled).</p><p>COT je současný kontext, nikoli historický filtr ani nákupní signál. Zobrazujeme index komerčních pozic za 52 reportů a změnu čistých pozic. U forexu jde o samostatné futures jednotlivých měn; USD zastupuje DXY. Report je zpožděný, datum znamená datum pozic. Výsledky nezahrnují poplatky, spread ani skluz a nejsou předpovědí. Prohledávání mnoha instrumentů může najít náhodně silné patterny; malý vzorek není důkaz spolehlivosti.</p></details>
         </section>
         <p id="market-export-status" class="market-export-status" role="status" aria-live="polite" data-export-omit></p>
     </div>

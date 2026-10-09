@@ -9,7 +9,7 @@
     const cache = new Map();
     async function read(path) {
         // Only the current export's same-origin, content-addressed files are allowed.
-        if (!/^\/data\/(prices|cot)\/[A-Za-z0-9_-]+\.[a-f0-9]{20}\.json$/.test(path))
+        if (!/^\/data\/(prices|cot|screener)\/[A-Za-z0-9_-]+\.[a-f0-9]{20}\.json$/.test(path))
             throw new Error('Invalid static data path');
         if (!cache.has(path)) {
             const request = (async () => {
@@ -32,6 +32,12 @@
     }
     return {
         exportedAt: manifest.exportedAt,
+        async screener() {
+            if (!manifest.screener) throw new Error('Screener snapshot unavailable');
+            const payload = await read(manifest.screener.path);
+            if (payload.schemaVersion !== 1 || !Array.isArray(payload.assets)) throw new Error('Invalid screener snapshot');
+            return payload;
+        },
         async prices(key) {
             const asset = assetFor(key);
             const payload = await read(asset.prices.path);
