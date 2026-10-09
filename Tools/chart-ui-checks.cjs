@@ -1,6 +1,30 @@
 const assert = require('node:assert/strict');
 const { indexRange, tooltipPosition, exportScale, pngFilename } = require('../wwwroot/js/market-chart-ui.js');
 const geometry = require('../wwwroot/js/seasonality-geometry.js');
+const { createLookup } = require('../wwwroot/js/seasonality-year-trends.js');
+const trendLookup = createLookup();
+const trendRows = [
+    { date: '2024-12-31', close: 90 }, { date: '2025-12-31', close: 110 },
+    { date: '2024-01-01', close: 100 }, { date: '2025-01-01', close: 100 },
+    { date: '2026-01-01', close: 100 }, { date: '2026-10-09', close: 100 }
+];
+for (const year of [2024, 2025, 2026, 2023]) {
+    const values = trendRows.filter(row => new Date(row.date).getFullYear() === year)
+        .sort((a, b) => a.date.localeCompare(b.date));
+    const original = values.length && values.at(-1).close >= values[0].close ? 'bullish' : 'bearish';
+    assert.equal(trendLookup(trendRows, year), original, 'Cached trends must preserve original rules');
+}
+let dateReads = 0;
+const largeHistory = Array.from({length: 20000}, (_, i) => ({
+    get date() { dateReads++; return `${1980 + Math.floor(i / 250)}-01-01`; }, close: i
+}));
+trendLookup(largeHistory, 1980);
+const indexingReads = dateReads;
+for (let i = 0; i < 20000; i++) trendLookup(largeHistory, 1980 + Math.floor(i / 250));
+assert.equal(dateReads, indexingReads, 'Repeated trend lookups must not rescan history');
+assert.ok(indexingReads <= largeHistory.length * 6, 'Indexing must be linear');
+assert.equal(trendLookup([{date:'2025-01-01',close:100},{date:'2025-12-31',close:80}],2025),'bearish',
+    'A newly loaded price array must not reuse stale ticker trends');
 const seasonalPoints = [[0, 100], [182, 105.25], [364, 99.5]];
 assert.equal(geometry.nearestPoint([], 100), null);
 assert.deepEqual(geometry.nearestPoint(seasonalPoints, 0), seasonalPoints[0]);

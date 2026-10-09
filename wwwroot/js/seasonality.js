@@ -219,14 +219,8 @@
     const electionType = year => year % 4 === 0
         ? 'election'
         : year % 4 === 1 ? 'post' : year % 4 === 2 ? 'midterm' : 'pre';
-    const yearTrend = year => {
-        const values = rows()
-            .filter(row => new Date(row.date).getFullYear() === year)
-            .sort((a, b) => a.date.localeCompare(b.date));
-        return values.length && values[values.length - 1].close >= values[0].close
-            ? 'bullish'
-            : 'bearish';
-    };
+    const lookupYearTrend = window.SeasonalityYearTrends.createLookup();
+    const yearTrend = year => lookupYearTrend(rows(), year);
     const filtered = () => rows().filter(row => {
         const year = new Date(row.date).getFullYear();
         return selected.has(year)
