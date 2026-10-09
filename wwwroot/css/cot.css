@@ -15,6 +15,9 @@
 #seasonality-curve-view { min-width:0; grid-template-columns:minmax(0,1fr) 260px; }
 #seasonality-curve-view>.seasonality-filters,#seasonality-curve-view>.seasonality-table-panel { grid-column:1 / -1; }
 .seasonality-table-panel,.seasonality-monthly-table-wrap { min-width:0; }
+.seasonality-table-panel td.positive,.seasonality-table-panel td.negative { background:none; font-variant-numeric:tabular-nums; }
+.seasonality-table-panel td.positive { color:#24dfcf; }
+.seasonality-table-panel td.negative { color:#ef7075; }
 .brand-chart-mark { display:block; width:30px; height:30px; flex-shrink:0; }
 .seasonality-tabs { gap:4px; align-items:center; flex-wrap:wrap; }
 .seasonality-toolbar-history { display:flex; align-items:center; gap:8px; margin-left:16px; color:#aeb9c7; font-size:.8rem; }
