@@ -107,11 +107,15 @@
         updateAssetStatus();
 
         try {
-            const url = new URL(root.dataset.dataUrl, window.location.href);
-            url.searchParams.set('assetKey', assetKey);
-            const response = await fetch(url, { headers: { Accept: 'application/json' } });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const payload = await response.json();
+            let payload;
+            if (window.StaticMarketData) payload = await window.StaticMarketData.prices(assetKey);
+            else {
+                const url = new URL(root.dataset.dataUrl, window.location.href);
+                url.searchParams.set('assetKey', assetKey);
+                const response = await fetch(url, { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                payload = await response.json();
+            }
             const payloadKey = payload.assetKey || assetKey;
             data[payloadKey] = payload.prices || [];
             loadedAssets.add(payloadKey);

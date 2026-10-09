@@ -6,7 +6,7 @@
     var assets = Model.Assets.Select(asset => new { key = asset.Key, name = asset.Name, aliases = TradingJournal.Services.SeasonalityService.SearchAliases(asset.Key) });
     var data = Model.Prices.ToDictionary(pair => pair.Key, pair => pair.Value.Select(item => new { date = item.Date.ToString("yyyy-MM-dd"), close = item.Close }));
 }
-<div class="seasonality-page" data-updating="@Model.IsUpdating.ToString().ToLowerInvariant()" data-data-url="@Url.Action("Data", "Seasonality")" data-cot-url="@Url.Action("CotData", "Seasonality")" data-capture-url="@Url.Content("~/lib/html2canvas/html2canvas.min.js")">
+<div class="seasonality-page" data-updating="@Model.IsUpdating.ToString().ToLowerInvariant()" data-data-url="@(Model.StaticManifestJson is null ? Url.Action("Data", "Seasonality") : "")" data-cot-url="@(Model.StaticManifestJson is null ? Url.Action("CotData", "Seasonality") : "")" data-capture-url="@Url.Content("~/lib/html2canvas/html2canvas.min.js")">
     <div class="seasonality-wrap">
         <header class="seasonality-header">
             <h1 id="market-instrument-title">@Model.Assets.FirstOrDefault()?.Name</h1>
@@ -119,3 +119,7 @@
 </div>
 <script id="seasonality-assets" type="application/json">@Html.Raw(JsonSerializer.Serialize(assets))</script>
 <script id="seasonality-data" type="application/json">@Html.Raw(JsonSerializer.Serialize(data))</script>
+@if (Model.StaticManifestJson is not null)
+{
+    <script id="static-market-manifest" type="application/json">@Html.Raw(Model.StaticManifestJson)</script>
+}

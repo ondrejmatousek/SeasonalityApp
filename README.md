@@ -1,6 +1,51 @@
 # SeasonalityApp
 
-Samostatná MVC aplikace bez přihlašování. Historické ceny čte z Azure SQL a používá převzatou logiku sezonnosti z TradingJournal.
+Seasonality a COT bez přihlašování. Podporuje čistě statický frontend (HTML/CSS/JS + JSON snapshot) i původní MVC web. Azure SQL je u statické varianty pouze zdrojem pro build-time aktualizaci a export, nikoli pro návštěvy webu.
+
+## Statický frontend
+
+Vygenerovaný web nepotřebuje běžící .NET, App Service, API ani SQL. Razor se používá pouze při exportu k vytvoření `index.html`, aby se statická a původní verze vizuálně nerozcházely. Stávající JavaScript, grafy, filtry, hover body a PNG export jsou sdílené.
+
+- `index.html` obsahuje katalog instrumentů a metadata jednoho snapshotu, nikoli celou historii.
+- Ceny jsou kompaktní JSON soubory po tickeru a načítají se až při jeho výběru.
+- COT je exportován jednou pro každý futures kontrakt a lookback 26 / 52 / 156; více tickerů sdílí tentýž soubor i prohlížečovou cache. Odpovídá původnímu výpočtu v `CotService.BuildPoints`.
+- JSON má hash obsahu v názvu a dlouhou immutable cache. HTML/manifest se revalidují; po nasazení nové verze je u už otevřené staré záložky vhodné obnovit stránku, pokud žádá již nahrazený snapshot.
+- Export čte pouze tabulky cen a COT. Neprovádí inicializaci schématu ani zápisy. Neukládá připojovací řetězec, konfiguraci serveru ani binárky do veřejného výstupu.
+- Chybějící historie výchozího instrumentu/COT kontraktu, nevalidní export nebo překročení 240 MiB / 15 000 souborů zablokuje publikaci. Jednotlivé tickery bez cen se označí jako prázdné.
+
+### Lokální export a spuštění
+
+Použij stávající SQL konfiguraci a **nový** podadresář `artifacts/` (existující export se nikdy nepřepisuje):
+
+```powershell
+dotnet build SeasonalityApp.slnx -c Release
+dotnet run --project SeasonalityApp.csproj -c Release --no-build -- --export-static --output artifacts/static-site
+node Tools/static-site-checks.cjs artifacts/static-site
+node Tools/serve-static.cjs artifacts/static-site 54129
+```
+
+Otevři `http://127.0.0.1:54129/`. Poslední příkaz pouze servíruje soubory, nečte SQL a nevyžaduje .NET. Vygenerovaná data jsou ignorovaná Gitem, nikoli commitovaná do historie repozitáře. Pro nasazení se přenáší obsah exportu, ne ASP.NET aplikace.
+
+### Aktualizace a Azure Static Web Apps Free
+
+`.github/workflows/seasonality-update.yml` po pushi na `master`, denně v 05:15 UTC a ručně:
+
+1. Aktualizuje ceny a COT ve SQL.
+2. Až obě aktualizace uspějí, vytvoří statický export a ověří všechny tickery, hashe a COT výpočty.
+3. Nahraje artifact `seasonality-static-site` s jednodenní retencí a publikuje na Azure Static Web Apps, pokud je nastaven deployment token.
+
+Selhání aktualizace/exportu zabrání novému deploymentu; dosud publikovaný web se nepřepíše. Ruční volba `export_only=true` přeskočí aktualizaci zdrojů a publikuje aktuální SQL snapshot. V Actions používáme existující secret `SEASONALITY_CONNECTION_STRING`; do frontendu se nikdy nepřenese. Aktualizační/exportní úlohy stále spotřebovávají SQL prostředky a GitHub Actions kvóty; návštěvy statického webu ne.
+
+Jednorázová konfigurace:
+
+1. V Azure vytvoř **Static Web App**, plán **Free**, deployment source **Other** (nevytvářej druhé automatické GitHub workflow).
+2. V její správě zkopíruj deployment token a ulož jej do GitHub repo secrets jako `AZURE_STATIC_WEB_APPS_API_TOKEN`. Token neposílej do chatu ani necommituj.
+3. Spusť workflow `Update data and publish static seasonality`; lze zvolit `export_only=true`.
+4. Ověř URL nové Static Web App, obě záložky a data. Až poté samostatně rozhodni o vypnutí původního App Service. SQL zatím zůstává pro aktualizace.
+
+Bez tokenu workflow export ověří a uloží artifact, ale **statický web není publikován**; tuto skutečnost uvede v souhrnu běhu. Původní App Service deployment v `master_seasonality.yml` zůstává během přechodu beze změny.
+
+Hosting: [build/deploy konfigurace](https://learn.microsoft.com/en-us/azure/static-web-apps/build-configuration), [cache a routing](https://learn.microsoft.com/en-us/azure/static-web-apps/configuration), [Free limity](https://learn.microsoft.com/en-us/azure/static-web-apps/quotas). Před veřejným publikováním dat na jiném hostingu ověř podmínky jejich poskytovatelů; žádná nová licence na redistribuci tímto exportem nevzniká.
 
 ## Grafy a export PNG
 

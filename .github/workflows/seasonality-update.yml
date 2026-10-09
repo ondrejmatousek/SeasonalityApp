@@ -1,4 +1,4 @@
-name: Update seasonality data
+name: Update data and publish static seasonality
 
 on:
   push:
@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '15 5 * * *'
   workflow_dispatch:
+    inputs:
+      export_only:
+        description: 'Export and publish current SQL snapshot without updating sources'
+        type: boolean
+        default: false
 
 concurrency:
   group: seasonality-data-update
@@ -14,6 +19,7 @@ concurrency:
 
 jobs:
   cot-update:
+    if: inputs.export_only != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +32,7 @@ jobs:
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
   update:
+    if: inputs.export_only != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,3 +43,60 @@ jobs:
       - run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-restore -- --update-once
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+  export-static:
+    # Never publish a partially updated or failed data snapshot.
+    needs: [update, cot-update]
+    if: ${{ !cancelled() && (inputs.export_only == true || (needs.update.result == 'success' && needs['cot-update'].result == 'success')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: dotnet build SeasonalityApp.slnx --configuration Release
+      - run: dotnet run --project Tools/CotChecks/CotChecks.csproj --configuration Release
+      - run: node Tools/chart-ui-checks.cjs
+      - name: Export read-only SQL snapshot to static HTML and JSON
+        run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --export-static --output artifacts/static-site --Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command=Warning
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+      - name: Validate every exported ticker, COT index and immutable file
+        run: node Tools/static-site-checks.cjs artifacts/static-site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seasonality-static-site
+          path: artifacts/static-site/
+          retention-days: 1
+          compression-level: 9
+  deploy-static:
+    needs: export-static
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      HAS_STATIC_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: seasonality-static-site
+          path: artifacts/static-site
+      - name: Deploy static site (no API, App Service or runtime SQL)
+        if: env.HAS_STATIC_TOKEN == 'true'
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: artifacts/static-site
+          api_location: ''
+          output_location: ''
+          skip_app_build: true
+          skip_api_build: true
+          production_branch: master
+      - name: Explain pending hosting setup
+        if: env.HAS_STATIC_TOKEN != 'true'
+        run: echo 'Static site export is verified and available as an artifact. Azure publication is pending AZURE_STATIC_WEB_APPS_API_TOKEN; the existing App Service remains unchanged.' >> "$GITHUB_STEP_SUMMARY"

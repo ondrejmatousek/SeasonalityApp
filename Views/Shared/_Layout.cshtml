@@ -14,21 +14,22 @@
     <header>
         <nav class="navbar navbar-expand-lg app-navbar">
             <div class="container-fluid">
-                <a class="navbar-brand app-brand" href="/Seasonality">
+                <a class="navbar-brand app-brand" href="/">
                     <span class="brand-mark">SA</span>
                     <span>SeasonalityApp</span>
                 </a>
-                <div class="navbar-nav"><a class="nav-link active" href="/Seasonality">Seasonality &amp; COT</a></div>
+                <div class="navbar-nav"><a class="nav-link active" href="/">Seasonality &amp; COT</a></div>
             </div>
         </nav>
     </header>
     <div class="app-workspace">
         <aside class="app-sidebar">
             <div class="sidebar-title">Analýza trhů</div>
-            <a class="sidebar-link active" href="/Seasonality">Seasonality &amp; COT</a>
+            <a class="sidebar-link active" href="/">Seasonality &amp; COT</a>
         </aside>
         <main role="main" class="app-workspace-main">@RenderBody()</main>
     </div>
+    <script src="~/js/static-market-data.js" asp-append-version="true"></script>
     <script src="~/js/market-chart-ui.js" asp-append-version="true"></script>
     <script src="~/js/seasonality-geometry.js" asp-append-version="true"></script>
     <script src="~/js/cot.js" asp-append-version="true"></script>

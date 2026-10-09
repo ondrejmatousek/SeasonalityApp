@@ -9,9 +9,19 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 var connection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
+var exporting = args.Contains("--export-static", StringComparer.OrdinalIgnoreCase);
+if (exporting)
+{
+    // A paused serverless SQL database can need more than 30 seconds to resume.
+    var exportConnection = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connection) { ConnectTimeout = 120 };
+    connection = exportConnection.ConnectionString;
+}
 
 builder.Services.AddDbContext<SeasonalityDbContext>(options => options.UseSqlServer(connection, sql =>
-    sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), null)));
+{
+    sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), null);
+    if (exporting) sql.CommandTimeout(180);
+}));
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("CFTC", client =>
 {
@@ -20,6 +30,7 @@ builder.Services.AddHttpClient("CFTC", client =>
 });
 builder.Services.AddScoped<SeasonalityService>();
 builder.Services.AddScoped<CotService>();
+builder.Services.AddScoped<StaticSiteExporter>();
 builder.Services.AddSingleton<SeasonalityUpdateState>();
 builder.Services.AddControllersWithViews().ConfigureApplicationPartManager(parts =>
 {
@@ -31,6 +42,15 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SeasonalityDbContext>();
+    if (args.Contains("--export-static", StringComparer.OrdinalIgnoreCase))
+    {
+        var outputIndex = Array.IndexOf(args, "--output");
+        if (outputIndex < 0 || outputIndex + 1 >= args.Length)
+            throw new ArgumentException("--export-static requires --output <new-directory>.");
+        // Export is deliberately read-only: no schema initialization or updates.
+        await scope.ServiceProvider.GetRequiredService<StaticSiteExporter>().ExportAsync(args[outputIndex + 1]);
+        return;
+    }
     await db.Database.EnsureCreatedAsync();
     await db.EnsureCotSchemaAsync();
     if (args.Contains("--update-cot-once", StringComparer.OrdinalIgnoreCase))

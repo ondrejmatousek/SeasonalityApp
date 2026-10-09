@@ -86,12 +86,16 @@
         try {
             if (!force && cache.has(key)) payload = cache.get(key);
             else {
-                const url = new URL(root.dataset.cotUrl, window.location.href);
-                url.searchParams.set('assetKey', asset.key);
-                url.searchParams.set('lookbackWeeks', lookback.value);
-                const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: currentRequest.signal });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
+                let data;
+                if (window.StaticMarketData) data = await window.StaticMarketData.cot(asset.key, Number(lookback.value), currentRequest.signal);
+                else {
+                    const url = new URL(root.dataset.cotUrl, window.location.href);
+                    url.searchParams.set('assetKey', asset.key);
+                    url.searchParams.set('lookbackWeeks', lookback.value);
+                    const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: currentRequest.signal });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    data = await response.json();
+                }
                 if (currentRequest !== request) return;
                 payload = data;
                 cache.set(key, data);
