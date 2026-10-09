@@ -715,6 +715,7 @@
         root.querySelectorAll('[data-seasonality-tab]').forEach(item => item.classList.toggle('is-active', item === button));
         document.querySelector('#seasonality-curve-view').hidden = monthly;
         document.querySelector('#seasonality-monthly-view').hidden = !monthly;
+        root.querySelector('.seasonality-toolbar-history').hidden = monthly;
         if (monthly) drawMonthly();
         else draw();
     });

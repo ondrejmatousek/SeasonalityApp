@@ -15,7 +15,10 @@
 #seasonality-curve-view { min-width:0; grid-template-columns:minmax(0,1fr) 260px; }
 #seasonality-curve-view>.seasonality-filters,#seasonality-curve-view>.seasonality-table-panel { grid-column:1 / -1; }
 .seasonality-table-panel,.seasonality-monthly-table-wrap { min-width:0; }
-.seasonality-tabs { gap:4px; align-items:center; }
+.brand-chart-mark { display:block; width:30px; height:30px; flex-shrink:0; }
+.seasonality-tabs { gap:4px; align-items:center; flex-wrap:wrap; }
+.seasonality-toolbar-history { display:flex; align-items:center; gap:8px; margin-left:16px; color:#aeb9c7; font-size:.8rem; }
+.seasonality-toolbar-history select { border:1px solid #ffffff24; border-radius:6px; background:#252b2e; color:#e5e9ee; padding:.45rem .65rem; font-size:.8rem; color-scheme:dark; }
 .seasonality-tabs button { padding:.4rem .7rem; font-size:.8rem; }
 .seasonality-tabs .market-export-button { margin-left:auto; }
 .seasonality-page button.market-export-button { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; box-sizing:border-box; width:40px; height:40px; padding:8px; border:1px solid #ffffff24; border-radius:6px; background:#172025; color:#24dfcf; cursor:pointer; }
@@ -130,6 +133,7 @@
     .seasonality-interval-card .seasonality-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
 @media(max-width:650px) {
+    .seasonality-toolbar-history { order:2; flex-basis:100%; margin-left:0; }
     .seasonality-page { padding:16px 12px 28px; }
     .seasonality-header h1 { font-size:1rem; }
     .market-view-tabs button { padding:.5rem .7rem; font-size:.8rem; }

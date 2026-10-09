@@ -25,6 +25,7 @@
         <nav class="seasonality-tabs" aria-label="Seasonality views">
             <button type="button" class="is-active" data-seasonality-tab="curve">Sezónní křivka</button>
             <button type="button" data-seasonality-tab="monthly">Měsíční přehled</button>
+            <label class="seasonality-toolbar-history">Historie <select id="seasonality-years"><option value="5">5 let</option><option value="10">10 let</option><option value="15">15 let</option><option value="20">20 let</option><option value="25">25 let</option><option value="30">30 let</option><option value="all" selected>Všechna dostupná data</option></select></label>
             <button type="button" id="seasonality-export" class="market-export-button" data-export-view="seasonality" title="Stáhnout Seasonality jako PNG" aria-label="Stáhnout Seasonality jako PNG" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h4l2-3h4l2 3h4v13H4z"/><circle cx="12" cy="13" r="4"/></svg></button>
         </nav>
         <section id="seasonality-monthly-view" class="seasonality-monthly-view" hidden>
@@ -38,7 +39,6 @@
         </section>
         <div id="seasonality-curve-view">
         <section class="seasonality-filters">
-            <div class="seasonality-filter-row"><label>Historie <select id="seasonality-years"><option value="5">5 let</option><option value="10">10 let</option><option value="15">15 let</option><option value="20">20 let</option><option value="25">25 let</option><option value="30">30 let</option><option value="all" selected>Všechna dostupná data</option></select></label></div>
             <details class="seasonality-filter-details" open>
             <summary>Roky a pokročilé filtry</summary>
             <div class="seasonality-filter-options">
