@@ -326,6 +326,9 @@
     };
 
     function draw() {
+        root.dispatchEvent(new CustomEvent('seasonality-interval-change', { detail: {
+            asset: activeAsset, prices: rows(), interval, asOf: snapshotDay
+        } }));
         clearHover();
         hoverPlot = null;
         const byYear = new Map();

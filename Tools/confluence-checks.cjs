@@ -1,0 +1,56 @@
+const assert=require('node:assert/strict');
+const c=require('../wwwroot/js/seasonality-confluence.js');
+const approximately=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-7,`${actual} != ${expected}`);
+const interval=c.wilson(14,20);
+assert.ok(Math.abs(interval[0]-48.1027)<.0001);assert.ok(Math.abs(interval[1]-85.4523)<.0001);
+assert.equal(c.wilson(0,0),null);
+assert.ok(c.wilson(0,5)[0]>=0&&c.wilson(5,5)[1]<=100);
+assert.throws(()=>c.wilson(6,5));
+const prices=[],reports=[];
+for(let year=2000;year<=2026;year++){
+    for(let offset=0;offset<=14;offset++)prices.push({date:new Date(Date.UTC(year,0,10+offset)).toISOString().slice(0,10),close:100+(year%2===0?1:-1)*offset});
+    reports.push({date:`${year}-01-03`,commercial:{index:year%2===0?90:10}});
+    reports.push({date:`${year}-01-09`,commercial:{index:100}}); // Only available after the Jan 10 entry.
+}
+reports.push({date:'2026-09-29',commercial:{index:90}});
+reports.push({date:'2026-10-06',commercial:{index:10}}); // Not yet available under +7 day estimate.
+const settings={startDay:9,endDay:23,asOf:'2026-10-10'};
+const r=c.analyze(reports,prices,settings);
+assert.equal(r.reference.date,'2026-09-29');assert.equal(r.reference.index,90);
+assert.deepEqual(r.range,[80,100]);assert.equal(r.seasonal.count,26);
+assert.equal(r.baseline.count,26);assert.equal(r.conditional.count,13);
+assert.equal(r.conditional.rate,100);assert.equal(r.baseline.rate,50);assert.equal(r.delta,50);
+assert.ok(r.cases.every(s=>s.reportDate.endsWith('01-03')),'No report published inside the price window');
+assert.ok(r.cases.every(s=>s.year<2026),'Current year excluded');
+assert.equal(r.older.count+r.recent.count,13);assert.equal(r.recentYear,2021);
+const down=c.analyze(reports,prices,{...settings,direction:'down'});
+assert.equal(down.conditional.rate,0);approximately(down.conditional.medianAdverse,14);
+assert.equal(r.conditional.medianAdverse,0);
+assert.equal(c.analyze(reports,prices,{...settings,historyYears:10}).baseline.count,10);
+const missing=c.analyze(reports.filter(s=>s.date.slice(0,4)!=='2000'),prices,settings);
+assert.equal(missing.missing,1);assert.equal(missing.baseline.count,25);
+const stale=c.analyze(reports.filter(s=>!s.date.startsWith('2001-01')),prices,settings);
+assert.equal(stale.stale,1);
+const invalid=c.analyze(reports.map(s=>s.date==='2002-01-03'?{...s,commercial:{index:null}}:s),prices,settings);
+assert.equal(invalid.missingIndex,1);assert.equal(invalid.baseline.count,25);
+const noReference=c.analyze(reports.filter(s=>s.date<'2026-09-01'),prices,settings);
+assert.equal(noReference.referenceUsable,false);assert.equal(noReference.range,null);assert.equal(noReference.conditional.count,0);
+const noIndex=c.analyze(reports,prices,{...settings,group:'nonCommercial'});
+assert.equal(noIndex.referenceUsable,false);
+const gap=c.analyze(reports,prices.filter(s=>s.date<'2003-01-12'||s.date>'2003-01-20'),settings);
+assert.equal(gap.seasonal.count,25,'Incomplete internal prices excluded');
+const zero=c.summarize([{returnPct:0,maxDrop:0,maxRise:0}],'down');
+assert.equal(zero.rate,0);assert.equal(zero.flat,1);
+assert.equal(c.analyze([],prices,settings).baseline.count,0);
+assert.equal(c.analyze(reports,[],settings).conditional.rate,null);
+const changedFuture=c.analyze(reports.map(s=>s.date==='2026-10-06'?{...s,commercial:{index:100}}:s),prices,settings);
+assert.deepEqual(changedFuture.conditional,r.conditional,'Unavailable reference must not affect results');
+const outOfRange=c.analyze(reports.map(s=>s.date==='2002-01-03'?{...s,commercial:{index:101}}:s),prices,settings);
+assert.equal(outOfRange.missingIndex,1);
+const bounds=c.analyze(reports.map(s=>s.date==='2026-09-29'?{...s,commercial:{index:0}}:s),prices,settings);
+assert.deepEqual(bounds.range,[0,10]);
+const staleReference=c.analyze(reports,prices,{...settings,asOf:'2026-11-10'});
+assert.equal(staleReference.referenceUsable,false,'A stale latest report must not be called current');
+assert.throws(()=>c.analyze(reports,prices,{...settings,tolerance:-1}));
+assert.throws(()=>c.analyze(reports,prices,{...settings,startDay:30,endDay:10}));
+console.log('Confluence checks passed: Wilson, same-calendar baseline, estimated availability, no future/current-year leakage, freshness, missing indices, zero returns, directional adverse close moves and recent-history controls.');

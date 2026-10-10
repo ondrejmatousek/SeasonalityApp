@@ -27,6 +27,18 @@ Slovní hodnocení je transparentní heuristika, nikoli statistický test, před
 
 `node Tools/reliability-checks.cjs` ověřuje výpočty a je součástí CI.
 
+### Souběh sezonality a podobného COT
+
+Po výběru intervalu je v Seasonality karta „Pomáhá COT v tomto období?“. Uživatel zvolí růst/pokles závěrečné ceny, skupinu a toleranci k poslednímu odhadovaně dostupnému COT indexu. Rozšířené volby obsahují report (u FX jen jeden měnový kontrakt), lookback 26/52/156 a celou nebo posledních 10/20 let historie. Výběr roků a pokročilé filtry grafu se nepřenášejí, aby zejména zpětný Bullish/Bearish výběr nezkresloval interpretaci.
+
+Porovnává stejné kalendářní období v jednotlivých dokončených rocích: baseline zahrnuje všechny cenově validní roky s použitelným tehdejším COT, podmíněná skupina jen ty s podobným indexem. Baseline a souběh tedy používají stejnou dostupnou historii. Celá cenová sezonalita je uvedená zvlášť. Před vstupním denním close se volí poslední report odhadovaně dostupný (datum pozic + 7 kalendářních dní), nejvýše 21 dní starý podle data pozic; chybějící index se nenahrazuje starším. Stejný odhad dostupnosti a stáří platí pro dnešní referenci. Aktuální rok, neúplné cenové okraje a mezery přes 7 dní se vyřazují. Skutečná historická publikace není dostupná: jde o průzkumnou analýzu, ne přesný point-in-time backtest.
+
+Výstup obsahuje počet/četnost závěrečného pohybu ve zvoleném směru, orientační 95% Wilsonovo pásmo, rozdíl četností v procentních bodech, medián/kvartily výnosů a medián/maximum nepříznivého pohybu denních close vůči vstupu. Nulový výnos není úspěchem pro žádný směr. Při méně než 8 soubězích je hlavní procento i rozdíl potlačený; tabulka zachovává přesné popisné počty a četnost. Prahy 8 a 20 jsou transparentní upozornění na velikost vzorku, nikoli test spolehlivosti. Wilsonovo pásmo předpokládá nezávislé případy se stálou pravděpodobností, což tržní data nemusí splňovat; nezahrnuje změny režimu, hledání mnoha nastavení ani publikační chyby. Souběh je podmnožinou baseline, takže rozdíl není důkaz statistické významnosti/přínosu COT.
+
+Rozbalovací časová kontrola porovná starší část s posledními 5 dokončenými kalendářními roky při stejném dnešním nastavení. Není to nedotčený holdout test. Všechny jednotlivé roky lze dohledat s datem vstupu/výstupu, použitým COT a indexem. Žádný údaj není pravděpodobností zisku konkrétního obchodu ani doporučením vstupu/stop-lossu. Intradenní pohyby, obchodní náklady a samostatný dividendový model chybí; nezávislé ověření zůstává dalším krokem.
+
+Výpočet běží lokálně pouze pro vybraný instrument nad sdílenou lazy cache JSON. Prázdný interval nenačítá COT; resize/hover nevynucují opakovaný výpočet. Testy: `node Tools/confluence-checks.cjs`.
+
 ### Lokální export a spuštění
 
 Použij stávající SQL konfiguraci a **nový** podadresář `artifacts/` (existující export se nikdy nepřepisuje):

@@ -66,6 +66,33 @@
                 <section class="seasonality-stats" id="seasonality-stats" aria-label="Statistiky seasonality"></section>
             </aside>
         </section>
+        <section id="seasonality-confluence" class="confluence-card" aria-label="Souběh sezonality a COT">
+            <div class="confluence-heading"><h2>Pomáhá COT v tomto období?</h2><span class="confluence-badge">Historické srovnání</span></div>
+            <p id="confluence-placeholder">Vyber období v grafu. Porovnáme, jak často cena rostla nebo klesala ve stejných kalendářních dnech, s podobným COT i bez této podmínky.</p>
+            <div id="confluence-body" hidden>
+                <div class="confluence-controls">
+                    <label>Co sledujeme?<select id="confluence-direction"><option value="up">Cena na konci výše · růst</option><option value="down">Cena na konci níže · pokles</option></select></label>
+                    <label>Skupina COT<select id="confluence-group"><option value="commercial">Komerční obchodníci</option><option value="nonCommercial">Velcí spekulanti</option><option value="nonReportable">Malí obchodníci</option></select></label>
+                    <label>Podobnost poslednímu indexu<select id="confluence-tolerance"><option value="5">± 5 bodů</option><option value="10" selected>± 10 bodů</option><option value="15">± 15 bodů</option></select></label>
+                </div>
+                <details class="confluence-settings"><summary>Trh COT, lookback a délka historie</summary><div class="confluence-controls">
+                    <label>Report / futures proxy<select id="confluence-market"></select></label>
+                    <label>COT index lookback<select id="confluence-lookback"><option value="26">26 reportů</option><option value="52" selected>52 reportů</option><option value="156">156 reportů</option></select></label>
+                    <label>Historie srovnání<select id="confluence-history"><option value="all">Všechna dostupná data</option><option value="10">Posledních 10 let</option><option value="20">Posledních 20 let</option></select></label>
+                </div></details>
+                <p id="confluence-status" role="status" aria-live="polite"></p>
+                <div id="confluence-results"></div>
+                <details class="confluence-method"><summary>Jak procento číst a co nezaručuje?</summary>
+                    <p>Procento je historická četnost: počet období se závěrečnou cenou v požadovaném směru dělený počtem všech zahrnutých období. Nulový výnos není úspěchem ani pro růst, ani pro pokles. Nejde o pravděpodobnost zisku obchodu se stop-lossem, náklady nebo pákou. Při méně než 8 soubězích nezobrazujeme velký procentuální odhad; přesný počet a popisná četnost zůstávají v tabulce.</p>
+                    <p>Pro férovější porovnání hlavní sezonalita i souběh používají stejnou historii s dostupným COT indexem. Souběh je její podmnožina; rozdíl četností není test statistické významnosti ani důkaz přínosu COT. Sezonalitu za celou cenovou historii ukazujeme zvlášť. Každý rok přispívá nejvýše jedním dokončeným obdobím; aktuální rok je vynechaný. Ručně vybrané roky, Bullish/Bearish i další filtry grafu se do tohoto srovnání nepřenášejí.</p>
+                    <p>Vstup je první denní close uvnitř vybraného období, výstup poslední close nejpozději v jeho konci. Okraje a mezery přes 7 dní období vyřadí. Historický COT je nejnovější report odhadovaně dostupný při vstupu — nikdy report z pozdější části období. Dostupnost odhadujeme jako datum pozic + 7 kalendářních dní, stáří pozic při vstupu může být nejvýše 21 dní. Chybějící index nenahrazujeme starším. Stejná pravidla platí pro dnešní referenci. Skutečná historická data zveřejnění nemáme; mimořádná zpoždění proto mohou výsledek zkreslit. Nejde o přesný point-in-time backtest.</p>
+                    <p>95% Wilsonovo pásmo vyjadřuje orientační výběrovou nejistotu četnosti za předpokladu nezávislých případů se stejnou pravděpodobností. Tržní roky tyto předpoklady nemusí splňovat; pásmo nezahrnuje změny režimu, hledání mnoha nastavení ani chybné odhady dostupnosti. Není to pásmo budoucích výnosů ani záruka budoucí pravděpodobnosti.</p>
+                    <p>Pohyb proti směru měří největší nepříznivou změnu denního close vůči vstupu v každém období; nejde o intradenní maximum ani návrh stop-lossu. Výnosy jsou změny ceny instrumentu, ne P&amp;L shortu nebo futures proxy. Náklady, skluz a dividendy podle zdroje nejsou samostatně modelované. U FX se posuzuje právě jeden měnový futures report, ne současný stav obou měn.</p>
+                    <p>Porovnání starších roků s posledními 5 dokončenými kalendářními roky je jen kontrola změny v čase. Obě části používají stejné dnešní nastavení a byly prohlédnuté; nejde o nezávislý holdout test. Výsledek zatím nemá ověření na nedotčených datech.</p>
+                    <p><a href="https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm" target="_blank" rel="noopener noreferrer">Metoda Wilsonova intervalu · NIST ↗</a> · <a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/ReleaseSchedule/index.htm" target="_blank" rel="noopener noreferrer">Kalendář zveřejnění CFTC ↗</a></p>
+                </details>
+            </div>
+        </section>
         <section class="seasonality-detail-grid">
             <div class="seasonality-detail-panel"><div class="seasonality-detail-title">Výnos podle roku</div><canvas id="seasonality-returns-canvas"></canvas></div>
             <div class="seasonality-detail-panel"><div class="seasonality-detail-title">Kumulativní průběh průměrné křivky</div><canvas id="seasonality-cumulative-canvas"></canvas></div>

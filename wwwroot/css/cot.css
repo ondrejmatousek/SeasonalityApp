@@ -113,6 +113,31 @@
 .reliability-table th:first-child,.reliability-table td:first-child { text-align:left; }
 .reliability-table caption { caption-side:top; color:#aeb9c7; font-size:.75rem; }
 .reliability-method { margin-top:14px; font-size:.78rem; color:#9ba8b7; }
+.confluence-card { grid-column:1 / -1; min-width:0; padding:18px; border:1px solid #ffffff20; border-radius:8px; background:#15191c; color:#dce3e9; }
+.confluence-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.confluence-card h2 { margin:0; font-size:1rem; }
+.confluence-card h3 { margin:16px 0 8px; font-size:1rem; }
+.confluence-badge { color:#aeb9c7; border:1px solid #ffffff24; border-radius:5px; padding:4px 8px; font-size:.7rem; }
+.confluence-card p { margin:8px 0; font-size:.8rem; color:#aeb9c7; line-height:1.6; }
+.confluence-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:12px; margin:14px 0; }
+.confluence-controls label { display:grid; gap:6px; min-width:0; color:#aeb9c7; font-size:.75rem; }
+.confluence-controls select { width:100%; min-width:0; height:40px; padding:8px; border:1px solid #ffffff24; border-radius:6px; background:#252b2e; color:#e5e9ee; color-scheme:dark; }
+.confluence-card details { margin-top:12px; font-size:.78rem; color:#9ba8b7; }
+.confluence-card summary { cursor:pointer; color:#aeb9c7; }
+.confluence-card a { color:#24dfcf; }
+.confluence-tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr)); gap:12px; margin:14px 0; }
+.confluence-tile { padding:14px; border:1px solid #ffffff20; border-radius:6px; min-width:0; }
+.confluence-tile.is-primary { border-color:#24dfcf66; background:#24dfcf08; }
+.confluence-tile>span { color:#aeb9c7; font-size:.75rem; }
+.confluence-tile>strong { display:block; margin:10px 0; font-size:1.8rem; font-variant-numeric:tabular-nums; color:#dce3e9; }
+.confluence-tile.is-primary>strong { color:#24dfcf; }
+.confluence-tile.is-small-sample>strong { font-size:1.4rem; color:#eac782; }
+.confluence-tile small { display:block; font-size:.7rem; color:#9ba8b7; line-height:1.5; }
+.confluence-card .confluence-caution { color:#eac782; border-left:2px solid #eac78288; padding:5px 10px; }
+.confluence-card .confluence-context,.confluence-card .confluence-footnote { font-size:.72rem; }
+.confluence-footnote { border-top:1px solid #ffffff18; padding-top:10px; }
+.confluence-card .seasonality-table-wrap { max-width:100%; overflow-x:auto; }
+.confluence-card select:focus-visible { outline:2px solid #24dfcf; outline-offset:2px; }
 .cot-analysis { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; min-width:0; width:100%; max-width:none; margin:0; }
 #cot-content { min-width:0; }
 .cot-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding-bottom:4px; }
