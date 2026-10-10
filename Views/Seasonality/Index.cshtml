@@ -52,7 +52,10 @@
             </details>
         </section>
         <section class="seasonality-analysis-layout">
+            <div class="seasonality-analysis-main">
             <section class="seasonality-chart-panel"><div class="seasonality-chart-head"><div><strong id="seasonality-title"></strong><span id="seasonality-subtitle"></span></div><div class="seasonality-chart-actions"><button type="button" class="seasonality-chart-help" aria-label="Vysvětlení grafu">?<span class="seasonality-chart-help-popover" role="tooltip"><strong>Jak číst graf?</strong><br>Tyrkysová čára ukazuje průměrné sezonní chování vybraných roků. Výběrem úseku grafu zobrazíš výnos za dané období.</span></button><button type="button" id="seasonality-reset">Reset filtrů</button></div></div><div id="seasonality-sync-status" class="seasonality-sync-status"></div><div class="seasonality-chart-wrap"><canvas id="seasonality-canvas"></canvas><div id="seasonality-hover-guide" class="seasonality-hover-guide" data-export-omit aria-hidden="true" hidden></div><div id="seasonality-hover-marker" class="seasonality-hover-marker" data-export-omit aria-hidden="true" hidden></div><div id="seasonality-drag-preview" class="seasonality-drag-preview" hidden></div><div id="seasonality-tooltip" class="seasonality-tooltip" role="status"></div></div><div class="seasonality-axis"><span>1. leden</span><span>31. prosinec</span></div></section>
+                <section id="seasonality-reliability" class="seasonality-reliability" aria-label="Stabilita sezonálního intervalu"><strong>Jak stabilní je vybrané období?</strong><p>Vyber interval v grafu nebo otevři instrument ze Screeneru.</p></section>
+            </div>
             <aside class="seasonality-interval-card">
                 <div class="seasonality-detail-title">Analýza intervalu</div>
                 <div class="seasonality-date-grid"><label>Od<input id="seasonality-start-date" type="date"></label><label>Do<input id="seasonality-end-date" type="date"></label></div>
@@ -63,7 +66,6 @@
                 <section class="seasonality-stats" id="seasonality-stats" aria-label="Statistiky seasonality"></section>
             </aside>
         </section>
-        <section id="seasonality-reliability" class="seasonality-reliability" aria-label="Stabilita sezonálního intervalu"><strong>Jak stabilní je vybrané období?</strong><p>Vyber interval v grafu nebo otevři instrument ze Screeneru.</p></section>
         <section class="seasonality-detail-grid">
             <div class="seasonality-detail-panel"><div class="seasonality-detail-title">Výnos podle roku</div><canvas id="seasonality-returns-canvas"></canvas></div>
             <div class="seasonality-detail-panel"><div class="seasonality-detail-title">Kumulativní průběh průměrné křivky</div><canvas id="seasonality-cumulative-canvas"></canvas></div>
