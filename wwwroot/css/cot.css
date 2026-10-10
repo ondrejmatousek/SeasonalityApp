@@ -69,6 +69,12 @@
 .market-screener-view { min-width:0; display:grid; gap:16px; }
 .is-screener .seasonality-asset-search { display:none; }
 .screener-intro h2 { font-size:1.25rem; margin:0 0 8px; }
+.screener-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.screener-heading h2 { margin:0; }
+.screener-period { color:#dce3e9; margin:0; font-size:.85rem; }
+.screener-guide { padding:14px 18px; border:1px solid #ffffff18; border-radius:8px; background:#15191c; color:#aeb9c7; font-size:.8rem; line-height:1.6; }
+.screener-guide strong,.screener-guide b { color:#dce3e9; }
+.screener-guide p { margin:6px 0 0; }
 .screener-intro p,.screener-methodology,#screener-status { color:#9ba8b7; font-size:.8rem; }
 .screener-controls { display:flex; flex-wrap:wrap; gap:12px; }
 .screener-controls label { display:grid; gap:6px; color:#aeb9c7; font-size:.75rem; }
@@ -83,6 +89,12 @@
 .screener-table .screener-negative { color:#ef7075; }
 .screener-table .screener-warning { color:#eac782; }
 .screener-table button,#screener-retry { color:#24dfcf; border:1px solid #24dfcf70; background:#24dfcf12; border-radius:6px; padding:7px 10px; cursor:pointer; }
+.screener-table .screener-sort-button { background:none; border:0; color:#dce3e9; padding:0 0 8px; text-align:inherit; }
+.screener-column-filter { display:flex; gap:4px; }
+.screener-column-filter input,.screener-column-filter select { width:100%; min-width:60px; background:#252b2e; color:#e5e9ee; border:1px solid #ffffff24; border-radius:4px; padding:6px; font-size:.72rem; }
+.screener-column-filter input[type=number] { width:72px; }
+.screener-filter-hint { margin:0; color:#9ba8b7; font-size:.75rem; line-height:1.5; }
+#screener-clear-columns { color:#24dfcf; border:1px solid #ffffff24; border-radius:4px; background:#252b2e; padding:5px 8px; cursor:pointer; }
 .screener-methodology { line-height:1.6; border-top:1px solid #ffffff18; padding-top:12px; }
 .cot-analysis { display:grid; gap:12px; min-width:0; width:100%; max-width:none; margin:0; }
 .cot-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding-bottom:4px; }

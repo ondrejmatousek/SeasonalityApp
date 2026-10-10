@@ -15,6 +15,8 @@ Vygenerovaný web nepotřebuje běžící .NET, App Service, API ani SQL. Razor 
 
 ### Lokální export a spuštění
 
+Screener podporuje řazení kliknutím na hlavičky a kombinované filtry sloupců (číselné minimum/maximum, hledání instrumentu, dostupnost COT). COT se řadí podle dostupnosti, nikoli podle nesrovnatelných indexů různých měn. Fotoaparát uloží PNG s obdobím, filtry a prvními 20 výsledky v aktuálním řazení; počet zachycených výsledků je uvedený v obrázku.
+
 Použij stávající SQL konfiguraci a **nový** podadresář `artifacts/` (existující export se nikdy nepřepisuje):
 
 ```powershell

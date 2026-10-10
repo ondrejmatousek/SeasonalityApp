@@ -31,10 +31,30 @@
             const renderer = await loadLibrary();
             await document.fonts.ready;
             const rect = wrap.getBoundingClientRect();
+            const isScreener=button.dataset.exportView==='screener';
             const image = await renderer(wrap, {
                 backgroundColor: '#0b0f11', logging: false,
-                scale: window.MarketChartUi.exportScale(rect.width, rect.height),
+                scale: window.MarketChartUi.exportScale(rect.width, isScreener ? 2400 : rect.height),
                 onclone: doc => {
+                    if (isScreener) {
+                        const rows=[...doc.querySelectorAll('#screener-results tr')];
+                        rows.slice(20).forEach(row=>row.remove());
+                        const note=doc.createElement('p');note.textContent=`PNG: ${Math.min(rows.length,20)} z ${rows.length} výsledků v aktuálním řazení. Historické výsledky nejsou předpovědí.`;
+                        doc.querySelector('#market-screener-view').append(note);
+                        const tableWrap=doc.querySelector('.screener-table-wrap');tableWrap.style.overflow='visible';
+                        const captureWidth=Math.max(rect.width, root.querySelector('.screener-table').scrollWidth);
+                        doc.querySelector('.seasonality-wrap').style.width=captureWidth+'px';
+                        doc.querySelector('.seasonality-wrap').style.maxWidth='none';
+                        // Native number inputs can clip their values in html2canvas.
+                        // Use readable text in the PNG without changing live filters.
+                        doc.querySelectorAll('#market-screener-view input, #market-screener-view select').forEach(control=>{
+                            const value=doc.createElement('span');
+                            value.textContent=control.tagName==='SELECT' ? control.selectedOptions[0]?.textContent || '—'
+                                : `${control.type==='number'?control.placeholder+': ':''}${control.value || '—'}`;
+                            value.style.cssText='display:block;padding:6px 8px;border:1px solid #ffffff24;border-radius:4px;background:#252b2e;color:#e5e9ee;font-size:12px;white-space:nowrap';
+                            control.replaceWith(value);
+                        });
+                    }
                     // Capture the complete analysis, including charts below the
                     // current scroll position, but not navigation/hover popovers/tables.
                     for (const selector of ['body', '.app-workspace', '.app-workspace-main']) {
@@ -66,8 +86,8 @@
             const blob = await new Promise((resolve, reject) => framed.toBlob(result => result ? resolve(result) : reject(new Error('Empty PNG')), 'image/png'));
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            const asset = root.dataset.assetKey || 'instrument';
-            const view = button.dataset.exportView === 'cot' ? `COT-${root.dataset.cotMarket || asset}`
+            const asset = isScreener ? 'Trhy' : root.dataset.assetKey || 'instrument';
+            const view = isScreener ? 'Screener' : button.dataset.exportView === 'cot' ? `COT-${root.dataset.cotMarket || asset}`
                 : document.getElementById('seasonality-monthly-view').hidden ? 'Seasonality' : 'Seasonality-monthly';
             const date = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
             link.download = window.MarketChartUi.pngFilename(asset, view, date);
