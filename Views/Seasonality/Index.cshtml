@@ -26,12 +26,12 @@
         <nav class="seasonality-tabs" aria-label="Seasonality views">
             <button type="button" class="is-active" data-seasonality-tab="curve">Sezónní křivka</button>
             <button type="button" data-seasonality-tab="monthly">Měsíční přehled</button>
-            <label class="seasonality-toolbar-history">Historie <select id="seasonality-years"><option value="5">Posledních 5 dokončených let</option><option value="10" selected>Posledních 10 dokončených let</option><option value="20">Posledních 20 dokončených let</option><option value="all">Všechna dostupná data</option></select></label>
+            <label class="seasonality-toolbar-history">Historie <select id="seasonality-years"><option value="5">Posledních 5 dokončených let</option><option value="10">Posledních 10 dokončených let</option><option value="20" selected>Posledních 20 dokončených let</option><option value="all">Všechna dostupná data</option></select></label>
             <button type="button" id="seasonality-export" class="market-export-button" data-export-view="seasonality" title="Stáhnout Seasonality jako PNG" aria-label="Stáhnout Seasonality jako PNG" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h4l2-3h4l2 3h4v13H4z"/><circle cx="12" cy="13" r="4"/></svg></button>
         </nav>
         <section id="seasonality-monthly-view" class="seasonality-monthly-view" hidden>
             <div class="seasonality-monthly-toolbar">
-                <label>Lookback <select id="seasonality-monthly-years" aria-label="Měsíční lookback"><option value="5">5 let</option><option value="10" selected>10 let</option><option value="20">20 let</option><option value="30">30 let</option><option value="all">Všechna dostupná data</option></select></label>
+                <label>Lookback <select id="seasonality-monthly-years" aria-label="Měsíční lookback"><option value="5">5 let</option><option value="10">10 let</option><option value="20" selected>20 let</option><option value="30">30 let</option><option value="all">Všechna dostupná data</option></select></label>
                 <span id="seasonality-monthly-subtitle"></span>
             </div>
             <div class="seasonality-monthly-summary" id="seasonality-monthly-summary"></div>
@@ -78,7 +78,7 @@
                 <details class="confluence-settings"><summary>Trh COT, lookback a délka historie</summary><div class="confluence-controls">
                     <label>Report / futures proxy<select id="confluence-market"></select></label>
                     <label>COT index lookback<select id="confluence-lookback"><option value="26">26 reportů</option><option value="52" selected>52 reportů</option><option value="156">156 reportů</option></select></label>
-                    <label>Společná historie grafu a COT<select id="confluence-history"><option value="5">Posledních 5 dokončených let</option><option value="10" selected>Posledních 10 dokončených let</option><option value="20">Posledních 20 dokončených let</option><option value="all">Všechna dostupná data</option></select></label>
+                    <label>Společná historie grafu a COT<select id="confluence-history"><option value="5">Posledních 5 dokončených let</option><option value="10">Posledních 10 dokončených let</option><option value="20" selected>Posledních 20 dokončených let</option><option value="all">Všechna dostupná data</option></select></label>
                 </div></details>
                 <p id="confluence-status" role="status" aria-live="polite"></p>
                 <div id="confluence-results"></div>
@@ -167,9 +167,9 @@
             </div>
             <section id="screener-auto-view" class="opportunity-view">
                 <div class="screener-guide"><strong>Na který instrument se podívat nejdřív?</strong><p><b>Skóre podkladů 1–10</b> řadí příležitosti k dalšímu průzkumu: sezonalita 45 %, kontrola novějších 8 let 25 %, podobný COT 20 %, kvalita dat 10 %. Malé vzorky tlumíme; silný výsledek bez dostatečného COT nemůže získat více než 7 bodů. <b>8 bodů neznamená 80% šanci zisku.</b></p><p>Začni nejvýše hodnocenými řádky a otevři <b>Detail</b> — uvidíš složení skóre, omezení i jednotlivé roky. Před navrženým datem znovu ověř COT a cenu; vstup tato tabulka neurčuje. „Jen 4 podobné případy“ znamená 4 roky s podobným COT, ne chybějící reporty. Přísný filtr ostatní řádky jen skryje, nové případy nevytvoří.</p><details><summary>Jak hledáme období a porovnáváme historii?</summary><p>Aplikace denně hledá vstupy v příštích 60 dnech a opačný sezonální extrém za 14–60 dní. Období a směr vybírá jen ze starší historie, posledních 8 dokončených let je oddělená kontrola. Hlavní sloupce mají společnou historii 5 / 10 / 20 let, výchozí 10. COT porovnáváme ve stejném předstihu jako dnes. Procenta jsou historické četnosti, ne předpověď. COT pod 8 případy nezvýrazňujeme procentem; přesné počty zůstávají vidět. Práh 8 je pravidlo zobrazení, ne záruka statistické spolehlivosti.</p></details></div>
-                <div class="opportunity-shortcut" data-export-omit><button id="opportunity-best" type="button">Ukázat nejlepší podklady</button><span>10 let · skóre od 6 · bez přísného COT filtru. Nejlepší z přehledu nemusí mít dostatek COT podkladů.</span></div>
+                <div class="opportunity-shortcut" data-export-omit><button id="opportunity-best" type="button">Ukázat nejlepší podklady</button><span>20 let · skóre od 6 · bez přísného COT filtru. Nejlepší z přehledu nemusí mít dostatek COT podkladů.</span></div>
                 <div class="screener-controls">
-                    <label>Společná historie<select id="opportunity-history"><option value="5">Posledních 5 dokončených let</option><option value="10" selected>Posledních 10 dokončených let</option><option value="20">Posledních 20 dokončených let</option></select></label>
+                    <label>Společná historie<select id="opportunity-history"><option value="5">Posledních 5 dokončených let</option><option value="10">Posledních 10 dokončených let</option><option value="20" selected>Posledních 20 dokončených let</option></select></label>
                     <label>Směr<select id="opportunity-direction"><option value="all">Růst i pokles</option><option value="up">Růst · minimum → maximum</option><option value="down">Pokles · maximum → minimum</option></select></label>
                     <label>Vstup nejpozději za<select id="opportunity-horizon"><option value="14">14 dní</option><option value="30">30 dní</option><option value="60" selected>60 dní</option></select></label>
                     <label>Podklady<select id="opportunity-quality"><option value="all">Vše · včetně upozornění</option><option value="validation">Oddělená kontrola 8 let drží směr</option><option value="cot">Kontrola 8 let + alespoň 8 COT případů ve zvolené historii</option></select></label>
@@ -194,7 +194,7 @@
             <section id="screener-manual-view" hidden>
             <div class="screener-controls">
                 <label>Období<select id="screener-horizon"><option value="14">Příštích 14 dní</option><option value="30" selected>Příštích 30 dní</option><option value="60">Příštích 60 dní</option></select></label>
-                <label>Historie<select id="screener-lookback"><option value="10" selected>Posledních 10 let</option><option value="20">Posledních 20 let</option><option value="all">Všechna data</option></select></label>
+                <label>Historie<select id="screener-lookback"><option value="10">Posledních 10 let</option><option value="20" selected>Posledních 20 let</option><option value="all">Všechna data</option></select></label>
                 <label>Vývoj<select id="screener-direction"><option value="all">Růst i pokles</option><option value="up">Kladný medián</option><option value="down">Záporný medián</option></select></label>
                 <label>Minimum let<select id="screener-minimum"><option value="8" selected>8 let</option><option value="5">5 let</option><option value="3">3 roky</option></select></label>
                 <label>Řazení<select id="screener-sort"><option value="median">Medián: od nejvyššího</option><option value="lowest">Medián: od nejnižšího</option><option value="wins">Podíl kladných let</option><option value="count">Počet let</option></select></label>

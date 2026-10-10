@@ -256,7 +256,7 @@
     }
     byId('screener-mode-auto').onclick=()=>mode(true);byId('screener-mode-manual').onclick=()=>mode(false);
     byId('opportunity-best').onclick=()=>{
-        for(const [key,value] of Object.entries({history:'10',direction:'all',horizon:'60',quality:'all',sort:'score','min-score':'6',search:''}))byId('opportunity-'+key).value=value;
+        for(const [key,value] of Object.entries({history:'20',direction:'all',horizon:'60',quality:'all',sort:'score','min-score':'6',search:''}))byId('opportunity-'+key).value=value;
         byId('opportunity-history').dispatchEvent(new Event('change'));
     };
     ['direction','horizon','quality','sort','search','history','min-score'].forEach(id=>byId('opportunity-'+id).addEventListener(id==='search'?'input':'change',render));

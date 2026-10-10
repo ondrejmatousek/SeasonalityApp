@@ -33,6 +33,13 @@ for(const file of ['screener.js','opportunities-ui.js']){
     assert.ok(source.includes('AssetCategories.matches')&&source.includes('screener-market-filter-change'),`Both modes use identical filtering: ${file}`);
 }
 const auto=fs.readFileSync('wwwroot/js/opportunities-ui.js','utf8');
+for(const id of ['seasonality-years','seasonality-monthly-years','confluence-history','opportunity-history','screener-lookback']){
+    const select=html.match(new RegExp(`<select[^>]*id="${id}"[^>]*>([\\s\\S]*?)</select>`));
+    assert.ok(select,`Missing history control ${id}`);
+    assert.match(select[1],/<option value="20" selected>/,`Default history must be 20 years: ${id}`);
+    assert.doesNotMatch(select[1],/<option value="10" selected>/);
+}
+assert.match(auto,/history:'20'/,'Best-preset must keep the 20-year default');
 const preset=auto.slice(auto.indexOf("byId('opportunity-best')"));
 assert.ok(!preset.includes("byId('screener-asset-class').value="),'Best-preset must preserve chosen market');
 console.log('Asset-category checks passed: exclusive classes, food subgroups, hidden-group behavior, shared modes and preset preservation.');
