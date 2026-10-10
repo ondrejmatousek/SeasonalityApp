@@ -30,6 +30,22 @@
     const history=()=>Number(byId('opportunity-history').value);
     const display=c=>c.histories?.[history()];
     const rangeText=h=>`${h.from}–${h.to}`;
+    const today=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date());
+    const ranking=(a,c)=>window.OpportunityRanking.rank(a,c,{history:history(),asOf:snapshot.asOf,today:today()});
+    const limitTexts={
+        'no-seasonal-sample':'Bez použitelné cenové historie: strop 1.',
+        'short-seasonal-sample':'Méně než 5 cenových let: strop 5.',
+        'limited-seasonal-sample':'Méně než 8 cenových let: strop 7.',
+        'short-validation':'Méně než 5 novějších kontrolních let: strop 6.',
+        'validation-disagrees':'Novější kontrola nepotvrzuje směr četností nebo mediánem: strop 5,5.',
+        'seasonal-disagrees':'Zvolená cenová historie nepotvrzuje směr četností nebo mediánem: strop 5,5.',
+        'limited-cot-sample':'Méně než 8 podobných COT případů: postupný strop 6 + počet / 8 (nejvýše 7). COT je jen omezený podklad.',
+        'no-current-cot':'Chybí použitelný současný COT: strop 6. COT nemůže potvrdit směr.',
+        'cot-disagrees':'COT s alespoň 8 případy nepotvrzuje směr četností nebo mediánem: strop 6,5.',
+        'stale-prices':'Ceny jsou starší než 7 dní nebo nejsou platné: strop 5.',
+        'stale-snapshot':'Přehled je starší než 2 dny nebo má budoucí datum: strop 5.'
+    };
+    const limitedCot=n=>n===0?'Žádný podobný případ':`Jen ${n} podobn${n===1?'ý případ':n<5?'é případy':'ých případů'}`;
     function note(a,c){
         if(priceStale(a))return 'Starší ceny · před vstupem ověřit';
         if(c.warnings.includes('validation-disagrees'))return 'Novější roky nepotvrzují směr';
@@ -40,7 +56,7 @@
         return 'Historická shoda · nikoli signál';
     }
     function frequency(td,s,suppress,context='období ve směru'){
-        td.append(element('strong',suppress&&s.count<8?'Málo dat':pct(s.rate)));
+        td.append(element('strong',suppress&&s.count<8?(context.startsWith('podobných COT')?limitedCot(s.count):'Málo dat'):pct(s.rate)));
         td.append(element('small',`${s.successes} z ${s.count} ${context}`));
         if(s.count>=8){const uncertainty=element('small',`Nejistota četnosti: ${band(s)}`);
             uncertainty.title='95% interval spolehlivosti (Wilson): orientační statistická nejistota historické četnosti. Neznamená 95% šanci zisku ani rozsah budoucího výnosu.';td.append(uncertainty);}
@@ -49,18 +65,22 @@
         if(!snapshot)return;
         const direction=byId('opportunity-direction').value,horizon=Number(byId('opportunity-horizon').value);
         const quality=byId('opportunity-quality').value,sort=byId('opportunity-sort').value,query=byId('opportunity-search').value.trim().toLocaleLowerCase('cs');
-        let rows=snapshot.assets.flatMap(a=>a.candidates.filter(c=>display(c)).map(c=>({a,c})));
-        rows=rows.filter(({a,c})=>(direction==='all'||c.direction===direction)&&c.startsIn<=horizon&&
+        const minimum=Number(byId('opportunity-min-score').value);
+        let rows=snapshot.assets.flatMap(a=>a.candidates.filter(c=>display(c)).map(c=>({a,c,r:ranking(a,c)})));
+        rows=rows.filter(({a,c,r})=>r.value>=minimum&&(direction==='all'||c.direction===direction)&&c.startsIn<=horizon&&
             (!query||[a.key,a.name,...(a.aliases||[])].join(' ').toLocaleLowerCase('cs').includes(query))&&
             (quality==='all'||(!priceStale(a)&&fresh(c.validation)&&!c.warnings.includes('validation-disagrees')&&
                 (quality!=='cot'||(c.cotReference&&display(c).cot.count>=8&&display(c).cot.rate>50)))));
-        const score=c=>sort==='date'?-c.startsIn:sort==='validation'?(display(c).seasonal.rate??-1):sort==='cot'?(display(c).cot.count>=8?display(c).cot.uncertainty[0]:-1):c.score;
-        rows.sort((x,y)=>score(y.c)-score(x.c)||x.c.startsIn-y.c.startsIn||x.a.key.localeCompare(y.a.key)||x.c.direction.localeCompare(y.c.direction));
+        const score=({c,r})=>sort==='score'?r.value:sort==='date'?-c.startsIn:sort==='validation'?(display(c).seasonal.rate??-1):sort==='cot'?(display(c).cot.count>=8?display(c).cot.uncertainty[0]:-1):c.score;
+        rows.sort((x,y)=>score(y)-score(x)||(sort==='score'?y.r.uncapped-x.r.uncapped:0)||x.c.startsIn-y.c.startsIn||x.a.key.localeCompare(y.a.key)||x.c.direction.localeCompare(y.c.direction));
         const fragment=document.createDocumentFragment();
-        for(const {a,c} of rows){
+        for(const {a,c,r} of rows){
             const h=display(c);
             const tr=element('tr'),instrument=cell(tr,'');instrument.append(element('strong',a.key),element('small',a.name));
             if(priceStale(a))instrument.append(element('small',`Ceny k ${date(a.lastDate)}`,'screener-warning'));
+            const rating=cell(tr,'');rating.append(element('strong',`${number(r.value)} / 10`,`opportunity-score ${r.value>=8?'is-strong':r.value>=7?'is-supported':'is-limited'}`),element('small',r.label));
+            if(!r.currentCot)rating.append(element('small','Bez dnešního COT','screener-warning'));
+            else if(h.cot.count<8)rating.append(element('small','COT omezený','screener-warning'));
             const interval=cell(tr,`${date(c.startDate)} – ${date(c.endDate)}`);
             interval.append(element('small',`Vstup ${c.startsIn===0?'dnes':`za ${c.startsIn} dní`} · délka ${c.days} dní`));
             cell(tr,c.direction==='up'?'↑ Růst':'↓ Pokles',c.direction==='up'?'screener-positive':'screener-negative');
@@ -70,19 +90,39 @@
             cot.append(element('small',`Podobný COT v ${h.cot.count} z ${h.baseline.count} let s dostupným reportem`));
             cot.append(element('small',`${a.market.key} · pozice ${date(c.cotReference?.date)}`));
             cell(tr,pct(h.seasonal.medianAdverse));
-            const caution=cell(tr,h.cot.count<8?'COT: málo případů ve zvolené historii':note(a,c),c.warnings.length||priceStale(a)?'screener-warning':'');
+            const caution=cell(tr,note(a,c),c.warnings.length||priceStale(a)?'screener-warning':'');
             caution.append(element('small','Cena na konci období, bez nákladů'));
             const button=element('button','Detail');button.type='button';button.setAttribute('aria-label',`Detail ${a.key} ${c.direction==='up'?'růst':'pokles'} od ${date(c.startDate)}`);
             button.onclick=()=>showDetail(a,c,button);cell(tr,'').append(button);fragment.append(tr);
         }
-        if(!rows.length){const tr=element('tr');const td=cell(tr,'Žádná příležitost pro tyto filtry. Zkus delší předstih nebo „Vše · včetně upozornění“.');td.colSpan=8;fragment.append(tr);}
+        if(!rows.length){const tr=element('tr');const td=cell(tr,'Žádná příležitost pro tyto filtry. Sniž minimum skóre nebo zvol „Vše · včetně upozornění“.');td.colSpan=9;fragment.append(tr);}
         body.replaceChildren(fragment);
         const short=snapshot.assets.filter(a=>a.reason==='short-history').length,none=snapshot.assets.filter(a=>a.reason==='no-window').length;
-        status.textContent=`Přepočet ${date(snapshot.asOf)} · posledních ${history()} dokončených let (${Number(snapshot.asOf.slice(0,4))-history()}–${Number(snapshot.asOf.slice(0,4))-1}) pro oba sloupce · ${rows.length} období · ${snapshot.assets.length} instrumentů s COT. ${short} nemá dost starší historie, ${none} nemá vhodný extrém. Výchozí pořadí vybírá starší historie, ne nejvyšší nové procento.`;
-        const now=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date());
+        status.textContent=`Přepočet ${date(snapshot.asOf)} · posledních ${history()} dokončených let (${Number(snapshot.asOf.slice(0,4))-history()}–${Number(snapshot.asOf.slice(0,4))-1}) pro oba sloupce · ${rows.length} období · ${snapshot.assets.length} instrumentů s COT. ${short} nemá dost starší historie, ${none} nemá vhodný extrém. ${sort==='score'?'Řazeno podle skóre podkladů, nikoli pravděpodobnosti zisku.':'Jiné řazení než podle skóre.'}`;
+        const now=today();
         if((Date.parse(now)-Date.parse(snapshot.asOf))/86400000>2)status.textContent+=' Upozornění: přehled je starší než 2 dny; aktuální data ověř.';
         byId('screener-export').disabled=false;
         if(selected&&!rows.some(r=>r.a.key===selected.a.key&&r.c.startDate===selected.c.startDate&&r.c.direction===selected.c.direction))closeDetail();
+    }
+    function scoreDetail(a,c,h){
+        const r=ranking(a,c),section=element('section',undefined,'opportunity-score-detail');
+        const heading=element('div',undefined,'opportunity-score-heading');
+        heading.append(element('span','Skóre podkladů','opportunity-rank-title'),element('strong',`${number(r.value)} / 10`,'opportunity-score'),element('span',r.label));section.append(heading);
+        section.append(element('p','Pořadí pro další průzkum — ne procento úspěchu obchodu. Pevné váhy nejsou statisticky kalibrované.'));
+        const table=element('table',undefined,'opportunity-score-table'),thead=element('thead'),tr=element('tr');
+        ['Složka a skutečné podklady','Váha','Příspěvek ze 100'].forEach(label=>tr.append(element('th',label)));thead.append(tr);table.append(thead);
+        const labels={seasonal:[`Sezonalita · posledních ${history()} let`,`${h.seasonal.successes} z ${h.seasonal.count} ve směru (${pct(h.seasonal.rate)}) · ${rangeText(h)}`],
+            validation:['Oddělená kontrola · posledních 8 let',`${c.validation.successes} z ${c.validation.count} ve směru (${pct(c.validation.rate)})`],
+            cot:['Podobný COT · stejná historie',r.currentCot?`${h.cot.successes} z ${h.cot.count} podobných případů ve směru${h.cot.count<8?' · omezený vzorek':''}`:'Chybí použitelný dnešní report · neutrální příspěvek, nikoli potvrzení'],
+            quality:['Kvalita dat',`Ceny ${h.seasonal.count} / ${history()} let · kontrola ${c.validation.count} / 8 · COT pokrytí ${h.baseline.count} / ${h.seasonal.count} let · ${r.pricesFresh&&r.currentCot&&r.snapshotFresh?'aktuální data':'část dat není aktuální'}`]};
+        const tbody=element('tbody');
+        for(const part of r.components){const row=element('tr'),label=cell(row,'');label.append(element('span',labels[part.key][0],'opportunity-rank-title'),element('small',labels[part.key][1]));
+            cell(row,`${part.weight} %`);cell(row,`${number(part.contribution)} / ${part.weight}`);tbody.append(row);}
+        table.append(tbody);section.append(table);
+        if(r.limits.length){const list=element('ul',undefined,'opportunity-score-limits');r.limits.forEach(l=>list.append(element('li',l.code==='limited-cot-sample'?`${limitTexts[l.code]} Zde ${h.cot.count} případů: ${number(l.max)} bodu.`:limitTexts[l.code])));section.append(list);}
+        section.append(element('p',`Vážený součet převedený na škálu 1–10: ${number(r.uncapped)}. ${r.capped?`Po uplatnění stropu ${number(r.ceiling)}: ${number(r.value)}.`:'Žádný strop výsledné číslo nesnížil.'}`));
+        const method=element('details');method.append(element('summary','Jak skóre počítáme a co nehodnotí?'),element('p','Četnosti tlumíme neutrálními přídavky: sezonalita a kontrola (úspěchy +2) / (případy +4), COT (úspěchy +4) / (případy +8). Přídavky nejsou skutečné roky. Medián proti směru omezuje příslušnou podporu na 50 ze 100. Chybějící COT nepřesouvá váhu do jiné složky. Kvalita je průměr pokrytí cen, kontrolních let, historického COT a čerstvosti. Součet příspěvků 0–100 převádíme jako 1 + 9 × součet / 100, poté uplatníme stropy a zaokrouhlíme.'));
+        method.append(element('p','Složky se překrývají a nejsou nezávislé. COT sleduje výnosy při podobném komerčním reportu, ne počet shodných křivek. Skóre nehodnotí náklady, poměr zisku k riziku, vstup, stop-loss ani ziskovost. Typický pohyb proti směru a rozptyl zkontroluj zvlášť. Nezvyšuj číslo přepínáním historie a filtrů; to může zvýhodnit náhodu.'));section.append(method);return section;
     }
     function curve(a,c){
         const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
@@ -107,6 +147,7 @@
         title.id='opportunity-detail-title';
         const close=element('button','×');close.type='button';close.className='opportunity-dialog-close';close.setAttribute('aria-label','Zavřít detail');close.autofocus=true;close.onclick=closeDetail;head.append(title,close);detail.append(head);
         detail.append(element('p',note(a,c),'confluence-caution'));
+        detail.append(scoreDetail(a,c,h));
         detail.append(element('p',`Křivka pouze ze starších let ${a.trainingYears.join(', ')}. Tyrkysový výřez: ${c.direction==='up'?'od minima k prvnímu následujícímu maximu':'od maxima k prvnímu následujícímu minimu'} · ${c.days} dní. Vyhlazení jen pro výběr období; všechny výsledky níže jsou z původních cen.`,`opportunity-context`),curve(a,c));
         const cards=element('div',undefined,'opportunity-metrics');
         for(const [label,s,description] of [
@@ -161,7 +202,11 @@
         byId('screener-export').disabled=true;root.dispatchEvent(new CustomEvent('screener-visible'));
     }
     byId('screener-mode-auto').onclick=()=>mode(true);byId('screener-mode-manual').onclick=()=>mode(false);
-    ['direction','horizon','quality','sort','search','history'].forEach(id=>byId('opportunity-'+id).addEventListener(id==='search'?'input':'change',render));
+    byId('opportunity-best').onclick=()=>{
+        for(const [key,value] of Object.entries({history:'10',direction:'all',horizon:'60',quality:'all',sort:'score','min-score':'6',search:''}))byId('opportunity-'+key).value=value;
+        byId('opportunity-history').dispatchEvent(new Event('change'));
+    };
+    ['direction','horizon','quality','sort','search','history','min-score'].forEach(id=>byId('opportunity-'+id).addEventListener(id==='search'?'input':'change',render));
     // One calendar lookback across the main chart, confluence and automatic screener.
     for(const id of ['seasonality-years','opportunity-history','confluence-history'])byId(id).addEventListener('change',()=>{
         const value=byId(id).value;

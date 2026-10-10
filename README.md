@@ -133,6 +133,16 @@ V Azure Portal vytvoř SQL Database na SQL serveru s nejnižší dostupnou bezpl
 
 ## COT
 
+### Skóre podkladů v automatickém Screeneru
+
+Výchozí pořadí je skóre 1–10 (`opportunity-ranking.js`), nikoli kalibrovaná pravděpodobnost. Pevné váhy: sezonalita ve zvolené historii 45 %, oddělená kontrola posledních 8 dokončených let 25 %, výsledky ceny při podobném primárním komerčním COT 20 %, kvalita dat 10 %. Váhy nejsou optimalizované na historických výsledcích a skóre nemění nalezené intervaly ani směr. Historie se překrývají, COT je podmnožina; složky nejsou nezávislé důkazy a procenta nenásobíme. Nejde o hlasování třemi COT křivkami, výnos po nákladech ani doporučení vstupu nebo stop-lossu.
+
+Sezonalita/kontrola používají tlumenou podporu `(úspěchy + 2) / (případy + 4)`, COT silnější `(úspěchy + 4) / (případy + 8)`. Neutrální přídavky nejsou historické případy ani predikce a nemění publikované četnosti. Medián proti směru omezuje složku nejvýše na 50/100. Chybějící dnešní COT je neutrální, bez přesunu váhy. Kvalita je průměr pokrytí cen v nastavených 5/10/20 letech, pokrytí osmi kontrolních let, dostupnosti historických reportů ve stejných cenových letech a společné čerstvosti (ceny ≤7 dní, odhadovaně zveřejněný COT ≤21 dní, snapshot ≤2 dny). Součet převedeme jako `1 + 9 × vážený součet / 100`, zastropujeme a zaokrouhlíme na desetinu.
+
+Stropy: COT vzorek <8 má postupný strop `6 + počet / 8`, nejvýše 7 (0 případů 6; jeden 6,1; šest 6,8 po zaokrouhlení); chybějící současný COT nebo kontrola <5 let nejvýše 6; nesouhlas směru sezonality/kontroly četností nebo mediánem nejvýše 5,5; COT s ≥8 případy proti směru nejvýše 6,5; staré ceny/snapshot nejvýše 5. Sezonalita <8 let nejvýše 7, <5 let nejvýše 5, bez cen 1. Strop nikdy nezvedá nižší vypočtené skóre. Detail ukazuje skutečné počty, váhy, příspěvky a všechny stropy. „Jen 4 podobné případy“ rozlišuje omezený vzorek od chybějících reportů; práh 8 není záruka statistické spolehlivosti.
+
+Jedním klikem „Ukázat nejlepší podklady“ nastaví společných 10 let, všechny směry, předstih 60 dní, bez přísného COT filtru a minimum skóre 6. Nejlepší ze snapshotu nemusí mít dost COT podkladů. Existující přísné filtry pouze skrývají výsledky, nevytvářejí další COT případy. Ověření: `node Tools/opportunity-ranking-checks.cjs` (malé vzorky, monotonicita, stropy, nepublikovaný/starý report, čerstvost, směry, rozsah, determinismus a neměnnost vstupních dat). Výpočet probíhá v prohlížeči nad denním kompaktním JSON, bez dalšího dotazu do SQL.
+
 ### Sjednocená historie sezonality a COT
 
 Vysvětlivky ⓘ u ovládání, tabulkových sloupců a metrik fungují při najetí myší, při fokusu klávesnicí i po klepnutí na mobilu. Escape zavře nejprve vysvětlivku, poté případně dialog. Tooltip je umístěný u pojmu, ohraničený viewportem a funguje i uvnitř modálního detailu. Při zavření detailu nebo odstranění výsledku zmizí. Vysvětlivky a jejich tlačítka se neexportují do PNG. Texty rozlišují historickou četnost, 95% nejistotu, počet podobných COT případů, grafový/COT index a různé významy historie.

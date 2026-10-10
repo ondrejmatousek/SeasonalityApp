@@ -67,6 +67,7 @@ jobs:
       - run: node Tools/cot-analogs-checks.cjs
       - run: node Tools/confluence-checks.cjs
       - run: node Tools/opportunities-checks.cjs
+      - run: node Tools/opportunity-ranking-checks.cjs
       - name: Export read-only SQL snapshot to static HTML and JSON
         run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --export-static --output artifacts/static-site --Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command=Warning
         env:

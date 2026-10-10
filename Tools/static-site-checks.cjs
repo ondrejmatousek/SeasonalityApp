@@ -92,7 +92,7 @@ function exportChecks(directory) {
         }
     }
     if (manifest.opportunities) {
-        const snapshot=checkHash(manifest.opportunities.path),model=require('../wwwroot/js/daily-opportunities.js');
+        const snapshot=checkHash(manifest.opportunities.path),model=require('../wwwroot/js/daily-opportunities.js'),ranking=require('../wwwroot/js/opportunity-ranking.js');
         assert.equal(snapshot.schemaVersion,1);assert.equal(snapshot.modelVersion,'seasonal-extremes-v1');
         assert.equal(snapshot.asOf,manifest.opportunities.asOf);assert.equal(snapshot.exportedAt,manifest.exportedAt);
         assert.deepEqual(snapshot.config,model.config);
@@ -112,9 +112,15 @@ function exportChecks(directory) {
             for(const c of asset.candidates){
                 assert.ok(c.startDate>=snapshot.asOf&&c.training.count>=10);
                 assert.ok(c.cases.every(s=>!s.reportDate||Date.parse(s.reportDate)+7*86400000<=Date.parse(s.signalDate)));
+                for(const history of [5,10,20]){
+                    const score=ranking.rank(asset,c,{history,asOf:snapshot.asOf});
+                    assert.ok(Number.isFinite(score.value)&&score.value>=1&&score.value<=10,`Ranking range ${asset.key}/${history}`);
+                    if(c.histories[history].cot.count<8)assert.ok(score.value<=7,`Small COT score ceiling ${asset.key}/${history}`);
+                    assert.deepEqual(score,ranking.rank(asset,c,{history,asOf:snapshot.asOf}),'Ranking must be deterministic');
+                }
             }
         }
-        console.log(`Daily opportunity export checked: ${unique.size} instruments, training/validation parity, primary markets and COT forecast timing.`);
+        console.log(`Daily opportunity export checked: ${unique.size} instruments, training/validation parity, primary markets, COT forecast timing and ranking for all 5/10/20-year histories.`);
     }
     for (const asset of manifest.assets) {
         const payload = checkHash(asset.prices.path);

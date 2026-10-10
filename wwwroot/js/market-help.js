@@ -27,8 +27,12 @@
         date:'Navržené kalendářní období, ne pokyn k okamžitému vstupu. Historicky používáme první dostupnou závěrečnou cenu od začátku a poslední nejpozději v konci. Před budoucím vstupem znovu ověř cenu a COT.',
         forecast:'Datum, ke kterému byl historický COT posouzen. U budoucího období používáme výročí dne snapshotu, tedy stejný předstih jako dnes; ne až report známý při budoucím vstupu. Dostupnost reportu odhadujeme jako datum pozic +7 dní.',
         quality:'Filtr podkladů, nikoli záruka úspěchu. Oddělená kontrola vyžaduje všech 8 let, alespoň 62,5 % ve směru a souhlas mediánu. COT volba navíc požaduje alespoň 8 podobných případů ve zvolené historii a více než polovinu ve směru.',
-        sort:'Výchozí pořadí vychází ze starší výběrové historie, nikoli nejvyššího nového procenta. Řazení podle četnosti zvýhodňuje také náhodně silné malé vzorky. Dolní mez COT používá nejistotu četnosti; není to hodnocení ziskovosti.',
+        sort:'Automatický Screener výchozí řadí podle skóre podkladů 1–10. Pevné váhy zohledňují četnosti, malé vzorky a kvalitu dat; nejde o pravděpodobnost zisku. Jiné řazení mění pouze pořadí, ne období ani výsledky. Řazení podle samotné četnosti může zvýhodnit malé náhodně silné vzorky.',
         small:'Méně než 8 použitelných případů: velké procento by působilo přesněji, než data dovolují. Ukazujeme skutečné počty, ale procento nezvýrazňujeme. Tři úspěchy ze tří nejsou důkaz 100% šance příštího obchodu.',
+        ranking:'Skóre podkladů 1–10 je pořadí pro další průzkum, ne pravděpodobnost. 8 bodů NEZNAMENÁ 80% šanci zisku. Váhy: sezonalita 45 %, novější kontrola 25 %, podobný COT 20 %, kvalita dat 10 %. Malé vzorky tlumíme, omezení skóre zastropují. Složky se překrývají; procenta nenásobíme. Složení i stropy jsou v Detailu.',
+        limitedCot:'Ve zvolené historii je méně než 8 dokončených ročních období s podobným COT indexem. Neznamená to chybějící všechny COT reporty. Například 4 podobné případy z 10 let jsou jen podmnožina deseti let. Práh 8 není statistická záruka. Skóre má postupný strop 6 + počet / 8, nejvýše 7: jeden případ má strop 6,1 bodu, šest 6,8 po zaokrouhlení; filtr vzorek nezvětší.',
+        dataQuality:'Pokrytí skutečně použitelných cenových roků, osmi novějších kontrolních let, historických COT reportů a čerstvost dat. Každá ze čtyř kontrol má stejnou váhu uvnitř této 10% složky. Čerstvé ceny nejvýše 7 dní, dostupný současný COT nejvýše 21 dní od pozic a snapshot nejvýše 2 dny. Nehodnotí ziskovost ani riziko.',
+        contribution:'Příspěvek dané složky do váženého součtu 0–100 po utlumení malého vzorku a kontrole směru mediánu. Například 30 / 45 znamená 30 bodů z maximálních 45 pro sezonalitu. Není to 30% pravděpodobnost. Součet převádíme na 1–10 a následně uplatníme stropy uvedené pod tabulkou.',
         normalized:'Grafový index má základ 100 na začátku historického roku. Ukazuje relativní sezonální průběh, nikoli cenu instrumentu. Hodnota 101 znamená přibližně +1 % oproti základně. Není to COT index 0–100.',
         trimmed:'Průměr po odstranění právě jednoho nejlepšího a jednoho nejhoršího roku. Pomáhá poznat, zda výsledek nevytváří několik extrémů. Neodstraňuje všechny mimořádné situace ani negarantuje opakování.',
         difference:'Rozdíl četnosti podobného COT a základny se stejnými dostupnými roky, v procentních bodech. Například 70 % minus 60 % = +10 p. b. Popisný rozdíl není důkaz, že COT přidává obchodní výhodu.',
@@ -45,6 +49,7 @@
         ,analogMode:'Vybere podobnost poslednímu reportu nebo historické extrémy indexu 0–20 / 80–100. Následné výnosy za 2, 4 a 8 týdnů používají celý dostupný souběh cen a COT, ne pouze roky zobrazené v grafu. Extrém sám není nákupní ani prodejní signál.'
     };
     const rules=[
+        [/skóre podkladů|minimum skóre/, 'ranking'],[/jen \d+ podobn|žádný podobný případ|cot omezený/,'limitedCot'],[/kvalita dat/,'dataQuality'],[/příspěvek ze 100/,'contribution'],
         [/nejistot|95%/, 'uncertainty'],[/oddělená kontrola/,'validation'],[/podobný cot|podobnost|souběh/,'cot'],
         [/sezonalita ·|ve směru|četnost|win rate|kladné (roky|období|případy)|podíl kladných/,'frequency'],
         [/prostředních 50/,'middle'],[/medián/,'median'],[/bez nejlepšího/,'trimmed'],[/průměr/,'mean'],
@@ -59,7 +64,7 @@
     ];
     const controls={
         'seasonality-years':'history','opportunity-history':'history','confluence-history':'history',
-        'opportunity-direction':'direction','opportunity-horizon':'date','opportunity-quality':'quality','opportunity-sort':'sort',
+        'opportunity-direction':'direction','opportunity-horizon':'date','opportunity-quality':'quality','opportunity-sort':'sort','opportunity-min-score':'ranking',
         'confluence-direction':'direction','confluence-group':'groups','confluence-tolerance':'tolerance','confluence-lookback':'lookback',
         'confluence-market':'cot','cot-lookback':'lookback','cot-history':'chartHistory','cot-analog-group':'groups','cot-analog-mode':'analogMode',
         'cot-analog-tolerance':'tolerance','screener-lookback':'history','screener-minimum':'small','screener-sort':'sort'
@@ -110,12 +115,12 @@
                 const control=doc.getElementById(id),label=control?.closest('label');
                 if(label){const name=Array.from(label.childNodes).filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();attach(label,texts[key],name);}
             }
-            page.querySelectorAll('thead th,.opportunity-metric>span,.opportunity-metric>small,.confluence-tile>span,.seasonality-stats span,.reliability-metrics span,.seasonality-filter-group>span,#cot-summary dt,#cot-summary h3').forEach(node=>{
+            page.querySelectorAll('thead th,.opportunity-rank-title,.opportunity-metric>span,.opportunity-metric>small,.confluence-tile>span,.seasonality-stats span,.reliability-metrics span,.seasonality-filter-group>span,#cot-summary dt,#cot-summary h3').forEach(node=>{
                 const label=node.dataset.label||node.textContent.trim();attach(node,describe(label),label);
             });
             page.querySelectorAll('#opportunity-results td small,#opportunity-results td strong,.opportunity-metric>strong,.confluence-tile>strong').forEach(node=>{
                 const label=node.textContent.trim();
-                if(label.startsWith('Nejistota četnosti')||label==='Málo dat')attach(node,describe(label),label);
+                if(label.startsWith('Nejistota četnosti')||label==='Málo dat'||/^(Jen \d+ podobn|Žádný podobný případ|COT omezený)/.test(label))attach(node,describe(label),label);
             });
             if(active&&!active.isConnected)hide();
         }
