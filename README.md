@@ -15,6 +15,10 @@ Vygenerovaný web nepotřebuje běžící .NET, App Service, API ani SQL. Razor 
 
 ### Ovládání Screeneru
 
+Společný filtr **Typ trhu** funguje v automatickém i pevném režimu: Indexy / Komodity / Forex / ETF / Krypto / Akcie. Komodity lze dále zúžit na maso a dobytek, mléčné produkty, obiloviny a olejniny, ostatní zemědělské, kovy, energie a dřevo. Metadata jsou součástí katalogu i obou kompaktních snapshotů; filtr nenačítá další cenové historie ani SQL. DXY je index, XAUUSD komodita; ETF zůstávají ETF bez ohledu na jejich COT proxy. „Ukázat nejlepší podklady“ zachovává zvolený typ trhu. Skrytá skupina komodit neomezuje jiné typy trhu. Filtry a jejich hodnoty zůstávají v PNG exportu.
+
+Live Cattle / skot na porážku, Feeder Cattle / skot na výkrm a Lean Hogs / vepřové lze hledat také přes „maso“, „dobytek“, „skot“, „vepřové“ a LE / GF / HE. Nové komodity: MILK (DC=F, Class III, CFTC 052641), BUTTER (CB=F, cash settled, 050642), CHEESE (CSC=F, cash settled, 063642), KCWHEAT (KE=F, Kansas HRW, 001612). Yahoo chart API ověřeno 10. 10. 2026: historie začínají v letech 2006 / 2005 / 2010 / 2000. Kódy a samostatné futures-only historie ověřeny proti [primárnímu datasetu CFTC Legacy Futures Only](https://publicreporting.cftc.gov/Commitments-of-Traders/Legacy-Futures-Only/6dca-aqww). Nejde o maloobchodní ceny potravin; kontinuální futures mohou obsahovat vliv rolování. Kratší historie může instrument vyřadit z automatického hledání, ale ne z vyhledávání Seasonality a pevného režimu. Test: `node Tools/asset-category-checks.cjs`.
+
 Screener podporuje řazení kliknutím na hlavičky a kombinované filtry sloupců (číselné minimum/maximum, hledání instrumentu, dostupnost COT). COT se řadí podle dostupnosti, nikoli podle nesrovnatelných indexů různých měn. Fotoaparát uloží PNG s obdobím, filtry a prvními 20 výsledky v aktuálním řazení; počet zachycených výsledků je uvedený v obrázku.
 
 Výchozí filtr Screeneru je „S COT daty“; volba „Vše“ zpřístupní i čistě sezonální instrumenty. Jde o dostupnost dat, ne vyhodnocení shody COT a sezonality.
@@ -53,6 +57,8 @@ node Tools/serve-static.cjs artifacts/static-site 54129
 ```
 
 Otevři `http://127.0.0.1:54129/`. Poslední příkaz pouze servíruje soubory, nečte SQL a nevyžaduje .NET. Vygenerovaná data jsou ignorovaná Gitem, nikoli commitovaná do historie repozitáře. Pro nasazení se přenáší obsah exportu, ne ASP.NET aplikace.
+
+Při rozšíření katalogu lze doplnit pouze chybějící cenové historie pomocí `dotnet run --project SeasonalityApp.csproj -c Release --no-build -- --update-missing-once`. Existující cenové řady se tím znovu nestahují. COT doplní běžný `--update-cot-once`; denní/push workflow používá obvyklou inkrementální aktualizaci všech trhů.
 
 ### Aktualizace a Azure Static Web Apps Free
 
@@ -159,10 +165,10 @@ Jde o průzkumnou analýzu, ne přesný point-in-time obchodní backtest: skute�
 
 Ověření: `node Tools/cot-analogs-checks.cjs` (prodleva, dokončené horizonty, nepřekrývání, mezery a kvartily).
 
-Společné vyhledávání instrumentu ovládá záložky Seasonality a COT. COT podporuje 91 instrumentů prostřednictvím 58 samostatných futures reportů. Vyhledávání přijímá i aliasy NQ → NDX, ES → SPX, YM → DJI, RTY → RUT, XAU / GC → XAUUSD, XAG / SI → SILVER, CL → WTI a NG → NATGAS; nevytváří duplicitní cenové instrumenty.
+Společné vyhledávání instrumentu ovládá záložky Seasonality a COT. COT podporuje 95 instrumentů prostřednictvím 62 samostatných futures reportů. Vyhledávání přijímá i aliasy NQ → NDX, ES → SPX, YM → DJI, RTY → RUT, XAU / GC → XAUUSD, XAG / SI → SILVER, CL → WTI a NG → NATGAS; nevytváří duplicitní cenové instrumenty.
 
 - 28 hlavních forexových párů a DXY. Cross pár zobrazuje reporty jednotlivých měn; USD používá explicitně označený proxy report US Dollar Index. COT není reportem o celém spotovém páru.
-- Všech 26 komodit v katalogu: kovy, energie, zemědělské plodiny, hospodářská zvířata a dřevo. Brent používá NYMEX Brent Last Day (06765T), nikoli jiný ICE kontrakt. Nový Lumber (058644) a historický Random Length Lumber / LBS (058643, poslední report 2023) jsou dvě přepínatelné řady; nespojují se.
+- Všech 30 komodit v katalogu: kovy, energie, zemědělské plodiny, hospodářská zvířata, mléčné produkty a dřevo. Brent používá NYMEX Brent Last Day (06765T), nikoli jiný ICE kontrakt. Nový Lumber (058644) a historický Random Length Lumber / LBS (058643, poslední report 2023) jsou dvě přepínatelné řady; nespojují se.
 - SPX, NDX (NQ), DJI, RUT, VIX a NIKKEI225: uvedené podkladové futures, nikoli hotovostní index. Nepřičítáme micro ani konsolidované kontrakty.
 - BTCUSD, ETHUSD, SOLUSD a XRPUSD: futures CME, nikoli pozice na spotových kryptoburzách. BNB nemá odpovídající report v použitém zdroji.
 - 26 ETF s jasně označeným proxy: SPY, QQQ, DIA, IWM, EFA, EEM, TLT, IEF, GLD, SLV, USO, UNG, CPER, WEAT, CORNETF, SOYBETF, CANE a devět SPDR sektorů. U sektorů jde o příslušné [S&P Select Sector futures](https://www.cmegroup.com/markets/equities/select-sectors.html), nikoli pozice v samotném ETF; TLT / IEF používají Ultra Treasury Bond / 10Y Note futures s odlišnou durací a splatnostmi. Některé sektorové reporty mají velmi krátkou nebo nepravidelnou historii.
@@ -187,7 +193,7 @@ Ověření parseru a výpočtů (bez databáze a bez dalších testovacích bal�
 dotnet run --project Tools/CotChecks/CotChecks.csproj -c Release
 ```
 
-Volitelná read-only kontrola všech 91 podporovaných instrumentů proti spuštěné aplikaci a reálně importovaným datům:
+Volitelná read-only kontrola všech 95 podporovaných instrumentů proti spuštěné aplikaci a reálně importovaným datům:
 
 ```powershell
 dotnet run --project Tools/CotChecks/CotChecks.csproj -c Release -- --live-url http://127.0.0.1:54128/

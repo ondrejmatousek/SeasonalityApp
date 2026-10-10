@@ -44,8 +44,10 @@
         if (!snapshot || document.getElementById('screener-manual-view')?.hidden) return;
         const [horizon,lookback,direction,minimum,sort,search] = controls.map(item=>item.value);
         const term = search.toLocaleLowerCase('cs-CZ').trim();
+        const assetClass=byId('screener-asset-class').value,commodityGroup=byId('screener-commodity-group').value;
         const results = snapshot.assets.map(asset=>({asset,stats:asset.windows[`${horizon}:${lookback}`]}))
             .filter(({asset,stats:s})=>s && s.count>=Number(minimum) && s.median!=null
+                && window.AssetCategories.matches(asset,assetClass,commodityGroup)
                 && (direction==='all' || (direction==='up' ? s.median>0 : s.median<0))
                 && (cotFilter.value==='all' || (cotFilter.value==='yes'?asset.cot.length>0:asset.cot.length===0))
                 && columnFilters.every(({field,bound,input})=>!Number.isFinite(input.valueAsNumber) || (bound==='min'?s[field]>=input.valueAsNumber:s[field]<=input.valueAsNumber))
@@ -89,7 +91,7 @@
         const end=new Date(snapshot.asOf+'T00:00:00Z');end.setUTCDate(end.getUTCDate()+Number(horizon));
         byId('screener-period').textContent=`Sledované období: ${date(snapshot.asOf)} – ${date(end.toISOString().slice(0,10))}. Tabulka porovnává stejné kalendářní období v minulých letech; letošní výsledek není zahrnutý.`;
         byId('screener-export').disabled=false;
-        status.textContent=`${results.length} instrumentů · od ${date(snapshot.asOf)} · ${horizon} kalendářních dní · data exportována ${new Date(snapshot.exportedAt).toLocaleString('cs-CZ')}.`;
+        status.textContent=`${window.AssetCategories.label(assetClass,commodityGroup)} · ${results.length} instrumentů · od ${date(snapshot.asOf)} · ${horizon} kalendářních dní · data exportována ${new Date(snapshot.exportedAt).toLocaleString('cs-CZ')}.`;
         if (!results.length) status.textContent+=' Žádný výsledek; zkus jiné filtry nebo nižší minimum let.';
     }
     async function load() {
@@ -103,5 +105,6 @@
         finally {pending=false;}
     }
     controls.forEach(control=>control.addEventListener(control.type==='search'?'input':'change',render));
+    root.addEventListener('screener-market-filter-change',render);
     root.addEventListener('screener-visible',()=>{if(!document.getElementById('screener-manual-view')?.hidden)load();});retry.onclick=load;
 })();

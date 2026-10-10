@@ -11,7 +11,7 @@ for(const asset of manifest.assets.filter(a=>a.cot.markets.length)){
     if(!contracts.has(market.contractCode))contracts.set(market.contractCode,JSON.parse(fs.readFileSync(path.join(dir,manifest.contracts[market.contractCode].files['52']))).reports);
     const prices=JSON.parse(fs.readFileSync(path.join(dir,asset.prices.path))).prices.map(([date,close])=>({date,close}));
     const analysis=model.analyzeAsset(prices,contracts.get(market.contractCode),asOf);
-    assets.push({key:asset.key,name:asset.name,aliases:asset.aliases,lastDate:asset.prices.lastDate,market,cotNote:asset.cot.note,...analysis});
+    assets.push({key:asset.key,name:asset.name,aliases:asset.aliases,assetClass:asset.assetClass,commodityGroup:asset.commodityGroup,lastDate:asset.prices.lastDate,market,cotNote:asset.cot.note,...analysis});
 }
 const payload=JSON.stringify({schemaVersion:1,modelVersion:'seasonal-extremes-v1',asOf,exportedAt:manifest.exportedAt,config:model.config,assets});
 const hash=crypto.createHash('sha256').update(payload).digest('hex').slice(0,20),url=`/data/screener/opportunities.${hash}.json`;

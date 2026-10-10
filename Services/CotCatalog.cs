@@ -28,6 +28,7 @@ public static class CotCatalog
         new("NATGAS", "Natural Gas · NYMEX", "023651"),
         new("CORN", "Corn · CBOT", "002602"),
         new("WHEAT", "Wheat SRW · CBOT", "001602"),
+        new("KCWHEAT", "KC Wheat HRW · CBOT", "001612"),
         new("SOYBEANS", "Soybeans · CBOT", "005602"),
         new("COFFEE", "Coffee C · ICE US", "083731"),
         new("SUGAR", "Sugar No. 11 · ICE US", "080732"),
@@ -42,6 +43,9 @@ public static class CotCatalog
         new("LIVECATTLE", "Live Cattle · CME", "057642"),
         new("FEEDERCATTLE", "Feeder Cattle · CME", "061641"),
         new("LEANHOGS", "Lean Hogs · CME", "054642"),
+        new("MILK", "Class III Milk · CME", "052641"),
+        new("BUTTER", "Butter Cash Settled · CME", "050642"),
+        new("CHEESE", "Cheese Cash Settled · CME", "063642"),
         new("ORANGEJUICE", "Frozen Concentrated Orange Juice · ICE US", "040701"),
         new("LUMBER", "Lumber · CME (nový kontrakt)", "058644"),
         new("LUMBEROLD", "Random Length Lumber · CME (historický)", "058643"),
@@ -82,7 +86,7 @@ public static class CotCatalog
             foreach (var asset in assets) result.Add(asset, new([market], note));
         }
         const string commodity = "Pozice v podkladových komoditních futures, nikoli v celém spotovém trhu. Každá řada patří uvedené burze a kontraktu.";
-        foreach (var key in new[] { "SILVER", "COPPER", "PLATINUM", "PALLADIUM", "WTI", "BRENT", "NATGAS", "CORN", "WHEAT", "SOYBEANS", "COFFEE", "SUGAR", "GASOLINE", "HEATINGOIL", "COTTON", "COCOA", "OATS", "RICE", "SOYBEANOIL", "SOYBEANMEAL", "LIVECATTLE", "FEEDERCATTLE", "LEANHOGS", "ORANGEJUICE" })
+        foreach (var key in new[] { "SILVER", "COPPER", "PLATINUM", "PALLADIUM", "WTI", "BRENT", "NATGAS", "CORN", "WHEAT", "KCWHEAT", "SOYBEANS", "COFFEE", "SUGAR", "GASOLINE", "HEATINGOIL", "COTTON", "COCOA", "OATS", "RICE", "SOYBEANOIL", "SOYBEANMEAL", "LIVECATTLE", "FEEDERCATTLE", "LEANHOGS", "MILK", "BUTTER", "CHEESE", "ORANGEJUICE" })
             Map(key, commodity, key);
         Map("GOLD", "Podkladové futures na zlato (COMEX); nejde o samostatný COT report spotového XAU/USD.", "XAUUSD");
         result.Add("LUMBER", new(["LUMBER", "LUMBEROLD"], "Nový Lumber a ukončený Random Length Lumber (LBS) jsou odlišné kontrakty. Historie se nespojuje; stará řada končí v roce 2023."));

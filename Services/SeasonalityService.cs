@@ -17,7 +17,14 @@ public sealed class SeasonalityService
     {
         "NDX" => ["NQ"], "SPX" => ["ES"], "DJI" => ["YM"], "RUT" => ["RTY"],
         "XAUUSD" => ["XAU", "GC"], "SILVER" => ["XAG", "SI"],
-        "WTI" => ["CL"], "NATGAS" => ["NG"], _ => []
+        "WTI" => ["CL"], "NATGAS" => ["NG"],
+        "LIVECATTLE" => ["LE", "LE=F", "Live Cattle", "dobytek", "skot", "hovězí", "maso"],
+        "FEEDERCATTLE" => ["GF", "GF=F", "Feeder Cattle", "dobytek", "skot", "hovězí", "maso"],
+        "LEANHOGS" => ["HE", "HE=F", "Lean Hogs", "prasata", "vepřové", "maso"],
+        "MILK" => ["DC", "DC=F", "Class III Milk", "mléko", "mleko"],
+        "BUTTER" => ["CB=F", "Cash-settled Butter", "máslo", "maslo"],
+        "CHEESE" => ["CSC", "CSC=F", "Cash-Settled Cheese", "sýr", "syr"],
+        "KCWHEAT" => ["KE", "KE=F", "KC HRW Wheat", "Kansas", "pšenice", "psenice"], _ => []
     };
 
     private static IReadOnlyList<SeasonalityAsset> BuildAssets()
@@ -63,6 +70,7 @@ public sealed class SeasonalityService
                 new("NATGAS", "Natural Gas", "NG=F", "ng.f"),
                 new("CORN", "Corn", "ZC=F", "zc.f"),
                 new("WHEAT", "Wheat", "ZW=F", "zw.f"),
+                new("KCWHEAT", "Pšenice Kansas HRW / KC Wheat", "KE=F", "ke.f"),
                 new("SOYBEANS", "Soybeans", "ZS=F", "zs.f"),
                 new("COFFEE", "Coffee", "KC=F", "kc.f"),
                 new("SUGAR", "Sugar", "SB=F", "sb.f"),
@@ -74,9 +82,12 @@ public sealed class SeasonalityService
                 new("RICE", "Rough Rice", "ZR=F", "zr.f"),
                 new("SOYBEANOIL", "Soybean Oil", "ZL=F", "zl.f"),
                 new("SOYBEANMEAL", "Soybean Meal", "ZM=F", "zm.f"),
-                new("LIVECATTLE", "Live Cattle", "LE=F", "le.f"),
-                new("FEEDERCATTLE", "Feeder Cattle", "GF=F", "gf.f"),
-                new("LEANHOGS", "Lean Hogs", "HE=F", "he.f"),
+                new("LIVECATTLE", "Live Cattle / Skot na porážku", "LE=F", "le.f"),
+                new("FEEDERCATTLE", "Feeder Cattle / Skot na výkrm", "GF=F", "gf.f"),
+                new("LEANHOGS", "Lean Hogs / Vepřové", "HE=F", "he.f"),
+                new("MILK", "Class III Milk / Mléko", "DC=F", "dc.f"),
+                new("BUTTER", "Cash-Settled Butter / Máslo", "CB=F", "cb.f"),
+                new("CHEESE", "Cash-Settled Cheese / Sýr", "CSC=F", "csc.f"),
                 new("ORANGEJUICE", "Orange Juice", "OJ=F", "oj.f"),
                 new("LUMBER", "Lumber", "LBS=F", "lbs.f"),
                 new("DBC", "Invesco DB Commodity Index Tracking Fund", "DBC", "dbc.us"),
@@ -554,9 +565,9 @@ public sealed class SeasonalityService
             throw new InvalidOperationException($"Duplicate seasonality asset key: {duplicateKey.Key}");
         }
 
-        if (assets.Length != 522)
+        if (assets.Length != 526)
         {
-            throw new InvalidOperationException($"Expected 522 seasonality assets, got {assets.Length}.");
+            throw new InvalidOperationException($"Expected 526 seasonality assets, got {assets.Length}.");
         }
 
         return assets;

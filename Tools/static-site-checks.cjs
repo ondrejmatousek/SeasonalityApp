@@ -79,6 +79,8 @@ function exportChecks(directory) {
         for (let i=0;i<screener.assets.length;i++) {
             const asset=screener.assets[i],catalog=manifest.assets[i];
             assert.equal(asset.key,catalog.key);
+            assert.equal(asset.assetClass,catalog.assetClass);
+            assert.equal(asset.commodityGroup,catalog.commodityGroup);
             const prices=read(catalog.prices.path).prices;
             for(const days of [14,30,60])for(const years of ['10','20','all'])
                 assert.deepEqual(asset.windows[`${days}:${years}`],summarize(prices,screener.asOf,days,years));
@@ -101,6 +103,8 @@ function exportChecks(directory) {
         for(const asset of snapshot.assets){
             assert.ok(!unique.has(asset.key));unique.add(asset.key);
             const catalog=manifest.assets.find(a=>a.key===asset.key);assert.ok(catalog);
+            assert.equal(asset.assetClass,catalog.assetClass);
+            assert.equal(asset.commodityGroup,catalog.commodityGroup);
             const market=catalog.cot.markets.find(m=>!m.isDollarIndex)||catalog.cot.markets[0];
             assert.deepEqual(asset.market,market,'Primary COT market cannot be selected from outcomes');
             const reports=read(manifest.contracts[market.contractCode].files['52']).reports;
@@ -123,6 +127,10 @@ function exportChecks(directory) {
         console.log(`Daily opportunity export checked: ${unique.size} instruments, training/validation parity, primary markets, COT forecast timing and ranking for all 5/10/20-year histories.`);
     }
     for (const asset of manifest.assets) {
+        const categories=require('../wwwroot/js/asset-categories.js');
+        assert.ok(asset.assetClass in categories.classes && asset.assetClass!=='all','Every exported asset needs a known class');
+        assert.equal(asset.assetClass==='commodity',asset.commodityGroup!=null,'Only commodities have a subgroup');
+        if(asset.commodityGroup)assert.ok(asset.commodityGroup in categories.groups && asset.commodityGroup!=='all');
         const payload = checkHash(asset.prices.path);
         assert.equal(payload.assetKey, asset.key);
         assert.equal(payload.prices.length, asset.prices.count);
@@ -166,6 +174,10 @@ function exportChecks(directory) {
         }
     }
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    for(const key of ['MILK','BUTTER','CHEESE','KCWHEAT','LIVECATTLE','FEEDERCATTLE','LEANHOGS']) {
+        const asset=manifest.assets.find(a=>a.key===key);assert.ok(asset);
+        assert.ok(asset.prices.count>1000 && asset.cot.markets.length===1,'Food/agricultural instruments require real prices and a dedicated COT contract: '+key);
+    }
     assert.ok(html.includes('id="static-market-manifest"'));
     assert.ok(!html.includes('@Url.') && !html.includes('@Model.') && !html.includes('asp-append-version='), 'HTML must be fully rendered');
     assert.ok(!html.includes('/Seasonality/Data') && !html.includes('/Seasonality/CotData'), 'No live API endpoint may be required');

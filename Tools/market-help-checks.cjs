@@ -8,5 +8,6 @@ assert.ok(help.texts.cot.includes('ne šest posledních let'));
 assert.ok(help.texts.bullish.includes('zpětný filtr'));
 assert.ok(help.texts.ranking.includes('NEZNAMENÁ 80%'));
 assert.ok(help.texts.limitedCot.includes('filtr vzorek nezvětší'));
+assert.ok(help.texts.assetClass.includes('ETF') && help.texts.commodityGroup.includes('Lean Hogs'));
 assert.equal(help.describe('Neznámá položka'),null);
 console.log('Market help checks passed: terminology, uncertainty, COT sample distinction and retrospective filters.');

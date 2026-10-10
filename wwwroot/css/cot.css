@@ -267,6 +267,9 @@
     .seasonality-interval-card .seasonality-date-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .seasonality-interval-card .seasonality-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
+.screener-market-controls { margin:12px 0 16px; align-items:end; }
+.screener-market-controls>label[hidden] { display:none; }
+.screener-market-hint { color:#9aa8b7; font-size:.8rem; max-width:540px; padding-bottom:6px; }
 @media(max-width:650px) {
     .seasonality-header { grid-template-columns:minmax(0,1fr); }
     .market-view-tabs { justify-self:start; max-width:100%; }

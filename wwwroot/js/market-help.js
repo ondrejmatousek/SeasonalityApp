@@ -4,6 +4,8 @@
     else help.mount(root.document);
 }(typeof globalThis==='object'?globalThis:this,function(){
     const texts={
+        assetClass:'Filtr typu instrumentu pro oba režimy Screeneru. Indexy zahrnují také DXY; měnové páry patří do Forexu. ETF jako QQQ nebo GLD zůstávají v kategorii ETF, i když používají COT podkladového indexu nebo komodity. Filtr nemění skóre, historii ani výběr období. Automatický režim ukazuje jen trhy s COT, dostatečnou starší cenovou historií a vhodným sezonálním obdobím.',
+        commodityGroup:'Zúží komodity na konkrétní skupinu. Maso a dobytek: Live Cattle (skot na porážku), Feeder Cattle (skot na výkrm) a Lean Hogs (vepřové). Mléčné produkty: mléko Class III, hotovostně vypořádané máslo a sýr. Jsou to futures, nikoli maloobchodní ceny potravin. Pokud chybí vhodné automatické období, instrument stále najdeš přes vyhledávání v Seasonality.',
         history:'Posledních 5, 10 nebo 20 dokončených kalendářních let. Letošní rok a neúplná období se vynechávají. Chybějící roky nenahrazujeme staršími. Sezonalita a COT mají stejný rozsah historie, ale podobný COT může být jen v některých letech.',
         frequency:'Historická četnost: počet období, která skončila ve zvoleném směru, dělený počtem dokončených období. Například 7 z 10 = 70 %. Nulová změna se nepočítá jako úspěch. Nejde o ověřenou pravděpodobnost budoucího zisku.',
         uncertainty:'95% interval spolehlivosti (Wilson) ukazuje orientační statistickou nejistotu historické četnosti. Například 70 % z deseti let má velmi široké pásmo. Čím méně případů, tím méně jistý výsledek. Není to 95% šance zisku ani rozpětí budoucího výnosu; tržní roky navíc nemusí být nezávislé.',
@@ -63,6 +65,7 @@
         [/^max růst$/,'rise'],[/^max pokles$/,'fall'],[/^pozice k$|datum pozic/,'positionDate'],[/^výnos$|změna ceny/,'direction'],[/^cot komerční/,'index']
     ];
     const controls={
+        'screener-asset-class':'assetClass','screener-commodity-group':'commodityGroup',
         'seasonality-years':'history','opportunity-history':'history','confluence-history':'history',
         'opportunity-direction':'direction','opportunity-horizon':'date','opportunity-quality':'quality','opportunity-sort':'sort','opportunity-min-score':'ranking',
         'confluence-direction':'direction','confluence-group':'groups','confluence-tolerance':'tolerance','confluence-lookback':'lookback',

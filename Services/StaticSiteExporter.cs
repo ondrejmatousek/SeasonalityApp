@@ -87,6 +87,7 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
             assets = assets.Select(asset => new
             {
                 key = asset.Key, name = asset.Name, aliases = SeasonalityService.SearchAliases(asset.Key),
+                assetClass = AssetClassification.ClassFor(asset), commodityGroup = AssetClassification.CommodityGroupFor(asset.Key),
                 prices = prices[asset.Key],
                 cot = new
                 {

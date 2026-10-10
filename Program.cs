@@ -53,6 +53,11 @@ using (var scope = app.Services.CreateScope())
     }
     await db.Database.EnsureCreatedAsync();
     await db.EnsureCotSchemaAsync();
+    if (args.Contains("--update-missing-once", StringComparer.OrdinalIgnoreCase))
+    {
+        await scope.ServiceProvider.GetRequiredService<SeasonalityService>().UpdateMissingAsync();
+        return;
+    }
     if (args.Contains("--update-cot-once", StringComparer.OrdinalIgnoreCase))
     {
         await scope.ServiceProvider.GetRequiredService<CotService>().UpdateAsync();

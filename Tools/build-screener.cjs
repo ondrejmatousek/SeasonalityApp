@@ -23,7 +23,7 @@ const assets = manifest.assets.map(asset => {
     const windows = {};
     for (const days of [14,30,60]) for (const lookback of ['10','20','all'])
         windows[`${days}:${lookback}`] = summarize(prices, asOf, days, lookback);
-    return {key:asset.key,name:asset.name,aliases:asset.aliases,lastDate:asset.prices.lastDate,windows,cot:asset.cot.markets.map(latestCot),cotNote:asset.cot.note};
+    return {key:asset.key,name:asset.name,aliases:asset.aliases,assetClass:asset.assetClass,commodityGroup:asset.commodityGroup,lastDate:asset.prices.lastDate,windows,cot:asset.cot.markets.map(latestCot),cotNote:asset.cot.note};
 });
 const payload = JSON.stringify({schemaVersion:1,asOf,exportedAt:manifest.exportedAt,assets});
 const hash = crypto.createHash('sha256').update(payload).digest('hex').slice(0,20);

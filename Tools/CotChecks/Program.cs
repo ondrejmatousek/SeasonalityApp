@@ -42,7 +42,20 @@ Check(CotService.MarketsForAsset("LUMBER").Select(x => x.ContractCode).SequenceE
 Check(CotService.MarketsForAsset("xauusd").Single().Key == "GOLD", "Mapping must be case-insensitive.");
 Check(CotService.Markets.Count == CotService.Markets.Select(x => x.ContractCode).Distinct().Count(), "Each contract must be imported only once.");
 var supported = SeasonalityService.Assets.Where(x => CotService.MarketsForAsset(x.Key).Count > 0).ToArray();
-Check(supported.Length == 91, "Expected COT coverage: 28 FX + DXY + 26 commodities + 6 indices + 4 crypto + 26 ETF.");
+Check(supported.Length == 95, "Expected COT coverage: 28 FX + DXY + 30 commodities + 6 indices + 4 crypto + 26 ETF.");
+foreach (var (key, code) in new[] { ("MILK", "052641"), ("BUTTER", "050642"), ("CHEESE", "063642"), ("KCWHEAT", "001612"),
+    ("LIVECATTLE", "057642"), ("FEEDERCATTLE", "061641"), ("LEANHOGS", "054642") })
+    Check(CotService.MarketsForAsset(key).Single().ContractCode == code, "Agricultural contracts must map exactly: " + key);
+foreach (var asset in SeasonalityService.Assets)
+{
+    var category = AssetClassification.ClassFor(asset);
+    Check(new[] { "index", "commodity", "forex", "etf", "crypto", "equity" }.Contains(category), "Every asset needs a known class.");
+    Check((category == "commodity") == (AssetClassification.CommodityGroupFor(asset.Key) is not null), "Only commodity instruments need a commodity group.");
+}
+foreach (var (key, category) in new[] { ("EURUSD", "forex"), ("GBPCAD", "forex"), ("DXY", "index"), ("NDX", "index"),
+    ("QQQ", "etf"), ("GLD", "etf"), ("XAUUSD", "commodity"), ("MILK", "commodity"), ("BTCUSD", "crypto"), ("AAPL", "equity") })
+    Check(AssetClassification.ClassFor(SeasonalityService.Assets.Single(a => a.Key == key)) == category, "Classify the instrument, not its COT proxy: " + key);
+Check(SeasonalityService.SearchAliases("LEANHOGS").Contains("maso") && SeasonalityService.SearchAliases("MILK").Contains("mléko"), "Food markets must be discoverable in Czech.");
 Check(supported.SelectMany(x => CotService.MarketsForAsset(x.Key)).Select(x => x.Key).Distinct().Count() == CotService.Markets.Count, "Do not import unused markets.");
 foreach (var asset in SeasonalityService.Assets.Where(x => x.YahooSymbol.EndsWith("=F")))
     Check(CotService.MarketsForAsset(asset.Key).Count > 0, "Every catalog commodity futures asset must have a mapping: " + asset.Key);

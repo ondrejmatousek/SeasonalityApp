@@ -66,7 +66,9 @@
         const direction=byId('opportunity-direction').value,horizon=Number(byId('opportunity-horizon').value);
         const quality=byId('opportunity-quality').value,sort=byId('opportunity-sort').value,query=byId('opportunity-search').value.trim().toLocaleLowerCase('cs');
         const minimum=Number(byId('opportunity-min-score').value);
-        let rows=snapshot.assets.flatMap(a=>a.candidates.filter(c=>display(c)).map(c=>({a,c,r:ranking(a,c)})));
+        const assetClass=byId('screener-asset-class').value,commodityGroup=byId('screener-commodity-group').value;
+        const pool=snapshot.assets.filter(a=>window.AssetCategories.matches(a,assetClass,commodityGroup));
+        let rows=pool.flatMap(a=>a.candidates.filter(c=>display(c)).map(c=>({a,c,r:ranking(a,c)})));
         rows=rows.filter(({a,c,r})=>r.value>=minimum&&(direction==='all'||c.direction===direction)&&c.startsIn<=horizon&&
             (!query||[a.key,a.name,...(a.aliases||[])].join(' ').toLocaleLowerCase('cs').includes(query))&&
             (quality==='all'||(!priceStale(a)&&fresh(c.validation)&&!c.warnings.includes('validation-disagrees')&&
@@ -97,8 +99,8 @@
         }
         if(!rows.length){const tr=element('tr');const td=cell(tr,'Žádná příležitost pro tyto filtry. Sniž minimum skóre nebo zvol „Vše · včetně upozornění“.');td.colSpan=9;fragment.append(tr);}
         body.replaceChildren(fragment);
-        const short=snapshot.assets.filter(a=>a.reason==='short-history').length,none=snapshot.assets.filter(a=>a.reason==='no-window').length;
-        status.textContent=`Přepočet ${date(snapshot.asOf)} · posledních ${history()} dokončených let (${Number(snapshot.asOf.slice(0,4))-history()}–${Number(snapshot.asOf.slice(0,4))-1}) pro oba sloupce · ${rows.length} období · ${snapshot.assets.length} instrumentů s COT. ${short} nemá dost starší historie, ${none} nemá vhodný extrém. ${sort==='score'?'Řazeno podle skóre podkladů, nikoli pravděpodobnosti zisku.':'Jiné řazení než podle skóre.'}`;
+        const short=pool.filter(a=>a.reason==='short-history').length,none=pool.filter(a=>a.reason==='no-window').length;
+        status.textContent=`${window.AssetCategories.label(assetClass,commodityGroup)} · přepočet ${date(snapshot.asOf)} · posledních ${history()} dokončených let (${Number(snapshot.asOf.slice(0,4))-history()}–${Number(snapshot.asOf.slice(0,4))-1}) pro oba sloupce · ${rows.length} období · ${pool.length} instrumentů s COT v této kategorii. ${short} nemá dost starší historie, ${none} nemá vhodný extrém. ${sort==='score'?'Řazeno podle skóre podkladů, nikoli pravděpodobnosti zisku.':'Jiné řazení než podle skóre.'}`;
         const now=today();
         if((Date.parse(now)-Date.parse(snapshot.asOf))/86400000>2)status.textContent+=' Upozornění: přehled je starší než 2 dny; aktuální data ověř.';
         byId('screener-export').disabled=false;
@@ -217,5 +219,6 @@
         if(id!=='seasonality-years')byId('seasonality-years').dispatchEvent(new Event('change'));
         closeDetail();render();
     });
+    root.addEventListener('screener-market-filter-change',render);
     root.addEventListener('screener-visible',load);retry.onclick=load;
 })();
