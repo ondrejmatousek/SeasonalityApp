@@ -102,6 +102,14 @@ V Azure Portal vytvoř SQL Database na SQL serveru s nejnižší dostupnou bezpl
 
 ## COT
 
+### Podobné historické COT situace
+
+V záložce COT je analýza následných cenových výnosů zvoleného instrumentu za 2/4/8 týdnů. Volby: skupina, podobnost poslednímu indexu ±5/10/15 bodů nebo extrémy 0–20 a 80–100. Používá celý dostupný souběh cen a reportů, historické indexy z vybraného lookbacku a společný vzorek kompletních horizontů. Chronologický výběr vynechává překrývající se 8týdenní okna. Tabulka ukazuje počet případů, medián, průměr, kladné případy, kvartily, minimum/maximum a jednotlivé případy.
+
+Jde o průzkumnou analýzu, ne přesný point-in-time obchodní backtest: skutečná historická data zveřejnění nejsou v snapshotu. Vstupní close je první dostupná cena nejdříve 7 dní po datu pozic; mimořádná zpoždění nejsou garantovaně ošetřená. Cena cíle je první od 14/28/56 dní po vstupu s tolerancí nejvýše 4 dní. Cenové mezery přes 7 dní, neplatné ceny a neúplné horizonty vyřazuje. FX/proxy COT se nepřevádí na syntetický párový signál. Srovnává cenu vybraného instrumentu, ne futures P&L. Nezahrnuje obchodní náklady. Funguje v prohlížeči nad lazy JSON bez SQL dotazů při návštěvě.
+
+Ověření: `node Tools/cot-analogs-checks.cjs` (prodleva, dokončené horizonty, nepřekrývání, mezery a kvartily).
+
 Společné vyhledávání instrumentu ovládá záložky Seasonality a COT. COT podporuje 91 instrumentů prostřednictvím 58 samostatných futures reportů. Vyhledávání přijímá i aliasy NQ → NDX, ES → SPX, YM → DJI, RTY → RUT, XAU / GC → XAUUSD, XAG / SI → SILVER, CL → WTI a NG → NATGAS; nevytváří duplicitní cenové instrumenty.
 
 - 28 hlavních forexových párů a DXY. Cross pár zobrazuje reporty jednotlivých měn; USD používá explicitně označený proxy report US Dollar Index. COT není reportem o celém spotovém páru.

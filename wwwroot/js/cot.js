@@ -25,6 +25,8 @@
     let currency = null;
     let request = null;
     let points = [];
+    let analogVersion = 0;
+    const analogPriceCache = new Map();
     const number = value => value == null ? '—' : new Intl.NumberFormat('cs-CZ').format(value);
     const signed = value => value == null ? '—' : `${value > 0 ? '+' : ''}${number(value)}`;
     const dateLabel = value => new Date(`${value}T00:00:00Z`).toLocaleDateString('cs-CZ', { timeZone: 'UTC' });
@@ -70,6 +72,7 @@
 
     async function load(force = false) {
         if (!asset || panel.hidden) return;
+        analogVersion++;
         const key = `${asset.key}:${lookback.value}`;
         request?.abort();
         request = new AbortController();
@@ -168,6 +171,7 @@
         cutoff.setUTCFullYear(cutoff.getUTCFullYear() - Number(history.value));
         points = history.value === 'all' ? reports : reports.filter(row => Date.parse(`${row.date}T00:00:00Z`) >= cutoff.getTime());
         renderSummary(latest);
+        renderAnalogs();
         draw();
         const table = byId('cot-report-table');
         table.replaceChildren();
@@ -179,6 +183,55 @@
                 signed(row.nonCommercial.change), number(row.openInterest)].forEach(value => tr.append(element('td', value)));
             table.append(tr);
         });
+    }
+
+    async function renderAnalogs() {
+        const selectedMarket=market();
+        if(!selectedMarket||!asset)return;
+        const version=++analogVersion,key=asset.key,name=asset.name;
+        const resultNode=byId('cot-analog-results'),message=byId('cot-analog-status');
+        const mode=byId('cot-analog-mode').value;
+        byId('cot-analog-tolerance').disabled=mode!=='latest';
+        resultNode.replaceChildren();message.textContent='Porovnávám historické COT a ceny…';
+        try {
+            if(!analogPriceCache.has(key)) {
+                const pending=(async()=>{
+                    if(window.StaticMarketData)return (await window.StaticMarketData.prices(key)).prices;
+                    const url=new URL(root.dataset.dataUrl,window.location.href);url.searchParams.set('assetKey',key);
+                    const response=await fetch(url,{headers:{Accept:'application/json'}});
+                    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+                    return (await response.json()).prices;
+                })();
+                analogPriceCache.set(key,pending);
+                pending.catch(()=>{if(analogPriceCache.get(key)===pending)analogPriceCache.delete(key);});
+            }
+            const prices=await analogPriceCache.get(key);
+            if(version!==analogVersion||panel.hidden)return;
+            const asOf=(window.StaticMarketData?.exportedAt||new Date().toISOString()).slice(0,10);
+            const result=window.CotAnalogs.analyze(selectedMarket.reports,prices,{group:byId('cot-analog-group').value,
+                mode,tolerance:Number(byId('cot-analog-tolerance').value),asOf});
+            if(!result.range){message.textContent='Pro poslední report není index této skupiny dostupný. Zkus jinou skupinu nebo historický extrém.';return;}
+            const n=result.samples.length;
+            message.textContent=`COT ${selectedMarket.name} → výnos ceny ${name}. Index ${number(result.range[0])}–${number(result.range[1])}, lookback ${lookback.value} reportů. Reference ${dateLabel(result.referenceDate)}${mode==='latest'?` · index ${number(result.target)}`:''}. ${n} nepřekrývajících se případů z ${result.candidates} podobných reportů. Ceny ${result.firstPriceDate?dateLabel(result.firstPriceDate):'—'} až ${result.lastPriceDate?dateLabel(result.lastPriceDate):'—'}.`;
+            const caution=element('p',n<8?'Malý vzorek: méně než 8 případů. Výsledky mohou být náhodné.':'Historické srovnání, nikoli nákupní / prodejní signál.');
+            caution.className='cot-analog-caution';resultNode.append(caution);
+            if(!n){resultNode.append(element('p','Žádný případ s kompletními cenami pro všechny tři horizonty. Zkus širší toleranci nebo jinou skupinu / situaci.'));return;}
+            const pct=value=>value==null?'—':`${value>0?'+':''}${new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:2}).format(value)} %`;
+            const wrap=element('div',null,'seasonality-table-wrap'),table=element('table'),head=element('thead'),heading=element('tr');
+            ['Po vstupu','Případů','Medián','Průměr','Kladné případy','Prostředních 50 %','Minimum / maximum'].forEach(t=>heading.append(element('th',t)));
+            head.append(heading);table.append(head);const body=element('tbody');
+            result.horizons.forEach(h=>{const row=element('tr');[`${h.weeks} týdny`,number(h.count),pct(h.median),pct(h.mean),`${number(Math.round(h.positive))} %`,`${pct(h.q25)} až ${pct(h.q75)}`,`${pct(h.min)} / ${pct(h.max)}`].forEach(t=>row.append(element('td',t)));body.append(row);});
+            table.append(body);wrap.append(table);resultNode.append(wrap);
+            const cases=element('details'),summary=element('summary',`Zobrazit jednotlivé případy (${n})`),caseWrap=element('div',null,'seasonality-table-wrap'),caseTable=element('table'),caseHead=element('thead'),caseHeading=element('tr');
+            ['Datum pozic','Index','Vstupní close','Za 2 týdny','Za 4 týdny','Za 8 týdnů','Konec 8 týdnů'].forEach(t=>caseHeading.append(element('th',t)));
+            caseHead.append(caseHeading);caseTable.append(caseHead);const caseBody=element('tbody');
+            [...result.samples].reverse().forEach(s=>{const row=element('tr');[dateLabel(s.reportDate),number(s.index),dateLabel(s.entryDate),pct(s.outcomes[2].returnPct),pct(s.outcomes[4].returnPct),pct(s.outcomes[8].returnPct),dateLabel(s.outcomes[8].date)].forEach(t=>row.append(element('td',t)));caseBody.append(row);});
+            caseTable.append(caseBody);caseWrap.append(caseTable);cases.append(summary,caseWrap);resultNode.append(cases);
+        } catch(error) {
+            if(version!==analogVersion)return;
+            message.textContent='Historické ceny se nepodařilo načíst. Zkus analýzu znovu.';
+            const button=element('button','Zkusit znovu');button.type='button';button.onclick=renderAnalogs;resultNode.append(button);
+        }
     }
 
     function renderSummary(latest) {
@@ -336,11 +389,13 @@
     root.addEventListener('asset-change', event => {
         if (event.detail?.key === asset?.key) return;
         asset = event.detail;
+        analogVersion++;
         request?.abort();
         tooltip.hidden = true;
         load();
     });
     history.onchange = render;
+    ['cot-analog-group','cot-analog-mode','cot-analog-tolerance'].forEach(id=>byId(id).onchange=renderAnalogs);
     lookback.onchange = () => load();
     retry.onclick = () => load(true);
     indexButtons.forEach(button => {
