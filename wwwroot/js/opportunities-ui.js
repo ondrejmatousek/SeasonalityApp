@@ -160,17 +160,17 @@
         const method=element('details');method.append(element('summary','Jak skóre počítáme a co nehodnotí?'),element('p','Četnosti tlumíme neutrálními přídavky: sezonalita a kontrola (úspěchy +2) / (případy +4), COT (úspěchy +4) / (případy +8). Přídavky nejsou skutečné roky. Medián proti směru omezuje příslušnou podporu na 50 ze 100. Chybějící COT nepřesouvá váhu do jiné složky. Kvalita je průměr pokrytí cen, kontrolních let, historického COT a čerstvosti. Součet příspěvků 0–100 převádíme jako 1 + 9 × součet / 100, poté uplatníme stropy a zaokrouhlíme.'));
         method.append(element('p','Složky se překrývají a nejsou nezávislé. COT sleduje výnosy při podobném komerčním reportu, ne počet shodných křivek. Skóre nehodnotí náklady, poměr zisku k riziku, vstup, stop-loss ani ziskovost. Typický pohyb proti směru a rozptyl zkontroluj zvlášť. Nezvyšuj číslo přepínáním historie a filtrů; to může zvýhodnit náhodu.'));section.append(method);return section;
     }
-    function curve(a,c){
+    function curve(a,c,values,label){
         const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
-        svg.setAttribute('viewBox','0 0 1000 270');svg.setAttribute('role','img');svg.setAttribute('aria-label',`${a.key}: vyhlazená starší sezonální křivka s vyznačeným obdobím`);
+        svg.setAttribute('viewBox','0 0 1000 270');svg.setAttribute('role','img');svg.setAttribute('aria-label',`${a.key}: ${label} s vyznačeným obdobím`);
         const add=(tag,attrs,text)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;svg.append(e);return e;};
-        const low=Math.min(...a.curve),high=Math.max(...a.curve),pad=Math.max((high-low)*.12,.05),min=low-pad,max=high+pad;
+        const low=Math.min(...values),high=Math.max(...values),pad=Math.max((high-low)*.12,.05),min=low-pad,max=high+pad;
         const x=d=>60+d/364*920,y=v=>225-(v-min)/(max-min)*205;
         const shade=(start,end)=>add('rect',{x:x(start),y:20,width:x(end)-x(start),height:205,fill:'#24dfcf',opacity:'.12'});
         if(c.endDay<c.startDay){shade(c.startDay,364);shade(0,c.endDay);}else shade(c.startDay,c.endDay);
         for(let i=0;i<5;i++){const v=min+(max-min)*i/4;add('line',{x1:60,x2:980,y1:y(v),y2:y(v),stroke:'#ffffff14'});add('text',{x:50,y:y(v)+4,'text-anchor':'end',fill:'#9ba8b7','font-size':12},number(v));}
-        add('polyline',{points:a.curve.map((v,i)=>`${x(i)},${y(v)}`).join(' '),fill:'none',stroke:'#24dfcf','stroke-width':2});
-        for(const d of [c.startDay,c.endDay]){add('line',{x1:x(d),x2:x(d),y1:20,y2:225,stroke:'#c5e5e2','stroke-dasharray':'4 4'});add('circle',{cx:x(d),cy:y(a.curve[d]),r:4,fill:'#24dfcf',stroke:'#0b0f11','stroke-width':2});}
+        add('polyline',{points:values.map((v,i)=>`${x(i)},${y(v)}`).join(' '),fill:'none',stroke:'#24dfcf','stroke-width':2});
+        for(const d of [c.startDay,c.endDay]){add('line',{x1:x(d),x2:x(d),y1:20,y2:225,stroke:'#c5e5e2','stroke-dasharray':'4 4'});add('circle',{cx:x(d),cy:y(values[d]),r:4,fill:'#24dfcf',stroke:'#0b0f11','stroke-width':2});}
         const months=['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
         months.forEach((m,i)=>{const d=(Date.UTC(2001,i,1)-Date.UTC(2001,0,1))/86400000;add('text',{x:x(d),y:252,fill:'#9ba8b7','font-size':12},m);});
         return svg;
@@ -184,7 +184,24 @@
         const close=element('button','×');close.type='button';close.className='opportunity-dialog-close';close.setAttribute('aria-label','Zavřít detail');close.autofocus=true;close.onclick=closeDetail;head.append(title,close);detail.append(head);
         detail.append(element('p',note(a,c),'confluence-caution'));
         detail.append(scoreDetail(a,c,h));
-        detail.append(element('p',`Křivka pouze ze starších let ${a.trainingYears.join(', ')}. Tyrkysový výřez: ${c.direction==='up'?'od minima k prvnímu následujícímu maximu':'od maxima k prvnímu následujícímu minimu'} · ${c.days} dní. Vyhlazení jen pro výběr období; všechny výsledky níže jsou z původních cen.`,`opportunity-context`),curve(a,c));
+        const chartSection=element('section',undefined,'opportunity-detail-chart');
+        const chartLabel=element('label','Historie grafu ', 'opportunity-chart-choice'),chartHistory=element('select');
+        chartHistory.id='opportunity-chart-history';chartHistory.setAttribute('aria-label','Historie grafu v detailu');
+        chartHistory.title='Mění pouze zobrazenou křivku. Nemění interval, skóre, zvolenou historii statistik ani oddělenou kontrolu posledních 8 let.';
+        for(const [value,text] of [['all','Všechny dokončené roky'],['training','Starší historie použitá pro výběr']]){
+            const option=element('option',text);option.value=value;option.disabled=value==='all'&&!a.displayCurve;chartHistory.append(option);
+        }
+        chartHistory.value=a.displayCurve?'all':'training';chartLabel.append(chartHistory);
+        const chartCaption=element('p',undefined,'opportunity-context'),chartHost=element('div');
+        function renderDetailCurve(){
+            const all=chartHistory.value==='all',years=all?a.displayYears:a.trainingYears,values=all?a.displayCurve:a.curve;
+            chartCaption.textContent=all
+                ?`Křivka ze všech ${years.length} dokončených let (${years[0]}–${years.at(-1)}), včetně nejnovějších. Rok ${snapshot.asOf.slice(0,4)} je neúplný a není zahrnutý. Tyrkysový výřez označuje původně navržené období (${c.days} dní); na této křivce nemusí ležet přesně na minimu a maximu.`
+                :`Výběrová křivka ze starších let ${years.join(', ')}. Tyrkysový výřez: ${c.direction==='up'?'od minima k prvnímu následujícímu maximu':'od maxima k prvnímu následujícímu minimu'} · ${c.days} dní. Novější roky zůstaly oddělené pro kontrolu.`;
+            chartCaption.textContent+=' Graf je vyhlazený 7denním průměrem pro přehlednost. Přepnutí grafu nemění statistiky níže; ty jsou z původních cen.';
+            chartHost.replaceChildren(curve(a,c,values,all?'sezonální křivka ze všech dokončených let':'starší výběrová sezonální křivka'));
+        }
+        chartHistory.onchange=renderDetailCurve;renderDetailCurve();chartSection.append(chartLabel,chartCaption,chartHost);detail.append(chartSection);
         const cards=element('div',undefined,'opportunity-metrics');
         for(const [label,s,description] of [
             [`Sezonalita · posledních ${history()} let (${rangeText(h)})`,h.seasonal,'Dokončená roční období ve vybrané historii.'],

@@ -124,6 +124,8 @@
 .opportunity-sort-arrow { color:#8293a4; white-space:nowrap; }
 .opportunity-table th[aria-sort="ascending"] .opportunity-sort-arrow,.opportunity-table th[aria-sort="descending"] .opportunity-sort-arrow { color:#24dfcf; }
 .opportunity-sort-button:focus-visible { outline:2px solid #24dfcf; outline-offset:3px; }
+.opportunity-chart-choice { display:flex; flex-wrap:wrap; align-items:center; gap:10px; color:#c5d0da; font-size:.85rem; }
+.opportunity-chart-choice select { max-width:100%; padding:8px 10px; border:1px solid #ffffff24; border-radius:6px; background:#30383b; color:#dce3e9; }
 .opportunity-table strong { display:block; font-size:.92rem; margin-bottom:3px; }
 .opportunity-table .opportunity-score,.opportunity-score-heading>.opportunity-score { display:inline-block; font-size:1rem; white-space:nowrap; padding:5px 8px; border:1px solid #ffffff24; border-radius:6px; font-variant-numeric:tabular-nums; background:#ffffff05; }
 .opportunity-score.is-strong { color:#24dfcf; border-color:#24dfcf88; background:#24dfcf0d; }

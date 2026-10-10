@@ -9,9 +9,10 @@
     const anniversary=(s,year)=>{const d=new Date(time(s)),n=new Date(Date.UTC(year,d.getUTCMonth(),d.getUTCDate()));if(n.getUTCMonth()!==d.getUTCMonth())n.setUTCDate(0);return iso(n);};
     const lowerBound=(rows,date)=>{let lo=0,hi=rows.length;while(lo<hi){const mid=(lo+hi)>>>1;if(rows[mid].date<date)lo=mid+1;else hi=mid;}return lo;};
 
-    function seasonalCurve(rows,asOf){
+    function seasonalCurve(rows,asOf,options={}){
         const validationStart=Number(asOf.slice(0,4))-config.validationYears,groups=new Map();
-        for(const r of rows){const year=Number(r.date.slice(0,4));if(year>=validationStart)continue;
+        const cutoffYear=options.displayOnly?Number(asOf.slice(0,4)):validationStart;
+        for(const r of rows){const year=Number(r.date.slice(0,4));if(year>=cutoffYear)continue;
             if(!groups.has(year))groups.set(year,[]);groups.get(year).push(r);}
         const complete=[];
         for(const [year,group] of groups){
@@ -28,8 +29,8 @@
             complete.push({year,values});
         }
         complete.sort((a,b)=>a.year-b.year);
-        const selected=complete.slice(-config.maxTrainingYears),years=selected.map(s=>s.year);
-        if(years.length<config.minTrainingYears)return {years,validationStart,curve:null};
+        const selected=options.displayOnly?complete:complete.slice(-config.maxTrainingYears),years=selected.map(s=>s.year);
+        if(years.length<(options.displayOnly?1:config.minTrainingYears))return {years,validationStart,curve:null};
         const mean=Array.from({length:365},(_,d)=>selected.reduce((sum,s)=>sum+s.values[d],0)/selected.length);
         // Carry the average annual change through Dec/Jan, rather than inventing a reset extremum.
         const factor=mean[364]/mean[0];
@@ -104,7 +105,10 @@
         const rows=prices.filter(r=>Number.isFinite(time(r.date))&&r.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date));
         const cot=reports.filter(r=>Number.isFinite(time(r.date))&&r.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date));
         const discovered=candidates(rows,asOf),selected=[];
-        if(!discovered.curve)return {trainingYears:discovered.years,validationStart:discovered.validationStart,curve:null,candidates:[],reason:'short-history'};
+        // Read-only visual context: recent years MUST NOT change discovery or validation.
+        const display=seasonalCurve(rows,asOf,{displayOnly:true});
+        const displayFields={displayYears:display.years,displayCurve:display.curve?.map(v=>Math.round(v*10000)/10000)||null};
+        if(!discovered.curve)return {...displayFields,trainingYears:discovered.years,validationStart:discovered.validationStart,curve:null,candidates:[],reason:'short-history'};
         const validationYears=Array.from({length:config.validationYears},(_,i)=>discovered.validationStart+i);
         const cutoff=`${discovered.validationStart}-01-01`;
         // Selection sees ONLY training statistics. No COT or validation outcomes affect endpoints, direction or ranking.
@@ -160,7 +164,7 @@
                 cotReference:reference?{date:reference.date,index:reference.commercial.index}:null,cotRange:range,
                 score:best.score,warnings,cases:all.map(s=>covered.find(c=>c.year===s.year)||{...s,index:null,reportDate:null,matched:false,validation:s.year>=discovered.validationStart})});
         }
-        return {trainingYears:discovered.years,validationStart:discovered.validationStart,curve:discovered.curve.map(v=>Math.round(v*10000)/10000),
+        return {...displayFields,trainingYears:discovered.years,validationStart:discovered.validationStart,curve:discovered.curve.map(v=>Math.round(v*10000)/10000),
             candidates:selected,reason:selected.length?null:'no-window'};
     }
     return {config,analyzeAsset,seasonalCurve,candidates,historySamples,cotAt};

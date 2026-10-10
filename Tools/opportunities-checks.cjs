@@ -11,6 +11,9 @@ for(let year=1995;year<=2026;year++){
 const asOf='2026-10-10',result=model.analyzeAsset(prices,reports,asOf);
 assert.equal(result.validationStart,2018);assert.equal(result.trainingYears.length,20);
 assert.ok(result.trainingYears.every(y=>y<2018));assert.equal(result.candidates.length,2);
+assert.equal(result.displayYears.at(-1),2025);assert.equal(result.displayYears.length,31);
+assert.equal(result.displayCurve.length,365);assert.ok(result.displayCurve.every(Number.isFinite));
+assert.ok(!result.displayYears.includes(2026),'Current partial year never enters the display curve');
 for(const c of result.candidates){
     assert.ok(c.startsIn>=0&&c.startsIn<=60&&c.days>=14&&c.days<=60);
     assert.ok(c.training.count>=10&&c.validation.count===8);
@@ -33,6 +36,9 @@ for(const c of result.candidates){
 }
 const changed=model.analyzeAsset(prices.map(r=>r.date>='2018-01-01'?{...r,close:200-r.close}:r),reports,asOf);
 assert.deepEqual(changed.curve,result.curve,'Validation prices cannot change discovery curve');
+assert.notDeepEqual(changed.displayCurve,result.displayCurve,'Recent completed years update the visual curve');
+const currentChanged=model.analyzeAsset(prices.map(r=>r.date>='2026-01-01'?{...r,close:r.close*5}:r),reports,asOf);
+assert.deepEqual(currentChanged.displayCurve,result.displayCurve,'Partial current-year quotes cannot bias the full-year display');
 assert.deepEqual(changed.candidates.map(c=>[c.startDate,c.endDate,c.direction,c.score]),result.candidates.map(c=>[c.startDate,c.endDate,c.direction,c.score]),'Validation outcomes cannot select endpoints or directions');
 assert.ok(changed.candidates.some(c=>c.warnings.includes('validation-disagrees')));
 const future=model.analyzeAsset([...prices,{date:'2030-01-01',close:1}],reports,asOf);
