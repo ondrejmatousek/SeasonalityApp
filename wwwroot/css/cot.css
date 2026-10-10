@@ -44,9 +44,9 @@
 .seasonality-filter-group { width:auto; min-width:0; margin:0; font-size:.75rem; }
 .seasonality-years-list { flex-basis:100%; font-size:.75rem; padding-top:10px; }
 .seasonality-analysis-layout { display:contents; }
-.seasonality-analysis-main { grid-column:1; display:grid; gap:16px; min-width:0; align-self:start; }
+.seasonality-analysis-main { grid-column:1; display:grid; grid-template-rows:auto 1fr; gap:16px; min-width:0; }
 .seasonality-analysis-main>.seasonality-chart-panel { display:flex; flex-direction:column; }
-.seasonality-analysis-layout>.seasonality-interval-card { grid-column:2; grid-row:2; align-self:start; }
+.seasonality-analysis-layout>.seasonality-interval-card { grid-column:2; grid-row:2; }
 #seasonality-curve-view>.seasonality-detail-grid { grid-column:1 / -1; }
 .seasonality-chart-panel,.seasonality-detail-panel,.seasonality-interval-card { background:#15191c; padding:16px; min-width:0; }
 .seasonality-chart-head>div { text-align:left; min-width:0; }
@@ -98,7 +98,7 @@
 .screener-filter-hint { margin:0; color:#9ba8b7; font-size:.75rem; line-height:1.5; }
 #screener-clear-columns { color:#24dfcf; border:1px solid #ffffff24; border-radius:4px; background:#252b2e; padding:5px 8px; cursor:pointer; }
 .screener-methodology { line-height:1.6; border-top:1px solid #ffffff18; padding-top:12px; }
-.seasonality-reliability { align-self:start; padding:12px 16px; min-width:0; border:1px solid #ffffff18; border-radius:8px; background:#15191c; color:#dce3e9; }
+.seasonality-reliability { padding:12px 16px; min-width:0; border:1px solid #ffffff18; border-radius:8px; background:#15191c; color:#dce3e9; }
 .seasonality-reliability p { font-size:.8rem; line-height:1.6; color:#aeb9c7; margin:8px 0; }
 .reliability-heading { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; }
 .reliability-verdict { border:1px solid #ffffff24; border-radius:5px; padding:5px 9px; font-size:.78rem; color:#aeb9c7; }
