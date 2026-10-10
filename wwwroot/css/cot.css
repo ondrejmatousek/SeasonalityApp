@@ -120,6 +120,10 @@
 .opportunity-chart-link:hover { background:#24dfcf25; color:#7cfff2; }
 .opportunity-chart-link:focus-visible { outline:2px solid #24dfcf; outline-offset:3px; }
 .opportunity-table th:nth-child(8),.opportunity-table td:nth-child(8) { text-align:left; }
+.opportunity-table .opportunity-sort-button { padding:0; font:inherit; width:100%; cursor:pointer; }
+.opportunity-sort-arrow { color:#8293a4; white-space:nowrap; }
+.opportunity-table th[aria-sort="ascending"] .opportunity-sort-arrow,.opportunity-table th[aria-sort="descending"] .opportunity-sort-arrow { color:#24dfcf; }
+.opportunity-sort-button:focus-visible { outline:2px solid #24dfcf; outline-offset:3px; }
 .opportunity-table strong { display:block; font-size:.92rem; margin-bottom:3px; }
 .opportunity-table .opportunity-score,.opportunity-score-heading>.opportunity-score { display:inline-block; font-size:1rem; white-space:nowrap; padding:5px 8px; border:1px solid #ffffff24; border-radius:6px; font-variant-numeric:tabular-nums; background:#ffffff05; }
 .opportunity-score.is-strong { color:#24dfcf; border-color:#24dfcf88; background:#24dfcf0d; }

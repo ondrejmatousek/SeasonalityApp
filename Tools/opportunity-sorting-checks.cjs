@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),sorting=require('../wwwroot/js/opportunity-sorting.js');
+const row=(key,rate,count=10)=>({a:{key},r:{value:rate/10,uncapped:rate},c:{startsIn:100-rate,direction:'up',score:rate,histories:{10:{seasonal:{count:10,rate,medianAdverse:rate/100},cot:{count,rate,uncertainty:[rate-10,rate+10]}}}}});
+const rows=[row('BBB',80),row('AAA',60),row('CCC',100,3)],keys=(mode,input=rows)=>[...input].sort(sorting.comparator(mode,10,()=>'' )).map(r=>r.a.key);
+assert.deepEqual(keys('instrument:asc'),['AAA','BBB','CCC']);assert.deepEqual(keys('instrument:desc'),['CCC','BBB','AAA']);
+assert.deepEqual(keys('score'),['CCC','BBB','AAA']);assert.deepEqual(keys('score:asc'),['AAA','BBB','CCC']);
+assert.deepEqual(keys('date'),['CCC','BBB','AAA']);assert.deepEqual(keys('validation:desc'),['CCC','BBB','AAA']);
+assert.deepEqual(keys('cot-rate:asc'),['AAA','BBB','CCC']);assert.deepEqual(keys('cot-rate:desc'),['BBB','AAA','CCC']);
+assert.deepEqual(keys('cot'),['BBB','AAA','CCC']);assert.deepEqual(keys('adverse'),['AAA','BBB','CCC']);
+const missing=row('ZZZ',NaN);missing.c.histories[10].seasonal.rate=null;
+assert.equal(keys('validation:asc',[...rows,missing]).at(-1),'ZZZ');assert.equal(keys('validation:desc',[...rows,missing]).at(-1),'ZZZ');
+assert.deepEqual(sorting.selection('score'),{field:'score',direction:'desc'});assert.deepEqual(sorting.selection('date'),{field:'date',direction:'asc'});
+const ui=fs.readFileSync('wwwroot/js/opportunities-ui.js','utf8');assert.match(ui,/aria-sort/);assert.match(ui,/header.dataset.label=label/);
+assert.ok(fs.readFileSync('Views/Shared/_Layout.cshtml','utf8').indexOf('opportunity-sorting.js')<fs.readFileSync('Views/Shared/_Layout.cshtml','utf8').indexOf('opportunities-ui.js'));
+console.log('Opportunity sorting passed: both directions, existing presets, numeric rates, missing/COT-small samples last, and accessible headers.');

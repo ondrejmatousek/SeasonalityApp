@@ -46,6 +46,33 @@
         'stale-snapshot':'Přehled je starší než 2 dny nebo má budoucí datum: strop 5.'
     };
     const limitedCot=n=>n===0?'Žádný podobný případ':`Jen ${n} podobn${n===1?'ý případ':n<5?'é případy':'ých případů'}`;
+    const sortHeaders=[];
+    const sortFields=['instrument','score','date','direction','validation','cot-rate','adverse','note'];
+    document.querySelectorAll('.opportunity-table thead th').forEach((header,index)=>{
+        const field=sortFields[index];if(!field)return;
+        const label=header.textContent.trim();header.dataset.label=label;header.scope='col';
+        const button=element('button',undefined,'screener-sort-button opportunity-sort-button');button.type='button';
+        const caption=element('span',label),arrow=element('span',' ↕','opportunity-sort-arrow');arrow.setAttribute('aria-hidden','true');button.append(caption,arrow);
+        button.title=field==='cot-rate'?'Řadit podle zobrazené historické četnosti COT. Méně než 8 případů zůstává na konci.':'Kliknutím seřadit; dalším kliknutím obrátit pořadí.';
+        header.replaceChildren(button);sortHeaders.push({header,button,arrow,field,label});
+        for(const direction of ['asc','desc']){
+            const option=element('option',`${label} · ${direction==='asc'?'vzestupně':'sestupně'}`);option.value=`${field}:${direction}`;byId('opportunity-sort').append(option);
+        }
+        button.onclick=()=>{
+            const active=window.OpportunitySorting.selection(byId('opportunity-sort').value);
+            const direction=active.field===field?(active.direction==='asc'?'desc':'asc'):window.OpportunitySorting.defaults[field];
+            byId('opportunity-sort').value=`${field}:${direction}`;render();
+        };
+    });
+    function updateSortHeaders(){
+        const active=window.OpportunitySorting.selection(byId('opportunity-sort').value);
+        for(const {header,button,arrow,field,label} of sortHeaders){
+            const selected=active.field===field;header.setAttribute('aria-sort',selected?(active.direction==='asc'?'ascending':'descending'):'none');
+            arrow.textContent=selected?(active.direction==='asc'?' ↑':' ↓'):' ↕';
+            button.setAttribute('aria-label',`Řadit: ${label}${selected?` · nyní ${active.direction==='asc'?'vzestupně':'sestupně'}`:''}`);
+        }
+    }
+    updateSortHeaders();
     function note(a,c){
         if(priceStale(a))return 'Starší ceny · před vstupem ověřit';
         if(c.warnings.includes('validation-disagrees'))return 'Novější roky nepotvrzují směr';
@@ -73,8 +100,7 @@
             (!query||[a.key,a.name,...(a.aliases||[])].join(' ').toLocaleLowerCase('cs').includes(query))&&
             (quality==='all'||(!priceStale(a)&&fresh(c.validation)&&!c.warnings.includes('validation-disagrees')&&
                 (quality!=='cot'||(c.cotReference&&display(c).cot.count>=8&&display(c).cot.rate>50)))));
-        const score=({c,r})=>sort==='score'?r.value:sort==='date'?-c.startsIn:sort==='validation'?(display(c).seasonal.rate??-1):sort==='cot'?(display(c).cot.count>=8?display(c).cot.uncertainty[0]:-1):c.score;
-        rows.sort((x,y)=>score(y)-score(x)||(sort==='score'?y.r.uncapped-x.r.uncapped:0)||x.c.startsIn-y.c.startsIn||x.a.key.localeCompare(y.a.key)||x.c.direction.localeCompare(y.c.direction));
+        rows.sort(window.OpportunitySorting.comparator(sort,history(),note));updateSortHeaders();
         const fragment=document.createDocumentFragment();
         for(const {a,c,r} of rows){
             const h=display(c);
@@ -108,7 +134,7 @@
         if(!rows.length){const tr=element('tr');const td=cell(tr,'Žádná příležitost pro tyto filtry. Sniž minimum skóre nebo zvol „Vše · včetně upozornění“.');td.colSpan=9;fragment.append(tr);}
         body.replaceChildren(fragment);
         const short=pool.filter(a=>a.reason==='short-history').length,none=pool.filter(a=>a.reason==='no-window').length;
-        status.textContent=`${window.AssetCategories.label(assetClass,commodityGroup)} · přepočet ${date(snapshot.asOf)} · posledních ${history()} dokončených let (${Number(snapshot.asOf.slice(0,4))-history()}–${Number(snapshot.asOf.slice(0,4))-1}) pro oba sloupce · ${rows.length} období · ${pool.length} instrumentů s COT v této kategorii. ${short} nemá dost starší historie, ${none} nemá vhodný extrém. ${sort==='score'?'Řazeno podle skóre podkladů, nikoli pravděpodobnosti zisku.':'Jiné řazení než podle skóre.'}`;
+        status.textContent=`${window.AssetCategories.label(assetClass,commodityGroup)} · přepočet ${date(snapshot.asOf)} · posledních ${history()} dokončených let (${Number(snapshot.asOf.slice(0,4))-history()}–${Number(snapshot.asOf.slice(0,4))-1}) pro oba sloupce · ${rows.length} období · ${pool.length} instrumentů s COT v této kategorii. ${short} nemá dost starší historie, ${none} nemá vhodný extrém. Řazení: ${byId('opportunity-sort').selectedOptions[0].textContent}. Skóre není pravděpodobnost zisku.`;
         const now=today();
         if((Date.parse(now)-Date.parse(snapshot.asOf))/86400000>2)status.textContent+=' Upozornění: přehled je starší než 2 dny; aktuální data ověř.';
         byId('screener-export').disabled=false;
