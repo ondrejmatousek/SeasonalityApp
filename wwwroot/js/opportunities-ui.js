@@ -95,7 +95,15 @@
             const caution=cell(tr,note(a,c),c.warnings.length||priceStale(a)?'screener-warning':'');
             caution.append(element('small','Cena na konci období, bez nákladů'));
             const button=element('button','Detail');button.type='button';button.setAttribute('aria-label',`Detail ${a.key} ${c.direction==='up'?'růst':'pokles'} od ${date(c.startDate)}`);
-            button.onclick=()=>showDetail(a,c,button);cell(tr,'').append(button);fragment.append(tr);
+            button.onclick=()=>showDetail(a,c,button);
+            const actions=element('div',undefined,'opportunity-row-actions');actions.append(button);
+            const chart=window.TradingViewLinks.chart(a.key);
+            if(chart){
+                const link=element('a','TradingView ↗','opportunity-chart-link');
+                link.href=chart.url;link.target='_blank';link.rel='noopener noreferrer';link.title=chart.title;
+                link.setAttribute('aria-label',`Otevřít ${a.key} v TradingView v nové záložce`);actions.append(link);
+            }
+            cell(tr,'').append(actions);fragment.append(tr);
         }
         if(!rows.length){const tr=element('tr');const td=cell(tr,'Žádná příležitost pro tyto filtry. Sniž minimum skóre nebo zvol „Vše · včetně upozornění“.');td.colSpan=9;fragment.append(tr);}
         body.replaceChildren(fragment);

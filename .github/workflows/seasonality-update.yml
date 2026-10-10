@@ -63,6 +63,7 @@ jobs:
       - run: node Tools/chart-ui-checks.cjs
       - run: node Tools/market-help-checks.cjs
       - run: node Tools/asset-category-checks.cjs
+      - run: node Tools/tradingview-link-checks.cjs
       - run: node Tools/screener-checks.cjs
       - run: node Tools/reliability-checks.cjs
       - run: node Tools/cot-analogs-checks.cjs
