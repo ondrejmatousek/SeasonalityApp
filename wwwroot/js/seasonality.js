@@ -28,6 +28,9 @@
     const endDateInput = document.querySelector('#seasonality-end-date');
     const intervalLabel = document.querySelector('#seasonality-interval-label');
     const intervalMetrics = document.querySelector('#seasonality-interval-metrics');
+    const reliabilityPanel=document.querySelector('#seasonality-reliability');
+    const reliability=window.SeasonalityReliability;
+    const snapshotDay=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date(window.StaticMarketData?.exportedAt || Date.now()));
     const selected = new Set();
     let trend = null;
     let cycle = null;
@@ -251,27 +254,29 @@
     };
     const intervalYearStats = byYear => {
         if (!interval) return [];
-        const result = [];
-        byYear.forEach(yearRows => {
-            yearRows.sort((a, b) => a.date.localeCompare(b.date));
-            const startIndex = yearRows.findIndex(row => calendarDay(row.date) >= interval.startDay);
-            const endIndex = yearRows.findIndex(row => calendarDay(row.date) >= interval.endDay);
-            const first = yearRows[startIndex < 0 ? 0 : startIndex];
-            const last = yearRows[endIndex < 0 ? yearRows.length - 1 : endIndex];
-            if (!first || !last || first.date >= last.date) return;
-            const slice = yearRows.slice(yearRows.indexOf(first), yearRows.indexOf(last) + 1);
-            const base = first.close;
-            result.push({
-                year: new Date(first.date).getUTCFullYear(),
-                start: first.date,
-                end: last.date,
-                returnPct: last.close / base * 100 - 100,
-                maxRise: Math.max(...slice.map(row => row.close / base * 100)) - 100,
-                maxDrop: Math.min(...slice.map(row => row.close / base * 100)) - 100
-            });
-        });
-        return result;
+        return reliability.samples(rows(),interval.startDay,interval.endDay,snapshotDay).filter(item=>byYear.has(item.year));
     };
+
+    function updateReliability(selectedStats) {
+        if(!interval){
+            reliabilityPanel.innerHTML='<strong>Jak stabilní je vybrané období?</strong><p>Vyber interval v grafu nebo otevři instrument ze Screeneru. Pak porovnáme jednotlivé historické výsledky, extrémy a posledních 5/10/20 let.</p>';
+            return;
+        }
+        const all=reliability.samples(rows(),interval.startDay,interval.endDay,snapshotDay);
+        const anchorYear=Number(snapshotDay.slice(0,4));
+        const comparisons=[5,10,20].map(years=>({years,stats:reliability.summarize(all.filter(s=>s.year>=anchorYear-years))}));
+        const stats=reliability.summarize(selectedStats);
+        const verdict=reliability.assess(stats,comparisons.map(item=>item.stats));
+        const percent=value=>value==null?'—':formatPct(value);
+        const rate=s=>s.count?`${s.positive} z ${s.count} (${(s.positive/s.count*100).toFixed(0)} %)`:'—';
+        const metric=(label,value)=>`<div><span>${label}</span><strong>${value}</strong></div>`;
+        reliabilityPanel.innerHTML=`<div class="reliability-heading"><strong>Stabilita období ${formatDayLabel(interval.startDay)} – ${formatDayLabel(interval.endDay)}</strong><span class="reliability-verdict is-${verdict.kind}">${verdict.label}</span></div>`
+            +`<p>${verdict.reason}</p><p class="reliability-context">Vybrané roky a filtry: ${stats.count} dokončených období. Letošní rok a neúplná období jsou vynechané. ${trend||cycle||election?'Výběr roků je filtrovaný. Bullish/Bearish podle celého roku je zpětná analýza, ne tehdy dostupný signál.':''}</p>`
+            +`<div class="reliability-metrics">${metric('Medián výsledku',percent(stats.median))}${metric('Prostředních 50 % výsledků',`${percent(stats.q25)} až ${percent(stats.q75)}`)}${metric('Průměr bez nejlepšího a nejhoršího roku',percent(stats.trimmed))}${metric('Nejhorší / nejlepší výsledek',`${percent(stats.worst)} / ${percent(stats.best)}`)}</div>`
+            +'<div class="seasonality-table-wrap"><table class="reliability-table"><caption>Drží směr i v novější historii? Srovnání používá všechny dostupné dokončené roky, bez ručního výběru a pokročilých filtrů.</caption><thead><tr><th>Historie</th><th>Počet období</th><th>Průměr</th><th>Medián</th><th>Kladná období</th></tr></thead><tbody>'
+            +comparisons.map(({years,stats:s})=>`<tr><td>Posledních ${years} let</td><td>${s.count} / ${years}</td><td>${percent(s.mean)}</td><td>${percent(s.median)}</td><td>${rate(s)}</td></tr>`).join('')+'</tbody></table></div>'
+            +'<details class="reliability-method"><summary>Co tato kontrola znamená a co ne?</summary><p>Pásmo mezi 25. a 75. percentilem obsahuje prostředních 50 % historických výnosů — není to interval pravděpodobnosti budoucího výnosu. Vynechání extrémů odstraní právě jeden nejlepší a jeden nejhorší výsledek. Hodnocení je orientační pravidlo, nikoli statistický test nebo skóre ziskovosti: varuje při méně než 8 případech, změně znaménka mezi průměrem/mediánem/ořezaným průměrem, rozdílu mediánů 5/10/20 let nebo méně než 70 % let ve směru mediánu. Pro každé srovnávací okno požadujeme alespoň 4 dokončená období.</p><p>Ceny bereme od prvního obchodního dne uvnitř intervalu do posledního dne nejpozději v jeho konci. Chybějící okraje nebo mezery delší než 7 dní období vyřadí. Kalendářní roky se neposouvají k doplnění vzorku. Kontrola nezahrnuje poplatky, spread, intradenní pohyby ani COT a není doporučením obchodu. Opakované hledání v mnoha intervalech může najít náhodně dobrý výsledek.</p></details>';
+    }
 
     const rebuild = () => {
         const availableYears = [...new Set(rows().map(row => new Date(row.date).getFullYear()))]
@@ -329,6 +334,10 @@
             if (!byYear.has(year)) byYear.set(year, []);
             byYear.get(year).push(row);
         });
+        if(interval){
+            const validYears=new Set(reliability.samples(rows(),interval.startDay,interval.endDay,snapshotDay).map(item=>item.year));
+            for(const year of byYear.keys())if(!validYears.has(year))byYear.delete(year);
+        }
 
         const grouped = new Map();
         const yearStats = [];
@@ -384,6 +393,7 @@
         if (document.querySelector('#seasonality-monthly-view').hidden)
             document.querySelector('#seasonality-export').disabled = !points.length;
         const selectedIntervalStats = intervalYearStats(byYear);
+        updateReliability(selectedIntervalStats);
         const rect = canvas.getBoundingClientRect();
         const width = Math.max(280, rect.width);
         const height = rect.height || 380;
@@ -399,7 +409,7 @@
             : 'Asset';
         document.querySelector('#seasonality-subtitle').textContent = missingPrices
             ? 'Pro toto aktivum nejsou v Azure SQL uloženy ceny.'
-            : `${selected.size} vybraných let · průměr podle obchodních dnů · index 100 = začátek roku`;
+            : `${byYear.size} z ${selected.size} vybraných let${interval?' · pouze dokončená období':''} · index 100 = začátek roku`;
         if (!points.length) {
             ctx.fillStyle = '#8794a4';
             ctx.font = '14px sans-serif';
@@ -488,7 +498,7 @@
         // Reuse the plotted values and geometry; moving the pointer must not
         // recompute seasonality or repaint the full chart and statistics.
         hoverPlot = { points, width, top: pad, bottom, left: plot.left, right: plot.right, xFor, yFor };
-        updateStats(points, selectedIntervalStats.length ? selectedIntervalStats : yearStats, selected.size);
+        updateStats(points, interval ? selectedIntervalStats : yearStats, interval ? selectedIntervalStats.length : selected.size);
     }
 
     function updateStats(points, yearStats, yearCount) {
@@ -497,14 +507,15 @@
         const returns = yearStats.map(item => item.returnPct);
         const average = returns.length ? returns.reduce((sum, value) => sum + value, 0) / returns.length : 0;
         const sorted = [...returns].sort((a, b) => a - b);
-        const median = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0;
+        const median = reliability.quantile(sorted,.5) ?? 0;
         const winRate = returns.length ? returns.filter(value => value > 0).length / returns.length * 100 : 0;
+        const display=value=>interval&&!returns.length?'—':value;
         document.querySelector('#seasonality-stats').innerHTML =
-            `<div><strong>${end.toFixed(2)} %</strong><span>${interval ? 'průměrný výnos intervalu' : 'průměrný výnos období'}</span></div>`
+            `<div><strong>${display((interval ? average : end).toFixed(2)+' %')}</strong><span>${interval ? 'průměrný výnos intervalu' : 'průměrný výnos období'}</span></div>`
             + `<div><strong>${yearCount}</strong><span>vybraných let</span></div>`
-            + `<div><strong>${average.toFixed(2)} %</strong><span>průměrný roční výnos</span></div>`
-            + `<div><strong>${median.toFixed(2)} %</strong><span>medián ročního výnosu</span></div>`
-            + `<div><strong>${winRate.toFixed(1)} %</strong><span>win rate roků</span></div>`
+            + `<div><strong>${display(average.toFixed(2)+' %')}</strong><span>${interval?'průměr výnosů intervalu':'průměrný roční výnos'}</span></div>`
+            + `<div><strong>${display(median.toFixed(2)+' %')}</strong><span>${interval?'medián výnosů intervalu':'medián ročního výnosu'}</span></div>`
+            + `<div><strong>${display(winRate.toFixed(1)+' %')}</strong><span>win rate roků</span></div>`
             + `<div><strong>${high}</strong><span>maximální index</span></div>`;
         drawReturns(yearStats);
         const cumulativePoints = interval
@@ -528,6 +539,7 @@
         const wins = returns.filter(value => value > 0).length;
         const average = returns.length ? returns.reduce((sum, value) => sum + value, 0) / returns.length : 0;
         intervalLabel.textContent = `${formatDayLabel(interval.startDay)} – ${formatDayLabel(interval.endDay)}`;
+        if(!returns.length){intervalMetrics.textContent='Pro tento výběr nejsou dokončená historická období. Zkus více let nebo širší interval.';return;}
         intervalMetrics.innerHTML = `<div><strong>${returns.length}</strong><span>roků</span></div><div><strong>${formatPct(average)}</strong><span>průměrný výnos</span></div><div><strong>${returns.length ? (wins / returns.length * 100).toFixed(1) : '0.0'} %</strong><span>win rate</span></div>`;
     }
 

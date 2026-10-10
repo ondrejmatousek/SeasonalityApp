@@ -13,9 +13,21 @@ Vygenerovaný web nepotřebuje běžící .NET, App Service, API ani SQL. Razor 
 - Export čte pouze tabulky cen a COT. Neprovádí inicializaci schématu ani zápisy. Neukládá připojovací řetězec, konfiguraci serveru ani binárky do veřejného výstupu.
 - Chybějící historie výchozího instrumentu/COT kontraktu, nevalidní export nebo překročení 240 MiB / 15 000 souborů zablokuje publikaci. Jednotlivé tickery bez cen se označí jako prázdné.
 
-### Lokální export a spuštění
+### Ovládání Screeneru
 
 Screener podporuje řazení kliknutím na hlavičky a kombinované filtry sloupců (číselné minimum/maximum, hledání instrumentu, dostupnost COT). COT se řadí podle dostupnosti, nikoli podle nesrovnatelných indexů různých měn. Fotoaparát uloží PNG s obdobím, filtry a prvními 20 výsledky v aktuálním řazení; počet zachycených výsledků je uvedený v obrázku.
+
+Výchozí filtr Screeneru je „S COT daty“; volba „Vše“ zpřístupní i čistě sezonální instrumenty. Jde o dostupnost dat, ne vyhodnocení shody COT a sezonality.
+
+### Stabilita sezonálního intervalu
+
+Po výběru intervalu v Seasonality se zobrazí medián, 25./75. percentil výsledků, průměr bez právě jednoho nejlepšího a nejhoršího roku, extrémy a nezávislé porovnání posledních 5/10/20 kalendářních let. Hlavní souhrn respektuje vybrané roky/filtry; srovnávací okna ne. U všech intervalových statistik se vyřazuje aktuální rok snapshotu, neúplná období, neplatné ceny a mezery nebo chybějící okraje nad 7 dní. Vstup je první dostupná cena uvnitř období a konec poslední cena nejpozději v konci. Výsledky tak nekončí až za uživatelem vybranou hranicí a interval bez dat se nenahrazuje celoročními výsledky.
+
+Slovní hodnocení je transparentní heuristika, nikoli statistický test, předpověď nebo doporučení: minimum 8 případů, shoda znaménka průměru/mediánu/ořezaného průměru, shoda mediánů porovnávacích oken (min. 4 období v každém) a alespoň 70 % výsledků ve směru mediánu. Pásmo prostředních 50 % není predikční interval. COT není součástí hodnocení. Výpočet běží lokálně jen z historie vybraného instrumentu a výsledky intervalů se cachují; hover nic nepřepočítává.
+
+`node Tools/reliability-checks.cjs` ověřuje výpočty a je součástí CI.
+
+### Lokální export a spuštění
 
 Použij stávající SQL konfiguraci a **nový** podadresář `artifacts/` (existující export se nikdy nepřepisuje):
 

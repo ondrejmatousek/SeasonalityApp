@@ -14,6 +14,7 @@
     const columnSearch=document.createElement('input');columnSearch.type='search';columnSearch.placeholder='Ticker / název';columnSearch.setAttribute('aria-label','Filtr sloupce Instrument');
     const cotFilter=document.createElement('select');cotFilter.setAttribute('aria-label','Filtr dostupnosti COT');
     for (const [value,label] of [['all','Vše'],['yes','S COT daty'],['no','Bez COT dat']]) {const option=document.createElement('option');option.value=value;option.textContent=label;cotFilter.append(option);}
+    cotFilter.value='yes';
     for (const header of headers) {
         const field=header.dataset.screenerField,label=header.textContent;
         header.dataset.label=label;
