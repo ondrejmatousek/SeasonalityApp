@@ -18,6 +18,18 @@ for(const c of result.candidates){
     assert.ok(c.cases.filter(s=>s.validation).every(s=>s.year>=2018&&s.year<2026));
     assert.ok(c.cases.every(s=>!s.reportDate||Date.parse(s.reportDate)+7*86400000<=Date.parse(s.signalDate)));
     assert.equal(c.cot.count,c.cotBaseline.count,'Constant COT yields the same covered history');
+    for(const years of [5,10,20]){
+        const h=c.histories[years];
+        assert.equal(h.from,2026-years);assert.equal(h.to,2025);
+        assert.equal(h.seasonal.count,years);assert.equal(h.cot.count,years);
+        assert.ok(h.cases.every(s=>s.year>=2026-years&&s.year<=2025));
+        if(c.startDay<c.endDay){
+            const manual=require('../wwwroot/js/seasonality-confluence.js').analyze(reports,prices,
+                {startDay:c.startDay,endDay:c.endDay,asOf,direction:c.direction,historyYears:years,comparison:'snapshot'});
+            assert.deepEqual(manual.seasonal,h.seasonal,'Chart and screener use identical price samples');
+            assert.deepEqual(manual.conditional,h.cot,'Chart and screener use identical COT timing and calendar range');
+        }
+    }
 }
 const changed=model.analyzeAsset(prices.map(r=>r.date>='2018-01-01'?{...r,close:200-r.close}:r),reports,asOf);
 assert.deepEqual(changed.curve,result.curve,'Validation prices cannot change discovery curve');

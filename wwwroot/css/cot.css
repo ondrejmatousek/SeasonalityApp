@@ -102,7 +102,7 @@
 .screener-mode-tabs button,.opportunity-detail button,#opportunity-retry { color:#aeb9c7; background:#252b2e; border:1px solid #ffffff24; border-radius:6px; padding:9px 12px; cursor:pointer; }
 .screener-mode-tabs button.is-active { color:#24dfcf; background:#24dfcf12; border-color:#24dfcf70; }
 .opportunity-view,#screener-manual-view { display:grid; gap:16px; min-width:0; }
-.opportunity-view[hidden],#screener-manual-view[hidden],.opportunity-detail[hidden] { display:none; }
+.opportunity-view[hidden],#screener-manual-view[hidden] { display:none; }
 #opportunity-status { margin:0; color:#aeb9c7; font-size:.78rem; line-height:1.6; }
 .opportunity-table { table-layout:fixed; min-width:920px; }
 .opportunity-table th,.opportunity-table td { white-space:normal; padding:10px 8px; vertical-align:top; }
@@ -116,7 +116,11 @@
 .opportunity-table th:nth-child(8) { width:8%; }
 .opportunity-table th:nth-child(7),.opportunity-table td:nth-child(7) { text-align:left; }
 .opportunity-table strong { display:block; font-size:.92rem; margin-bottom:3px; }
-.opportunity-detail { min-width:0; padding:18px; border:1px solid #24dfcf55; border-radius:8px; background:#15191c; color:#dce3e9; scroll-margin-top:16px; }
+.opportunity-detail { box-sizing:border-box; width:calc(100% - 32px); max-width:1120px; min-width:0; max-height:calc(100dvh - 48px); margin:auto; padding:0 20px 20px; overflow-y:auto; overscroll-behavior:contain; border:1px solid #24dfcf55; border-radius:12px; background:#15191c; color:#dce3e9; box-shadow:0 20px 80px #0009; }
+.opportunity-detail::backdrop { background:#000a; }
+.opportunity-detail>.confluence-heading { position:sticky; top:0; z-index:1; background:#15191c; padding:16px 0 12px; border-bottom:1px solid #ffffff18; }
+.opportunity-detail .opportunity-dialog-close { flex-shrink:0; font-size:1.5rem; line-height:1; width:40px; height:40px; padding:0; }
+.opportunity-detail button:focus-visible,.opportunity-detail summary:focus-visible { outline:2px solid #24dfcf; outline-offset:3px; }
 .opportunity-detail h3 { margin:0; font-size:1rem; }
 .opportunity-detail p,.opportunity-detail details { color:#aeb9c7; font-size:.78rem; line-height:1.6; }
 .opportunity-detail .confluence-caution { color:#eac782; border-left:2px solid #eac78288; padding:5px 10px; }

@@ -133,13 +133,29 @@
             }
             const validationStats=confluence.summarize(validation,direction),cotStats=confluence.summarize(matched,direction);
             const cotBaseline=confluence.summarize(covered,direction),sign=direction==='up'?1:-1;
+            // Display windows share a fixed calendar-year range, not a count of matching COT reports.
+            const recent=historySamples(rows,asOf,best.window.startDate,best.window.endDate,
+                Array.from({length:20},(_,i)=>Number(asOf.slice(0,4))-20+i));
+            const recentCovered=recent.flatMap(sample=>{
+                const report=cotAt(cot,sample.signalDate);if(!report)return [];
+                const index=report.commercial.index;
+                return [{...sample,index,reportDate:report.date,matched:!!range&&index>=range[0]&&index<=range[1]}];
+            });
+            const histories=Object.fromEntries([5,10,20].map(years=>{
+                const from=Number(asOf.slice(0,4))-years;
+                const samples=recent.filter(s=>s.year>=from),available=recentCovered.filter(s=>s.year>=from);
+                return [years,{from,to:Number(asOf.slice(0,4))-1,seasonal:confluence.summarize(samples,direction),
+                    cot:confluence.summarize(available.filter(s=>s.matched),direction),
+                    baseline:confluence.summarize(available,direction),years:samples.map(s=>s.year),
+                    cases:samples.map(s=>available.find(r=>r.year===s.year)||{...s,index:null,reportDate:null,matched:false})}];
+            }));
             const warnings=[];
             if(validationStats.count<config.validationYears)warnings.push('incomplete-validation');
             if(validationStats.count&&(!(sign*validationStats.median>0)||validationStats.rate<=50))warnings.push('validation-disagrees');
             if(!reference)warnings.push('no-current-cot');
             else if(cotStats.count<8)warnings.push('small-cot-sample');
             else if(!(sign*cotStats.median>0)||cotStats.rate<=50)warnings.push('cot-disagrees');
-            selected.push({...best.window,training:best.stats,trainingYears:best.samples.map(s=>s.year),validation:validationStats,
+            selected.push({...best.window,histories,training:best.stats,trainingYears:best.samples.map(s=>s.year),validation:validationStats,
                 validationYears:validation.map(s=>s.year),cot:cotStats,cotBaseline,cotValidation:confluence.summarize(matched.filter(s=>s.validation),direction),
                 cotReference:reference?{date:reference.date,index:reference.commercial.index}:null,cotRange:range,
                 score:best.score,warnings,cases:all.map(s=>covered.find(c=>c.year===s.year)||{...s,index:null,reportDate:null,matched:false,validation:s.year>=discovered.validationStart})});

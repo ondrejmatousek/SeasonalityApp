@@ -95,6 +95,8 @@ node Tools/chart-ui-checks.cjs
 
 Výchozí režim „Automaticky od extrémů“ každé ráno navrhuje období ze sezonálních minim/maxim; původní režim „Pevné období 14 / 30 / 60 dní“ zůstává vedle něj.
 
+Tlačítko Detail otevírá nativní modální dialog s vlastní posuvnou oblastí a trvale dostupným křížkem. Escape nebo kliknutí na pozadí jej zavře. Fokus zůstává uvnitř dialogu a po zavření se vrátí k původnímu tlačítku; filtry a pozice tabulky se zachovávají. Dialog se nezahrnuje do PNG screeneru.
+
 `Tools/build-opportunities.cjs` připraví content-addressed JSON pro všechny instrumenty s COT. Je součástí existujícího denního workflow i nasazení po pushi, bez nové služby nebo SQL dotazů návštěvníka. Přehled se načítá až při otevření Screeneru; obsahuje datum přepočtu, filtry směru/předstihu/podkladů, řazení, vyhledávání a PNG prvních 20 výsledků. Detail ukazuje starší křivku, navržený interval, oddělené statistiky a všechny použité roky/COT. Vstup může být až za 60 dní, délka 14–60 dní; podporuje i prosinec–leden.
 
 Výběr má nejvýše 20 úplných starších cenových roků, nejméně 10. Posledních 8 kalendářních roků před datem snapshotu slouží pro kontrolu, nesmějí měnit křivku, koncové body, směr ani skóre. Průměrné roční křivky indexujeme na 100, interpolujeme kalendářní dny a pro hledání lokálních extrémů ±7 dní použijeme 7denní vyhlazení. Konec je první způsobilý opačný extrém, ne nejvýnosnější dodatečně vybraný konec. Roční změnu přeneseme přes přelom roku, nevytváříme falešný extrém resetem indexu. Statistiky používají původní denní ceny. Cenové mezery/okraje přes 7 dní vyřazují vzorek. Výběrové případy nesmějí končit v kontrolní historii. Období musí držet směr podle mediánu i průměru bez nejlepšího/nejhoršího roku. Na instrument vybereme maximálně jedno růstové a jedno poklesové období podle dolní Wilsonovy meze ve starší historii, při shodě medián/nepříznivý pohyb a bližší vstup. COT do výběru nevstupuje.
@@ -130,6 +132,12 @@ Aplikace sama nestahuje historické ceny při spuštění. Azure SQL musí obsah
 V Azure Portal vytvoř SQL Database na SQL serveru s nejnižší dostupnou bezplatnou konfigurací pro svůj subscription/region, povol přístup z hostingu a nastav secret `ConnectionStrings__DefaultConnection`. Ceny Azure Free/DTU se mění podle regionu a nabídky, proto se nefixují v kódu.
 
 ## COT
+
+### Sjednocená historie sezonality a COT
+
+Hlavní graf a automatický Screener mají společnou volbu posledních 5 / 10 / 20 dokončených kalendářních let, výchozí 10. Letošní rok se nezapočítává a chybějící roky nenahrazují starší. COT souběh respektuje i ruční výběr let a filtry grafu. Historický COT se na obou obrazovkách posuzuje k výročí dne snapshotu (stejný předstih před plánovaným vstupem), nikoli až v den budoucího vstupu. Hlavní sloupce uvádějí rozsah roků a skutečné počty: počet podobných COT situací je podmnožinou těchto roků, ne alternativní délka historie.
+
+Oddělená kontrola posledních 8 let zůstává v detailu a neovlivňuje vybrané intervaly. Hlavní desetileté/dvacetileté popisné výsledky mohou částečně zahrnovat výběrové roky a nejsou nezávislým testem. „Nejistota četnosti“ je Wilsonův 95% interval spolehlivosti, nikoli 95% šance zisku nebo pásmo cenového výnosu. Málo COT případů se nadále nezvýrazňuje jako pravděpodobnost.
 
 ### Podobné historické COT situace
 

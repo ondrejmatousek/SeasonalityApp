@@ -15,7 +15,7 @@
 
     function schedule(force=false){
         if(!state)return;
-        const key=JSON.stringify([state.asset?.key,state.interval,state.asOf,...controls.map(k=>byId('confluence-'+k).value)]);
+        const key=JSON.stringify([state.asset?.key,state.interval,state.asOf,state.historyYears,state.selectedYears,...controls.map(k=>byId('confluence-'+k).value)]);
         if(!force&&key===signature&&lastPrices===state.prices)return;
         signature=key;lastPrices=state.prices;version++;clearTimeout(timer);
         panel.setAttribute('aria-busy','false');
@@ -57,7 +57,7 @@
         const tile=el('div',null,`confluence-tile${primary?' is-primary':''}${primary&&s.count<8?' is-small-sample':''}`);
         tile.append(el('span',title),el('strong',primary&&s.count<8?'Málo dat':pct(s.rate)),
             el('p',s.count?`${s.successes} z ${s.count} období ve zvoleném směru`:'Žádné dokončené případy'),
-            el('small',primary&&s.count<8?'Méně než 8 případů: procentuální odhad nezvýrazňujeme.':`Orientační 95% pásmo četnosti: ${band(s)}`));
+            el('small',primary&&s.count<8?'Méně než 8 podobných případů v této historii: procento nezvýrazňujeme.':`Nejistota historické četnosti: ${band(s)} (95% interval spolehlivosti)`));
         return tile;
     }
 
@@ -76,18 +76,19 @@
             selector.value=payload.markets.some(m=>m.key===previous)?previous:(payload.markets.find(m=>!m.isDollarIndex)||payload.markets[0])?.key||'';
             marketAsset=key;
             // Avoid a redundant resize-driven request after populating the market select.
-            signature=JSON.stringify([captured.asset.key,captured.interval,captured.asOf,...controls.map(k=>byId('confluence-'+k).value)]);
+            signature=JSON.stringify([captured.asset.key,captured.interval,captured.asOf,captured.historyYears,captured.selectedYears,...controls.map(k=>byId('confluence-'+k).value)]);
             const market=payload.markets.find(m=>m.key===selector.value);
             if(!market){status.textContent='Pro tento instrument nemáme odpovídající COT. Společné srovnání nelze spočítat; sezonální analýza nad tím zůstává dostupná.';return;}
             const r=window.SeasonalityConfluence.analyze(market.reports,captured.prices,{...captured.interval,asOf:captured.asOf,
-                group,direction,tolerance,historyYears:history==='all'?null:Number(history)});
+                group,direction,tolerance,historyYears:captured.historyYears,selectedYears:captured.selectedYears,comparison:'snapshot'});
             if(!r.referenceUsable){
                 status.textContent=!r.reference?'Chybí odhadovaně dostupný referenční COT report.':r.reference.ageDays>21
                     ?`Poslední odhadovaně dostupný report je z ${date(r.reference.date)} (${number(r.reference.ageDays,0)} dní). Je příliš starý pro srovnání s dneškem.`
                     :'Poslední odhadovaně dostupný report nemá index této skupiny. Zkus jinou skupinu nebo kratší lookback.';
                 return;
             }
-            status.textContent=`${captured.asset.name} · ${period(captured.interval)} · COT ${market.name} / ${byId('confluence-group').selectedOptions[0].textContent}. Reference: pozice k ${date(r.reference.date)}, index ${number(r.reference.index,2)}, podobnost ${number(r.range[0],2)}–${number(r.range[1],2)} / 100; lookback ${lookback} reportů. Snapshot ${date(captured.asOf)}.`;
+            const year=Number(captured.asOf.slice(0,4)),yearsLabel=captured.historyYears?`${year-captured.historyYears}–${year-1}`:'vybrané dokončené roky';
+            status.textContent=`${captured.asset.name} · ${period(captured.interval)} · historie ${yearsLabel}, stejný výběr roků jako v grafu. COT ${market.name} / ${byId('confluence-group').selectedOptions[0].textContent}. Reference: pozice k ${date(r.reference.date)}, index ${number(r.reference.index,2)}, podobnost ${number(r.range[0],2)}–${number(r.range[1],2)} / 100; lookback ${lookback} reportů. COT v historii posuzujeme k výročí ${date(captured.asOf)}, stejně jako Screener (nikoli až k budoucímu vstupu).`;
             if(payload.note)results.append(el('p',payload.note,'cot-market-note'));
             results.append(el('h3',`Jak často byla cena ${captured.asset.name} na konci období ${direction==='up'?'výše':'níže'}?`));
             const caution=r.conditional.count<8?'Málo společných případů. Pro rozhodování zatím nemáme dost podkladů.':r.conditional.count<20
@@ -95,13 +96,13 @@
                 :'Historická četnost, nikoli ověřená pravděpodobnost budoucího obchodu.';
             results.append(el('p',caution,'confluence-caution'));
             const tiles=el('div',null,'confluence-tiles');
-            tiles.append(probabilityTile('Stejné období + podobný COT',r.conditional,true),probabilityTile('Stejné období · bez podmínky podobnosti COT',r.baseline,false));
+            tiles.append(probabilityTile(`Podobný COT · ${yearsLabel}`,r.conditional,true),probabilityTile(`Sezonalita · ${yearsLabel}`,r.seasonal,false));
             const delta=el('div',null,'confluence-tile');
             delta.append(el('span','Rozdíl historických četností'),el('strong',r.conditional.count<8||r.delta==null?'—':`${r.delta>0?'+':''}${number(r.delta)} p. b.`),
                 el('p',r.conditional.count<8?'Vzorek je příliš malý pro zvýraznění rozdílu.':'Souběh minus sezonalita na stejné dostupné historii.'),
                 el('small','Popisný rozdíl. Není důkazem, že COT přidává obchodní výhodu.'));
             tiles.append(delta);results.append(tiles);
-            results.append(el('p',`Čteme ${r.conditional.count} společných období z ${r.baseline.count} let s použitelným COT. Celá cenová historie má ${r.seasonal.count} období (${rate(r.seasonal)} ve zvoleném směru). Vyřazené roky: bez tehdejšího reportu ${r.missing}, starý report ${r.stale}, chybějící index ${r.missingIndex}. Filtry a výběr roků grafu se zde nepoužívají.`,'confluence-context'));
+            results.append(el('p',`V letech ${yearsLabel} byl COT podobný v ${r.conditional.count} z ${r.baseline.count} let s použitelným reportem. ${r.conditional.successes} z ${r.conditional.count} podobných případů skončilo ve směru. Sezonalita: ${rate(r.seasonal)}. Vyřazené COT roky: bez reportu ${r.missing}, starý report ${r.stale}, chybějící index ${r.missingIndex}. Výběr roků a filtry grafu se používají i zde. Nejistota četnosti je 95% interval spolehlivosti, ne 95% šance zisku ani rozsah budoucího výnosu.`,'confluence-context'));
             const row=(name,s)=>[name,rate(s),band(s),signed(s.median),`${signed(s.q25)} až ${signed(s.q75)}`,pct(s.medianAdverse)];
             results.append(table(['Výběr','Zvolený směr · počet / četnost','95% pásmo četnosti','Medián výnosu ceny','Prostředních 50 % výnosů','Typický pohyb proti směru'],
                 [row('Sezonalita + podobný COT',r.conditional),row('Sezonalita · stejná COT historie',r.baseline)],

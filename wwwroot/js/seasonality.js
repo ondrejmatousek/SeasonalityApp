@@ -281,7 +281,8 @@
     const rebuild = () => {
         const availableYears = [...new Set(rows().map(row => new Date(row.date).getFullYear()))]
             .sort((a, b) => b - a);
-        const visibleYears = years.value === 'all' ? availableYears : availableYears.slice(0, Number(years.value));
+        const anchorYear=Number(snapshotDay.slice(0,4));
+        const visibleYears = years.value === 'all' ? availableYears : availableYears.filter(y=>y>=anchorYear-Number(years.value)&&y<anchorYear);
         selected.clear();
         visibleYears.forEach(year => selected.add(year));
         if (screenerYears && rows().length) {
@@ -327,7 +328,8 @@
 
     function draw() {
         root.dispatchEvent(new CustomEvent('seasonality-interval-change', { detail: {
-            asset: activeAsset, prices: rows(), interval, asOf: snapshotDay
+            asset: activeAsset, prices: rows(), interval, asOf: snapshotDay,
+            historyYears:years.value==='all'?null:Number(years.value), selectedYears:[...selected]
         } }));
         clearHover();
         hoverPlot = null;
