@@ -41,7 +41,7 @@
     cotFilter.addEventListener('change',render);
     byId('screener-clear-columns').onclick=()=>{columnFilters.forEach(({input})=>{input.value='';});cotFilter.value='all';columnSearch.value='';byId('screener-search').value='';render();};
     function render() {
-        if (!snapshot) return;
+        if (!snapshot || document.getElementById('screener-manual-view')?.hidden) return;
         const [horizon,lookback,direction,minimum,sort,search] = controls.map(item=>item.value);
         const term = search.toLocaleLowerCase('cs-CZ').trim();
         const results = snapshot.assets.map(asset=>({asset,stats:asset.windows[`${horizon}:${lookback}`]}))
@@ -103,5 +103,5 @@
         finally {pending=false;}
     }
     controls.forEach(control=>control.addEventListener(control.type==='search'?'input':'change',render));
-    root.addEventListener('screener-visible',load);retry.onclick=load;
+    root.addEventListener('screener-visible',()=>{if(!document.getElementById('screener-manual-view')?.hidden)load();});retry.onclick=load;
 })();

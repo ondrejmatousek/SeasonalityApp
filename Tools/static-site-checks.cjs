@@ -40,6 +40,17 @@ async function adapterChecks() {
     assert.equal(attempts, 2, 'Failed requests must not poison the cache');
     const unsafe = factory({ ...manifest, assets: [{ key: 'BAD', prices: { path: 'https://example.com/data.json' } }] }, () => assert.fail('External fetch'));
     await assert.rejects(unsafe.prices('BAD'), /Invalid static data path/);
+    await assert.rejects(client.opportunities(), /unavailable/);
+    const opportunitiesPath='/data/screener/opportunities.'+'c'.repeat(20)+'.json';
+    let opportunityReads=0;
+    const daily=factory({...manifest,opportunities:{path:opportunitiesPath}},async url=>{
+        assert.equal(url,opportunitiesPath);opportunityReads++;
+        return {ok:true,json:async()=>({schemaVersion:1,modelVersion:'seasonal-extremes-v1',assets:[]})};
+    });
+    assert.equal(opportunityReads,0,'Daily summary must stay lazy');
+    await daily.opportunities();await daily.opportunities();assert.equal(opportunityReads,1,'Daily snapshot must be cached');
+    const invalidDaily=factory({...manifest,opportunities:{path:opportunitiesPath}},async()=>({ok:true,json:async()=>({schemaVersion:1,modelVersion:'wrong',assets:[]})}));
+    await assert.rejects(invalidDaily.opportunities(),/Invalid daily/);
     console.log('Static adapter checks passed: lazy reads, shared-contract cache, payload conversion, cancellation, retry and same-origin paths.');
 }
 
@@ -79,6 +90,31 @@ function exportChecks(directory) {
                 assert.equal(cot.change,latest?.commercial.change ?? null);
             }
         }
+    }
+    if (manifest.opportunities) {
+        const snapshot=checkHash(manifest.opportunities.path),model=require('../wwwroot/js/daily-opportunities.js');
+        assert.equal(snapshot.schemaVersion,1);assert.equal(snapshot.modelVersion,'seasonal-extremes-v1');
+        assert.equal(snapshot.asOf,manifest.opportunities.asOf);assert.equal(snapshot.exportedAt,manifest.exportedAt);
+        assert.deepEqual(snapshot.config,model.config);
+        assert.equal(snapshot.assets.length,manifest.assets.filter(a=>a.cot.markets.length).length);
+        const unique=new Set();
+        for(const asset of snapshot.assets){
+            assert.ok(!unique.has(asset.key));unique.add(asset.key);
+            const catalog=manifest.assets.find(a=>a.key===asset.key);assert.ok(catalog);
+            const market=catalog.cot.markets.find(m=>!m.isDollarIndex)||catalog.cot.markets[0];
+            assert.deepEqual(asset.market,market,'Primary COT market cannot be selected from outcomes');
+            const reports=read(manifest.contracts[market.contractCode].files['52']).reports;
+            const prices=read(catalog.prices.path).prices.map(([date,close])=>({date,close}));
+            // Compare the wire representation: JSON intentionally serializes -0 as 0.
+            const expected=JSON.parse(JSON.stringify(model.analyzeAsset(prices,reports,snapshot.asOf)));
+            for(const [key,value] of Object.entries(expected))assert.deepEqual(asset[key],value,`Daily model parity ${asset.key}/${key}`);
+            assert.ok(asset.candidates.length<=2);
+            for(const c of asset.candidates){
+                assert.ok(c.startDate>=snapshot.asOf&&c.training.count>=10);
+                assert.ok(c.cases.every(s=>!s.reportDate||Date.parse(s.reportDate)+7*86400000<=Date.parse(s.signalDate)));
+            }
+        }
+        console.log(`Daily opportunity export checked: ${unique.size} instruments, training/validation parity, primary markets and COT forecast timing.`);
     }
     for (const asset of manifest.assets) {
         const payload = checkHash(asset.prices.path);

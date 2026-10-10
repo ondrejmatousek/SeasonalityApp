@@ -32,6 +32,12 @@
     }
     return {
         exportedAt: manifest.exportedAt,
+        async opportunities() {
+            if (!manifest.opportunities) throw new Error('Daily opportunities snapshot unavailable');
+            const payload = await read(manifest.opportunities.path);
+            if (payload.schemaVersion !== 1 || payload.modelVersion !== 'seasonal-extremes-v1' || !Array.isArray(payload.assets)) throw new Error('Invalid daily opportunities snapshot');
+            return payload;
+        },
         async screener() {
             if (!manifest.screener) throw new Error('Screener snapshot unavailable');
             const payload = await read(manifest.screener.path);

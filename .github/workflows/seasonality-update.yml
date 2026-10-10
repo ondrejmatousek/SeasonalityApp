@@ -65,12 +65,15 @@ jobs:
       - run: node Tools/reliability-checks.cjs
       - run: node Tools/cot-analogs-checks.cjs
       - run: node Tools/confluence-checks.cjs
+      - run: node Tools/opportunities-checks.cjs
       - name: Export read-only SQL snapshot to static HTML and JSON
         run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --export-static --output artifacts/static-site --Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command=Warning
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
       - name: Build compact screener snapshot
         run: node Tools/build-screener.cjs artifacts/static-site
+      - name: Find daily seasonal extremes and compare historical COT
+        run: node Tools/build-opportunities.cjs artifacts/static-site
       - name: Validate every exported ticker, COT index and immutable file
         run: node Tools/static-site-checks.cjs artifacts/static-site
       - uses: actions/upload-artifact@v4

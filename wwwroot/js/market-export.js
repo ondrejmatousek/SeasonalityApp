@@ -32,17 +32,18 @@
             await document.fonts.ready;
             const rect = wrap.getBoundingClientRect();
             const isScreener=button.dataset.exportView==='screener';
+            const screenerView=!document.getElementById('screener-auto-view')?.hidden?'#screener-auto-view':'#screener-manual-view';
             const image = await renderer(wrap, {
                 backgroundColor: '#0b0f11', logging: false,
                 scale: window.MarketChartUi.exportScale(rect.width, isScreener ? 2400 : rect.height),
                 onclone: doc => {
                     if (isScreener) {
-                        const rows=[...doc.querySelectorAll('#screener-results tr')];
+                        const rows=[...doc.querySelectorAll(screenerView==='#screener-auto-view'?'#opportunity-results tr':'#screener-results tr')];
                         rows.slice(20).forEach(row=>row.remove());
                         const note=doc.createElement('p');note.textContent=`PNG: ${Math.min(rows.length,20)} z ${rows.length} výsledků v aktuálním řazení. Historické výsledky nejsou předpovědí.`;
-                        doc.querySelector('#market-screener-view').append(note);
-                        const tableWrap=doc.querySelector('.screener-table-wrap');tableWrap.style.overflow='visible';
-                        const captureWidth=Math.max(rect.width, root.querySelector('.screener-table').scrollWidth);
+                        doc.querySelector(screenerView).append(note);
+                        const tableWrap=doc.querySelector(`${screenerView} .screener-table-wrap`);tableWrap.style.overflow='visible';
+                        const captureWidth=Math.max(rect.width, root.querySelector(`${screenerView} .screener-table`).scrollWidth);
                         doc.querySelector('.seasonality-wrap').style.width=captureWidth+'px';
                         doc.querySelector('.seasonality-wrap').style.maxWidth='none';
                         // Native number inputs can clip their values in html2canvas.

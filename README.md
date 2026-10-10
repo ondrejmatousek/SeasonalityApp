@@ -47,6 +47,7 @@ Použij stávající SQL konfiguraci a **nový** podadresář `artifacts/` (exis
 dotnet build SeasonalityApp.slnx -c Release
 dotnet run --project SeasonalityApp.csproj -c Release --no-build -- --export-static --output artifacts/static-site
 node Tools/build-screener.cjs artifacts/static-site
+node Tools/build-opportunities.cjs artifacts/static-site
 node Tools/static-site-checks.cjs artifacts/static-site
 node Tools/serve-static.cjs artifacts/static-site 54129
 ```
@@ -89,6 +90,22 @@ node Tools/chart-ui-checks.cjs
 ```
 
 ## Screener
+
+### Denní automatický výběr od extrémů
+
+Výchozí režim „Automaticky od extrémů“ každé ráno navrhuje období ze sezonálních minim/maxim; původní režim „Pevné období 14 / 30 / 60 dní“ zůstává vedle něj.
+
+`Tools/build-opportunities.cjs` připraví content-addressed JSON pro všechny instrumenty s COT. Je součástí existujícího denního workflow i nasazení po pushi, bez nové služby nebo SQL dotazů návštěvníka. Přehled se načítá až při otevření Screeneru; obsahuje datum přepočtu, filtry směru/předstihu/podkladů, řazení, vyhledávání a PNG prvních 20 výsledků. Detail ukazuje starší křivku, navržený interval, oddělené statistiky a všechny použité roky/COT. Vstup může být až za 60 dní, délka 14–60 dní; podporuje i prosinec–leden.
+
+Výběr má nejvýše 20 úplných starších cenových roků, nejméně 10. Posledních 8 kalendářních roků před datem snapshotu slouží pro kontrolu, nesmějí měnit křivku, koncové body, směr ani skóre. Průměrné roční křivky indexujeme na 100, interpolujeme kalendářní dny a pro hledání lokálních extrémů ±7 dní použijeme 7denní vyhlazení. Konec je první způsobilý opačný extrém, ne nejvýnosnější dodatečně vybraný konec. Roční změnu přeneseme přes přelom roku, nevytváříme falešný extrém resetem indexu. Statistiky používají původní denní ceny. Cenové mezery/okraje přes 7 dní vyřazují vzorek. Výběrové případy nesmějí končit v kontrolní historii. Období musí držet směr podle mediánu i průměru bez nejlepšího/nejhoršího roku. Na instrument vybereme maximálně jedno růstové a jedno poklesové období podle dolní Wilsonovy meze ve starší historii, při shodě medián/nepříznivý pohyb a bližší vstup. COT do výběru nevstupuje.
+
+COT používá pevně první report katalogu mimo DXY, případně samotný DXY. Nikdy nevybíráme report podle nejvyššího výsledku. Komerční index 52, tolerance ±10 bodů, odhad dostupnosti pozice +7 dní, stáří nejvýše 21 dní. Historický COT hodnotíme k výročí **data přepočtu**, tedy ve stejném předstihu před vstupem jako dnes, ne až při budoucím vstupu. To je záměrně odlišné od ruční karty v Seasonality, která hodnotí COT při vstupu. Chybějící čerstvý index nenahrazujeme starším. Podmíněné výsledky zahrnují starší i novější roky; baseline na shodných letech s dostupným COT a novější podmnožina jsou uvedeny zvlášť.
+
+Procenta jsou historické četnosti směru konečné ceny, nikoli kalibrovaná budoucí pravděpodobnost nebo úspěšnost obchodu se stop-lossem. U méně než 8 případů hlavní procento potlačujeme. Wilsonovo 95% pásmo je orientační při předpokladu nezávislých případů se stejnou pravděpodobností. Kontrolní roky nejsou prospektivní ověření na nedotčených datech; hledání mnoha období/instrumentů a změny režimu mohou vést k nadhodnocení. Ani shoda sezonality a COT neprokazuje nezávislou výhodu. Obchodní náklady a intradenní pohyby chybí; vzdálený vstup vyžaduje novou kontrolu COT a ceny. Selhání denního běhu nechává původní snapshot; datum a upozornění na stáří zůstávají viditelné.
+
+Ověření: `node Tools/opportunities-checks.cjs` včetně neměnnosti výběru při změně kontrolních/budoucích dat, publikační prodlevy, stejného předstihu a přelomu roku. Statický checker znovu vypočítá všechny příležitosti z původních cen/COT a ověří shodu.
+
+### Pevné období
 
 Nová záložka porovnává historická období začínající dnešním datem (Europe/Prague) pro 14, 30 a 60 kalendářních dní. Souhrn se předpočítává při exportu (`Tools/build-screener.cjs`); návštěvník stahuje pouze jeden kompaktní soubor, nikoli cenovou historii všech instrumentů. Podporuje historii 10 / 20 / všech let, řazení, hledání, směr mediánu a minimum vzorku. Zobrazuje průměr, medián, podíl kladných roků a medián maximálního poklesu od vstupní ceny.
 
