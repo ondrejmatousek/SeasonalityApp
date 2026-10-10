@@ -96,7 +96,12 @@
             button.setAttribute('aria-label','Vysvětlit: '+label);button.setAttribute('aria-expanded','false');
             button.setAttribute('aria-controls',tip.id);
             const input=node.matches('label')?node.querySelector('select,input'):null;
-            if(input){if(!input.hasAttribute('aria-label'))input.setAttribute('aria-label',label);node.insertBefore(button,input);}
+            if(input){
+                if(!input.hasAttribute('aria-label'))input.setAttribute('aria-label',label);
+                const caption=doc.createElement('span');caption.className='market-help-label';caption.textContent=label;
+                Array.from(node.childNodes).filter(n=>n.nodeType===3).forEach(n=>n.remove());
+                caption.append(button);node.insertBefore(caption,input);
+            }
             else node.append(button);
         }
         function decorate(){
