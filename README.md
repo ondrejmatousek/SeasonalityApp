@@ -135,6 +135,8 @@ V Azure Portal vytvoř SQL Database na SQL serveru s nejnižší dostupnou bezpl
 
 ### Sjednocená historie sezonality a COT
 
+Vysvětlivky ⓘ u ovládání, tabulkových sloupců a metrik fungují při najetí myší, při fokusu klávesnicí i po klepnutí na mobilu. Escape zavře nejprve vysvětlivku, poté případně dialog. Tooltip je umístěný u pojmu, ohraničený viewportem a funguje i uvnitř modálního detailu. Při zavření detailu nebo odstranění výsledku zmizí. Vysvětlivky a jejich tlačítka se neexportují do PNG. Texty rozlišují historickou četnost, 95% nejistotu, počet podobných COT případů, grafový/COT index a různé významy historie.
+
 Hlavní graf a automatický Screener mají společnou volbu posledních 5 / 10 / 20 dokončených kalendářních let, výchozí 10. Letošní rok se nezapočítává a chybějící roky nenahrazují starší. COT souběh respektuje i ruční výběr let a filtry grafu. Historický COT se na obou obrazovkách posuzuje k výročí dne snapshotu (stejný předstih před plánovaným vstupem), nikoli až v den budoucího vstupu. Hlavní sloupce uvádějí rozsah roků a skutečné počty: počet podobných COT situací je podmnožinou těchto roků, ne alternativní délka historie.
 
 Oddělená kontrola posledních 8 let zůstává v detailu a neovlivňuje vybrané intervaly. Hlavní desetileté/dvacetileté popisné výsledky mohou částečně zahrnovat výběrové roky a nejsou nezávislým testem. „Nejistota četnosti“ je Wilsonův 95% interval spolehlivosti, nikoli 95% šance zisku nebo pásmo cenového výnosu. Málo COT případů se nadále nezvýrazňuje jako pravděpodobnost.
