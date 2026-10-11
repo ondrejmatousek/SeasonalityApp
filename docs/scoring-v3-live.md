@@ -1,5 +1,7 @@
 # V3 live experimental, version 1
 
+> UI interpretation update: the main score is now unchanged V2 raw. The existing V3 percentile is displayed as `Relativní pořadí`, e.g. `#1 z 51 · TOP 2 %`; its mapped display score is no longer shown. V1/V2/V3 calculations, stored fields, universe, data and live tracking remain unchanged. The calibration description below documents the retained original stored model, not the current UI rating.
+
 V3 retains the original V2 raw calculation, components and confidence unchanged. It adds no new COT availability heuristics. Working historical source remains the current exported dataset; this is not strict PIT validation. Unknown inputs remain neutral as in V2, not bullish evidence. Publication/provenance limitations still appear in confidence. All current candidates may therefore be low confidence.
 
 Calibration: collect raw scores of all eligible canonical core candidate windows before user filters. Include both proposed directions. Exclude NQ/MNQ/ES/MES execution aliases, research-only assets, blocked gold and unavailable data. Index and ETF references remain distinct price series but concentration warnings identify their shared family. Equal raw values get their midrank; percentile = 100 × midrank/(N−1). Single/constant cohorts get percentile 50. Interpolate between (0,1), (25,3.5), (50,5.5), (75,7.5), (90,9), (100,10), round display to one decimal.

@@ -32,7 +32,7 @@
     const rangeText=h=>`${h.from}–${h.to}`;
     const today=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date());
     const modelChoice=element('select');modelChoice.id='opportunity-model';modelChoice.setAttribute('aria-label','Scoring model');
-    for(const [value,text] of [['v3','V3 Experimental · relativní síla'],['v1','Scoring v1 · původní'],['v2','Scoring v2 · experimentální raw']]){const o=element('option',text);o.value=value;modelChoice.append(o);}
+    for(const [value,text] of [['v3','V2 raw + relativní pořadí'],['v1','Scoring v1 · původní'],['v2','Scoring v2 · raw']]){const o=element('option',text);o.value=value;modelChoice.append(o);}
     modelChoice.value='v3';
     const modelLabel=element('label','Model ');modelLabel.append(modelChoice);byId('opportunity-sort').parentElement.after(modelLabel);
     const diversity=element('select');diversity.id='opportunity-exposure-order';diversity.setAttribute('aria-label','Způsob pořadí');
@@ -44,14 +44,19 @@
     research.addEventListener('change',()=>{closeDetail();render();});
     const legacyRanking=(a,c)=>window.OpportunityRanking.rank(a,c,{history:history(),asOf:snapshot.asOf,evaluationAt:snapshot.exportedAt,today:today()});
     const ranking=(a,c)=>{const r=legacyRanking(a,c);if(modelChoice.value==='v3')return c.scoringV3
-        ?{...r,value:c.scoringV3.displayScore,uncapped:c.scoringV3.rawScore,label:'V3 Experimental · relativní síla'}
+        ?{...r,value:c.scoringV2.value,uncapped:c.scoringV2.rawScore,label:'Skóre podkladů · V2 raw'}
         :{...r,value:null,label:'V3 není dostupné pro tento trh'};return modelChoice.value==='v2'&&c.scoringV2
         ?{...r,value:c.scoringV2.value,label:'V2 raw · experimentální · kontext 20 let'}:r;};
     const confidence=(a,c)=>c.scoringV2?.confidence||window.OpportunityConfidence.assess({
         seasonal:display(c).seasonal.count,recent:c.validation.count,similar:display(c).cot.count,
         other:display(c).baseline.count-display(c).cot.count,currentCot:!!c.cotReference,
         verifiedPublications:false,completePrices:display(c).seasonal.count===history(),pricesFresh:!priceStale(a),proxy:a.assetClass!=='forex'});
-    const confidenceCode=value=>({'nízká':'low','střední':'medium','vyšší':'high'}[value]||value);
+    const relativeOrder=v=>{const rank=1+(1-v.percentile/100)*(v.referenceCount-1);
+        return `#${number(rank)} z ${v.referenceCount} · TOP ${Math.ceil(100*rank/v.referenceCount)} %`;};
+    const cotUnavailable=h=>h.cot.count===0&&h.baseline.count===0;
+    const noHistoricalCot='COT: historické srovnání není k dispozici';
+    const usdNote='USD je neutrální reference u=0, nikoli DXY. DXY může být pouze samostatný doplňkový kontext.';
+    const sourceText=a=>window.CoreMarkets.sourceText(a.mapping).replace('USD reference','USD reference u=0 (nikoli DXY)');
     const limitTexts={
         'no-seasonal-sample':'Bez použitelné cenové historie: strop 1.',
         'short-seasonal-sample':'Méně než 5 cenových let: strop 5.',
@@ -95,6 +100,7 @@
     updateSortHeaders();
     function note(a,c){
         if(priceStale(a))return 'Starší ceny · před vstupem ověřit';
+        if(cotUnavailable(display(c)))return noHistoricalCot;
         if(c.warnings.includes('validation-disagrees'))return 'Novější roky nepotvrzují směr';
         if(c.warnings.includes('incomplete-validation'))return 'Neúplná novější historie';
         if(c.warnings.includes('no-current-cot'))return 'Chybí použitelný dnešní COT';
@@ -125,7 +131,7 @@
                 (quality!=='cot'||(c.cotReference&&display(c).cot.count>=8&&display(c).cot.rate>50)))));
         const sortSelection=window.OpportunitySorting.selection(sort);
         rows.sort(modelChoice.value==='v3'&&sortSelection.field==='score'
-            ?(x,y)=>window.OpportunityScoringV3.compare(x,y)*(sortSelection.direction==='asc'?-1:1)
+            ?(x,y)=>(y.c.scoringV2.rawScore-x.c.scoringV2.rawScore||window.OpportunityScoringV3.compare(x,y))*(sortSelection.direction==='asc'?-1:1)
             :window.OpportunitySorting.comparator(sort,history(),note));
         const concentration=window.OpportunityExposures.warnings(rows);
         if(diversity.value==='diverse')rows=window.OpportunityExposures.diversified(rows);
@@ -134,27 +140,28 @@
         for(const {a,c,r} of rows){
             const h=display(c);
             const tr=element('tr'),instrument=cell(tr,'');instrument.append(element('strong',a.key),element('small',a.name));
-            if(a.mapping){const sources=element('small',window.CoreMarkets.sourceText(a.mapping));sources.title=a.mapping.proxyRelationship;instrument.append(sources);}
+            if(a.mapping){const sources=element('small',sourceText(a));sources.title=a.mapping.proxyRelationship;instrument.append(sources);}
             instrument.append(element('small',window.CoreMarkets.labels[a.dataStatus]||'Starý export bez core statusu','screener-warning'));
             if(priceStale(a))instrument.append(element('small',`Ceny k ${date(a.lastDate)}`,'screener-warning'));
             const rating=cell(tr,'');rating.append(element('strong',`${number(r.value)} / 10`,`opportunity-score ${r.value>=8?'is-strong':r.value>=7?'is-supported':'is-limited'}`),element('small',r.label));
             if(modelChoice.value==='v3'){
-                const v=c.scoringV3;rating.firstChild.textContent=`V3: ${number(v.displayScore)} / 10`;
-                rating.append(element('small',`Raw: ${number(v.rawScore)} · Percentil: ${number(v.percentile)}`));
-                rating.title=`Relativní pořadí mezi ${v.referenceCount} core obdobími před filtry, bez execution duplicit. 10 = horní konec tohoto přehledu, ne výjimečná absolutní obchodní výhoda. Percentil není pravděpodobnost zisku.`;
+                const v=c.scoringV3;
+                rating.append(element('small',`Relativní pořadí: ${relativeOrder(v)}`));
+                rating.title=`Hlavní skóre je nezměněné V2 raw. Relativní pořadí mezi ${v.referenceCount} core obdobími před filtry, bez execution duplicit; shodné hodnoty sdílejí střední pořadí. TOP označuje podíl přehledu, ne pravděpodobnost zisku.`;
             }
             const reliability=element('small',`Spolehlivost podkladů: ${confidence(a,c).level}`,'screener-warning');
-            if(modelChoice.value==='v3')reliability.textContent=`Confidence: ${confidenceCode(confidence(a,c).level)}`;
+            if(modelChoice.value==='v3')reliability.textContent=`Spolehlivost: ${confidence(a,c).level}`;
             reliability.title=confidence(a,c).reasons.join('\n');rating.append(reliability);
             if(!r.currentCot)rating.append(element('small','Bez dnešního COT','screener-warning'));
-            else if(h.cot.count<8)rating.append(element('small','COT omezený','screener-warning'));
+            else if(h.cot.count<8&&!cotUnavailable(h))rating.append(element('small','COT omezený','screener-warning'));
             const interval=cell(tr,`${date(c.startDate)} – ${date(c.endDate)}`);
             interval.append(element('small',`Vstup ${c.startsIn===0?'dnes':`za ${c.startsIn} dní`} · délka ${c.days} dní`));
             cell(tr,c.direction==='up'?'↑ Růst':'↓ Pokles',c.direction==='up'?'screener-positive':'screener-negative');
             frequency(cell(tr,''),h.seasonal,true,`dokončených ročních období ve směru · ${rangeText(h)}`);
             const cot=cell(tr,'');
-            if(c.cotReference)frequency(cot,h.cot,true,`podobných COT případů ve směru · ${rangeText(h)}`);else cot.append(element('strong','Chybí COT'));
-            cot.append(element('small',`Podobný COT v ${h.cot.count} z ${h.baseline.count} let s dostupným reportem`));
+            if(cotUnavailable(h))cot.append(element('strong',noHistoricalCot));
+            else {if(c.cotReference)frequency(cot,h.cot,true,`podobných COT případů ve směru · ${rangeText(h)}`);else cot.append(element('strong','Chybí COT'));
+                cot.append(element('small',`Podobný COT v ${h.cot.count} z ${h.baseline.count} let s dostupným reportem`));}
             cot.append(element('small',`${a.cotModel==='relative-cot-state-v1'?a.key+' · Relative COT state':a.market.key} · pozice ${date(c.cotReference?.date)}`));
             cell(tr,pct(h.seasonal.medianAdverse));
             const caution=cell(tr,note(a,c),c.warnings.length||priceStale(a)?'screener-warning':'');
@@ -178,7 +185,7 @@
         status.textContent+=' '+concentration.join(' ');
         status.textContent+=` Core Market Screener · ${snapshot.mappingVersion||'export bez core registry'} · ${includeResearch?'research zahrnut':'pouze validated-ranking-ready'}. Status značí způsobilost datové identity, nikoli ověřenou ziskovost nebo PIT validaci.`;
         if(modelChoice.value==='v2')status.textContent+=' V2 raw používá pevný 20letý kontext; 5/10 let mění pouze diagnostické četnosti. Nízká spolehlivost není obchodní potvrzení.';
-        if(modelChoice.value==='v3')status.textContent+=` V3 Experimental: kalibrace ${snapshot.calibrationV3.referenceCount} core období před filtry (bez execution duplicit). Pevný 20letý raw V2; percentil ani 10 bodů není pravděpodobnost zisku. Denní snapshoty a dokončené close-based výsledky: /data/screener/v3-live-ledger.json.`;
+        if(modelChoice.value==='v3')status.textContent+=` Skóre podkladů = nezměněné V2 raw. Relativní pořadí: ${snapshot.calibrationV3.referenceCount} core období před filtry, bez execution duplicit. TOP není pravděpodobnost zisku. Tracking zůstává beze změny: /data/screener/v3-live-ledger.json.`;
         if((Date.parse(now)-Date.parse(snapshot.asOf))/86400000>2)status.textContent+=' Upozornění: přehled je starší než 2 dny; aktuální data ověř.';
         byId('screener-export').disabled=false;
         if(selected&&!rows.some(r=>r.a.key===selected.a.key&&r.c.startDate===selected.c.startDate&&r.c.direction===selected.c.direction))closeDetail();
@@ -226,22 +233,22 @@
         title.id='opportunity-detail-title';
         const close=element('button','×');close.type='button';close.className='opportunity-dialog-close';close.setAttribute('aria-label','Zavřít detail');close.autofocus=true;close.onclick=closeDetail;head.append(title,close);detail.append(head);
         detail.append(element('p',note(a,c),'confluence-caution'));
-        if(a.mapping){detail.append(element('p',window.CoreMarkets.sourceText(a.mapping),'cot-market-note'));
+        if(a.mapping){detail.append(element('p',sourceText(a),'cot-market-note'));
             detail.append(element('p',`${window.CoreMarkets.labels[a.dataStatus]} · Mapping ${a.mapping.version} · ${a.mapping.proxyRelationship}`));}
+        if(a.assetClass==='forex')detail.append(element('p',usdNote,'cot-market-note'));
         const reliability=confidence(a,c),confidenceCard=element('section',undefined,'opportunity-score-detail');
         confidenceCard.append(element('h4',`Spolehlivost podkladů: ${reliability.level}`));
         const reasons=element('ul');reliability.reasons.forEach(r=>reasons.append(element('li',r)));confidenceCard.append(reasons);detail.append(confidenceCard);
-        detail.append(scoreDetail(a,c,h));
         if(c.scoringV3){
             const v=c.scoringV3,section=element('section',undefined,'opportunity-score-detail');
-            section.append(element('h4',`V3 Experimental: ${number(v.displayScore)} / 10`),
-                element('p',`Raw V2: ${number(v.rawScore)} · Percentil: ${number(v.percentile)} · Confidence: ${confidenceCode(v.confidence.level)}`),
-                element('p',`Relativní síla v rámci ${v.referenceCount} core období. Všechny způsobilé core výsledky před filtrováním, bez NQ/MNQ a ES/MES duplicit v kalibraci. Váhy i komponenty V2 zůstaly beze změny. 5/10/20 let mění pouze četnosti podkladů, ne V3.`));
+            section.append(element('h4',`Skóre podkladů: ${number(c.scoringV2.rawScore)} / 10`),
+                element('p',`Relativní pořadí: ${relativeOrder(v)}`),element('p',`Spolehlivost: ${v.confidence.level}`),
+                element('p',`Všechny způsobilé core výsledky před filtrováním, bez NQ/MNQ a ES/MES duplicit. Váhy i komponenty V2 zůstaly beze změny. 5/10/20 let mění pouze četnosti podkladů, ne raw skóre.`));
             for(const k of ['S','R','M','C'])section.append(element('p',`${k}: ${number(v.components[k]*100)} / 100 · váha ${number(v.weights[k]*100)} %`));
-            section.append(element('p','Kalibrace: percentil 0 → 1; 25 → 3,5; 50 → 5,5; 75 → 7,5; 90 → 9; 100 → 10. Mezi body lineární interpolace, shodné raw hodnoty sdílí střední pořadí. Jediný nebo konstantní vzorek má percentil 50.'));
-            section.append(element('p','8–9 = silné relativně v tomto přehledu; 10 = jeho horní konec, ne absolutní důkaz výjimečné příležitosti. Stejný raw může v jiném dni získat jiný percentil. Nízká confidence zůstává nízká i u V3 10. Nejde o procento zisku ani nezávislou historickou validaci.','confluence-caution'));
+            section.append(element('p','Relativní pořadí používá původní percentil, shodné raw hodnoty sdílejí střední pořadí. TOP = pořadí / počet kandidátů, zaokrouhlené nahoru na celé procento. Stejný raw může mít jiný den jiné pořadí. Nejde o procento zisku; nízká spolehlivost zůstává nízká.','confluence-caution'));
             const link=element('a','Stáhnout záznamy V3 a dokončené výsledky (JSON)');link.href='/data/screener/v3-live-ledger.json';link.download='v3-live-ledger.json';section.append(link);detail.append(section);
         }
+        const comparison=element('details');comparison.append(element('summary','Porovnání · původní Scoring V1'),scoreDetail(a,c,h));comparison.open=modelChoice.value==='v1';detail.append(comparison);
         if(c.scoringV2){
             const v=c.scoringV2,section=element('section',undefined,'opportunity-score-detail');
             section.append(element('h4',`Scoring v2 · experimentální Raw score: ${number(v.value)} / 10`));
@@ -275,22 +282,25 @@
             [`Podobný COT · stejných ${history()} let (${rangeText(h)})`,h.cot,'Jen roky z této historie, kdy byl COT podobný dnešnímu.'],
             ['Oddělená kontrola · posledních 8 let',c.validation,`${snapshot.asOf.slice(0,4)-8}–${snapshot.asOf.slice(0,4)-1}: tyto roky neměnily interval ani směr. Výše zvolená historie může částečně obsahovat výběrové roky; není nezávislým testem.`]]){
             const card=element('div',undefined,'opportunity-metric');card.append(element('span',label));
-            frequency(card,s,true,label.startsWith('Podobný COT')?'podobných COT případů ve směru':'dokončených ročních období ve směru');card.append(element('small',description));cards.append(card);
+            if(label.startsWith('Podobný COT')&&cotUnavailable(h))card.append(element('strong',noHistoricalCot));
+            else frequency(card,s,true,label.startsWith('Podobný COT')?'podobných COT případů ve směru':'dokončených ročních období ve směru');card.append(element('small',description));cards.append(card);
         }
         detail.append(cards);
         const reference=c.cotReference?(a.cotModel==='relative-cot-state-v1'
             ?`Relative COT state ${number(c.cotReference.relativeCot)} (−1 až +1), base ${number(c.cotReference.base?.u)}, quote ${number(c.cotReference.quote?.u)}, tolerance ±0,2`
             :`index ${number(c.cotReference.index)}, pozice k ${date(c.cotReference.date)}, podobnost ${number(c.cotRange[0])}–${number(c.cotRange[1])} / 100`):'bez použitelné současné reference';
         detail.append(element('p',`${a.cotModel==='relative-cot-state-v1'?'Relative COT state '+a.key+' · percentil commercial net / open interest · 52 známých reportů':'COT '+a.market.key+' / '+a.market.name+' · komerční index 52'} · ${reference}. Historický COT kontrolujeme k ${snapshot.asOf.slice(8,10)}. ${Number(snapshot.asOf.slice(5,7))}. v daném roce, tedy přibližně ${c.startsIn} dní před vstupem. Dostupnost používá availableAt; neznámé historické publikace se nepoužijí.`,`opportunity-context`));
-        if(a.cotNote)detail.append(element('p',a.cotNote,'opportunity-context'));
+        if(a.cotNote)detail.append(element('p',a.assetClass==='forex'?usdNote:a.cotNote,'opportunity-context'));
         const table=element('table',undefined,'screener-table'),thead=element('thead'),header=element('tr');
         ['Vzorek','Ve směru · počet / četnost','Medián ceny','Prostředních 50 % výnosů','Typicky proti směru'].forEach(t=>header.append(element('th',t)));thead.append(header);table.append(thead);
         const tbody=element('tbody');
         for(const [label,s] of [[`Sezonalita · ${rangeText(h)}`,h.seasonal],[`Stejné roky s dostupným COT · ${rangeText(h)}`,h.baseline],['Z toho podobný COT',h.cot],['Starší výběrová historie · ne nezávislý test',c.training],['Oddělená kontrola · posledních 8 let',c.validation]]){
-            const tr=element('tr');cell(tr,label);cell(tr,`${s.successes} / ${s.count}${s.count>=8?` · ${pct(s.rate)}`:' · málo dat'}`);cell(tr,move(s.median));cell(tr,`${move(s.q25)} až ${move(s.q75)}`);cell(tr,pct(s.medianAdverse));tbody.append(tr);
+            const tr=element('tr');cell(tr,label);
+            if(cotUnavailable(h)&&(s===h.baseline||s===h.cot)){cell(tr,noHistoricalCot).colSpan=4;tbody.append(tr);continue;}
+            cell(tr,`${s.successes} / ${s.count}${s.count>=8?` · ${pct(s.rate)}`:' · málo dat'}`);cell(tr,move(s.median));cell(tr,`${move(s.q25)} až ${move(s.q75)}`);cell(tr,pct(s.medianAdverse));tbody.append(tr);
         }
         table.append(tbody);const wrap=element('div',undefined,'seasonality-table-wrap');wrap.append(table);detail.append(wrap);
-        detail.append(element('p',`COT je podobný v ${h.cot.count} z ${h.baseline.count} let s dostupným reportem v období ${rangeText(h)}. ${h.cot.successes} z těchto ${h.cot.count} případů drželo směr. Pro přínos COT porovnávej se stejnými roky s dostupným reportem, ne s jiným vzorkem. Nejistota četnosti je 95% interval spolehlivosti: ne 95% šance zisku ani rozsah budoucího výnosu. Ani shoda procent není důkaz obchodní výhody.`,`opportunity-context`));
+        detail.append(element('p',cotUnavailable(h)?`${noHistoricalCot}. C komponenta zůstává neutrální, nikoli potvrzení směru.`:`COT je podobný v ${h.cot.count} z ${h.baseline.count} let s dostupným reportem v období ${rangeText(h)}. ${h.cot.successes} z těchto ${h.cot.count} případů drželo směr. Pro přínos COT porovnávej se stejnými roky s dostupným reportem, ne s jiným vzorkem. Nejistota četnosti je 95% interval spolehlivosti: ne 95% šance zisku ani rozsah budoucího výnosu. Ani shoda procent není důkaz obchodní výhody.`,`opportunity-context`));
         const cases=element('details'),summary=element('summary',`Jednotlivé roky a tehdejší COT · ${rangeText(h)} (${h.cases.length})`);cases.append(summary);
         const ct=element('table',undefined,'screener-table'),ch=element('thead'),cr=element('tr');
         ['Rok · část historie','COT posouzen k','Vstup → výstup','Změna ceny','Pohyb proti směru','COT pozice · index','Podobný COT'].forEach(t=>cr.append(element('th',t)));ch.append(cr);ct.append(ch);
