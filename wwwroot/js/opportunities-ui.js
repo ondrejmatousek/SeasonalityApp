@@ -55,6 +55,45 @@
     const researchLabel=element('label','Zobrazit research-only trhy ','core-research-toggle');researchLabel.prepend(research);diversityLabel.after(researchLabel);
     research.title='Zahrne trhy mimo core scope, blokované ceny i chybějící COT. Nejde o validated ranking.';
     research.addEventListener('change',()=>{closeDetail();render();});
+    const advanced=element('details',undefined,'opportunity-advanced');advanced.id='opportunity-advanced';
+    advanced.append(element('summary','Pokročilé filtry'));
+    const controls=byId('opportunity-history').closest('.screener-controls');
+    const marketControls=byId('screener-asset-class').closest('.screener-controls');
+    const cotFilter=element('select');cotFilter.id='opportunity-cot-filter';
+    for(const [value,text] of [['all','Vše'],['confirms','Potvrzuje'],['neutral','Neutrální'],['against','Proti směru'],['insufficient','Bez dostatku dat']]){const option=element('option',text);option.value=value;cotFilter.append(option);}
+    cotFilter.title='Stávající C komponenta v pevném 20letém kontextu: nad 0,5 potvrzuje, pod 0,5 je proti směru, 0,5 je neutrální. Bez dnešní reference nebo při méně než 8 podobných či 8 ostatních případech: bez dostatku dat.';
+    const cotLabel=element('label','COT ');cotLabel.append(cotFilter);controls.append(cotLabel);
+    advanced.append(marketControls,controls);main.prepend(advanced);
+    const shortcut=byId('opportunity-best').closest('.opportunity-shortcut');advanced.append(shortcut);
+    const presetBar=element('nav',undefined,'opportunity-presets');presetBar.setAttribute('aria-label','Preset screeneru');
+    const presetSummary=element('p',undefined,'opportunity-preset-summary');presetSummary.id='opportunity-preset-summary';presetSummary.setAttribute('aria-live','polite');
+    const presetButtons=new Map();let activePreset='current',applyingPreset=false;
+    for(const [key,label] of [['current','Aktuální'],['upcoming','Blížící se'],['research','Vše / výzkum']]){const button=element('button',label);button.type='button';button.dataset.opportunityPreset=key;button.onclick=()=>applyPreset(key);presetButtons.set(key,button);presetBar.append(button);}
+    main.prepend(presetBar,presetSummary);
+    function summarizeFilters(){
+        for(const [key,button] of presetButtons){button.classList.toggle('is-active',activePreset===key);button.setAttribute('aria-pressed',String(activePreset===key));}
+        const minimum=Number(byId('opportunity-min-score').value);
+        presetSummary.textContent=`${activePreset==='custom'?'Vlastní · ':''}${history()} let · vstup ≤${byId('opportunity-horizon').value} dní · ${minimum?`score ≥${number(minimum)}`:'bez minima skóre'} · ${research.checked&&!research.disabled?'core + výzkum':'core'}`;
+        if(byId('opportunity-direction').value!=='all')presetSummary.textContent+=` · ${byId('opportunity-direction').selectedOptions[0].textContent}`;
+        if(cotFilter.value!=='all')presetSummary.textContent+=` · COT: ${cotFilter.selectedOptions[0].textContent}`;
+        if(byId('screener-asset-class').value!=='all')presetSummary.textContent+=` · ${byId('screener-asset-class').selectedOptions[0].textContent}`;
+        if(byId('opportunity-search').value)presetSummary.textContent+=` · hledání: ${byId('opportunity-search').value}`;
+    }
+    function applyPreset(key){
+        applyingPreset=true;activePreset=key;
+        for(const [id,value] of Object.entries({history:'20',direction:'all',horizon:key==='current'?'30':'60',quality:'all',sort:'score','min-score':key==='research'?'0':'6',search:''}))byId('opportunity-'+id).value=value;
+        research.checked=key==='research';modelChoice.value=key==='research'?'v2':'v3';diversity.value='raw';cotFilter.value='all';
+        byId('screener-asset-class').value='all';byId('screener-commodity-group').value='all';
+        byId('screener-asset-class').dispatchEvent(new Event('change'));
+        byId('opportunity-history').dispatchEvent(new Event('change'));
+        closeDetail();render();summarizeFilters();applyingPreset=false;
+    }
+    for(const event of ['change','input'])advanced.addEventListener(event,()=>{if(!applyingPreset){activePreset='custom';summarizeFilters();}});
+    function cotFilterState(c){
+        const v=c.scoringV2;
+        if(!c.cotReference||!v||v.samples.similar<8||v.samples.other<8||!Number.isFinite(v.components.C))return 'insufficient';
+        return v.components.C>.5?'confirms':v.components.C<.5?'against':'neutral';
+    }
     const legacyRanking=(a,c)=>window.OpportunityRanking.rank(a,c,{history:history(),asOf:snapshot.asOf,evaluationAt:snapshot.exportedAt,today:today()});
     const ranking=(a,c)=>{const r=legacyRanking(a,c);if(modelChoice.value==='v3')return c.scoringV3
         ?{...r,value:c.scoringV2.value,uncapped:c.scoringV2.rawScore,label:'Skóre podkladů · V2 raw'}
@@ -99,7 +138,7 @@
         button.onclick=()=>{
             const active=window.OpportunitySorting.selection(byId('opportunity-sort').value);
             const direction=active.field===field?(active.direction==='asc'?'desc':'asc'):window.OpportunitySorting.defaults[field];
-            byId('opportunity-sort').value=`${field}:${direction}`;render();
+            byId('opportunity-sort').value=`${field}:${direction}`;byId('opportunity-sort').dispatchEvent(new Event('change',{bubbles:true}));
         };
     });
     function updateSortHeaders(){
@@ -134,12 +173,14 @@
         const minimum=Number(byId('opportunity-min-score').value);
         research.disabled=modelChoice.value==='v3';
         const includeResearch=research.checked&&!research.disabled;
+        summarizeFilters();
         const assetClass=byId('screener-asset-class').value,commodityGroup=byId('screener-commodity-group').value;
         const pool=snapshot.assets.filter(a=>window.CoreMarkets.visible(a,includeResearch)&&window.AssetCategories.matches(a,assetClass,commodityGroup));
         let rows=pool.flatMap(a=>a.candidates.filter(c=>display(c)).map(c=>({a,c,r:ranking(a,c)})));
         if(modelChoice.value==='v3')rows=rows.filter(r=>r.c.scoringV3);
         rows=rows.filter(({a,c,r})=>r.value>=minimum&&(direction==='all'||c.direction===direction)&&c.startsIn<=horizon&&
             (!query||[a.key,a.name,...(a.aliases||[])].join(' ').toLocaleLowerCase('cs').includes(query))&&
+            (cotFilter.value==='all'||cotFilterState(c)===cotFilter.value)&&
             (quality==='all'||(!priceStale(a)&&fresh(c.validation)&&!c.warnings.includes('validation-disagrees')&&
                 (quality!=='cot'||(c.cotReference&&display(c).cot.count>=8&&display(c).cot.rate>50)))));
         const sortSelection=window.OpportunitySorting.selection(sort);
@@ -343,16 +384,17 @@
     function mode(automatic){
         closeDetail();
         auto.hidden=!automatic;manual.hidden=automatic;
+        if(automatic)advanced.insertBefore(marketControls,controls);else auto.before(marketControls);
         for(const [id,active] of [['screener-mode-auto',automatic],['screener-mode-manual',!automatic]]){byId(id).classList.toggle('is-active',active);byId(id).setAttribute('aria-pressed',String(active));}
         byId('screener-export').disabled=true;root.dispatchEvent(new CustomEvent('screener-visible'));
     }
     byId('screener-mode-auto').onclick=()=>mode(true);byId('screener-mode-manual').onclick=()=>mode(false);
     byId('opportunity-best').onclick=()=>{
-        for(const [key,value] of Object.entries({history:'20',direction:'all',horizon:'60',quality:'all',sort:'score','min-score':'6',search:''}))byId('opportunity-'+key).value=value;
-        byId('opportunity-history').dispatchEvent(new Event('change'));
+        applyPreset('upcoming');
     };
     ['direction','horizon','quality','sort','search','history','min-score'].forEach(id=>byId('opportunity-'+id).addEventListener(id==='search'?'input':'change',render));
     modelChoice.addEventListener('change',()=>{closeDetail();render();});diversity.addEventListener('change',render);
+    cotFilter.addEventListener('change',render);
     // One calendar lookback across the main chart, confluence and automatic screener.
     for(const id of ['seasonality-years','opportunity-history','confluence-history'])byId(id).addEventListener('change',()=>{
         const value=byId(id).value;
@@ -365,4 +407,5 @@
     });
     root.addEventListener('screener-market-filter-change',render);
     root.addEventListener('screener-visible',load);retry.onclick=load;
+    applyPreset('current');
 })();

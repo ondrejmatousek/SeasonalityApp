@@ -9,6 +9,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
         await page.goto(process.argv[2],{waitUntil:'domcontentloaded'});await page.locator('#market-tab-screener').click();
         await page.waitForFunction(()=>document.querySelector('#opportunity-status').textContent.includes('Core Market Screener'));
         assert.equal(await page.locator('#opportunity-model').inputValue(),'v3');
+        await page.locator('#opportunity-advanced > summary').click();
+        await page.locator('#opportunity-horizon').selectOption('60');
         await page.locator('#opportunity-min-score').selectOption('0');
         const summary=await page.evaluate(async()=>{
             const s=await window.StaticMarketData.opportunities(),rows=s.assets.flatMap(a=>a.candidates.filter(c=>c.scoringV3).map(c=>({a,c})));
