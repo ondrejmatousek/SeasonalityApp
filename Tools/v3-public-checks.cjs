@@ -18,7 +18,10 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
             const recalibration=window.OpportunityScoringV3.calibrate(copy);
             if(JSON.stringify(recalibration)!==JSON.stringify(s.calibrationV3))throw Error('Calibration parity failed');
             const ledger=await (await fetch('/data/screener/v3-live-ledger.json',{cache:'no-store'})).json();
-            return {asOf:s.asOf,reference:s.calibrationV3.referenceCount,rows:rows.length,
+            if(s.config.discovery!=='all-completed-years-unsmoothed-v2')throw Error('Wrong interval discovery method');
+            for(const a of s.assets)if(a.curve&&JSON.stringify(a.curve)!==JSON.stringify(a.displayCurve))throw Error('Displayed/discovery curve mismatch');
+            const usdCad=s.assets.find(a=>a.key==='USDCAD');
+            return {asOf:s.asOf,discovery:s.config.discovery,USDCAD:{years:usdCad.displayYears,intervals:usdCad.candidates.map(c=>[c.direction,c.startDate,c.endDate])},reference:s.calibrationV3.referenceCount,rows:rows.length,
                 min:Math.min(...rows.map(r=>r.c.scoringV3.displayScore)),max:Math.max(...rows.map(r=>r.c.scoringV3.displayScore)),
                 top:sorted.slice(0,10).map(({a,c})=>({instrument:a.key,direction:c.direction,entry:c.startDate,exit:c.endDate,
                     V3:c.scoringV3.displayScore,raw:c.scoringV3.rawScore,percentile:c.scoringV3.percentile,confidence:c.scoringV3.confidence.level,family:a.mapping.exposureFamily})),
@@ -30,7 +33,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
         assert.ok(!keys.includes('LEANHOGS')&&!keys.includes('XAUUSD')&&keys.includes('NQ')&&keys.includes('MNQ'));
         const first=await page.locator('#opportunity-results tr').first().textContent();
         assert.match(first,/Skóre podkladů · V2 raw/);assert.match(first,/Relativní pořadí: #[\d,]+ z \d+ · TOP \d+ %/);assert.match(first,/Spolehlivost:/);
-        assert.doesNotMatch(first,/V3:|10 \/ 10|0 z 0|0 z těchto 0/);
+        assert.doesNotMatch(first,/V3:/,'Percentile display must not replace raw score');
         assert.match(await page.locator('.opportunity-table thead').textContent(),/Historická COT shoda/);
         await page.locator('#opportunity-search').fill(summary.top[0].instrument);
         assert.equal(await page.locator('#opportunity-results tr').first().textContent(),first,'Search recalibrated scores');
@@ -40,7 +43,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
         assert.match(detailText,/Spolehlivost:/);
         assert.match(detailText,/Historické availableAt ani vintage nevyžadujeme/);
         assert.match(detailText,/podobný COT \d+, ostatní COT \d+/);
-        assert.doesNotMatch(detailText,/V3 Experimental:|0 \/ 0|0 z 0|USD zastupuje DXY/);
+        assert.doesNotMatch(detailText,/V3 Experimental:|USD zastupuje DXY/);
+        assert.match(detailText,/Nevyhlazená denní křivka/);assert.match(detailText,/není nezávislý test/);
         await page.locator('.opportunity-dialog-close').click();await page.locator('#opportunity-search').fill('');
         await page.locator('#opportunity-model').selectOption('v1');assert.match(await page.locator('#opportunity-results').textContent(),/bližšímu průzkumu|podklady|Omezené/i);
         await page.locator('#opportunity-model').selectOption('v2');assert.match(await page.locator('#opportunity-results').textContent(),/V2 raw/);
