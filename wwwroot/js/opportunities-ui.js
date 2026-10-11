@@ -199,7 +199,7 @@
         ['Složka a skutečné podklady','Váha','Příspěvek ze 100'].forEach(label=>tr.append(element('th',label)));thead.append(tr);table.append(thead);
         const labels={seasonal:[`Sezonalita · posledních ${history()} let`,`${h.seasonal.successes} z ${h.seasonal.count} ve směru (${pct(h.seasonal.rate)}) · ${rangeText(h)}`],
             validation:['Oddělená kontrola · posledních 8 let',`${c.validation.successes} z ${c.validation.count} ve směru (${pct(c.validation.rate)})`],
-            cot:['Podobný COT · stejná historie',r.currentCot?`${h.cot.successes} z ${h.cot.count} podobných případů ve směru${h.cot.count<8?' · omezený vzorek':''}`:'Chybí použitelný dnešní report · neutrální příspěvek, nikoli potvrzení'],
+            cot:['Podobný COT · stejná historie',cotUnavailable(h)?noHistoricalCot:r.currentCot?`${h.cot.successes} z ${h.cot.count} podobných případů ve směru${h.cot.count<8?' · omezený vzorek':''}`:'Chybí použitelný dnešní report · neutrální příspěvek, nikoli potvrzení'],
             quality:['Kvalita dat',`Ceny ${h.seasonal.count} / ${history()} let · kontrola ${c.validation.count} / 8 · COT pokrytí ${h.baseline.count} / ${h.seasonal.count} let · ${r.pricesFresh&&r.currentCot&&r.snapshotFresh?'aktuální data':'část dat není aktuální'}`]};
         const tbody=element('tbody');
         for(const part of r.components){const row=element('tr'),label=cell(row,'');label.append(element('span',labels[part.key][0],'opportunity-rank-title'),element('small',labels[part.key][1]));

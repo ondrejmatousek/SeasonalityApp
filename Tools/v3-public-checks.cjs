@@ -36,7 +36,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
         const detailText=await page.locator('#opportunity-detail').textContent();
         assert.match(detailText,/Skóre podkladů: 7,1 \/ 10/);assert.match(detailText,/Relativní pořadí: #1 z 51 · TOP 2 %/);
         assert.match(detailText,/Spolehlivost: nízká/);assert.match(detailText,/USD je neutrální reference u=0, nikoli DXY/);
-        assert.doesNotMatch(detailText,/V3 Experimental:|0 \/ 0|USD zastupuje DXY/);
+        assert.doesNotMatch(detailText,/V3 Experimental:|0 \/ 0|0 z 0|USD zastupuje DXY/);
         await page.locator('.opportunity-dialog-close').click();await page.locator('#opportunity-search').fill('');
         await page.locator('#opportunity-model').selectOption('v1');assert.match(await page.locator('#opportunity-results').textContent(),/bližšímu průzkumu|podklady|Omezené/i);
         await page.locator('#opportunity-model').selectOption('v2');assert.match(await page.locator('#opportunity-results').textContent(),/V2 raw/);
