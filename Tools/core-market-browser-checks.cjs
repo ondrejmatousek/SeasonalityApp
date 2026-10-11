@@ -6,7 +6,7 @@ const server=spawn(process.execPath,[path.join(__dirname,'serve-static.cjs'),dir
 let browser;
 (async()=>{try{
     await new Promise((resolve,reject)=>{server.stdout.on('data',b=>{if(b.toString().includes('Static site ready'))resolve();});server.once('error',reject);server.once('exit',c=>reject(Error('Server exited '+c)));});
-    browser=await chromium.launch({headless:true,channel:process.env.CORE_BROWSER_CHANNEL||'msedge'});const page=await browser.newPage({viewport:{width:1500,height:1000}}),errors=[];
+    browser=await chromium.launch({headless:true,channel:process.env.CORE_BROWSER_CHANNEL||'msedge'});const page=await browser.newPage({viewport:{width:2200,height:1000}}),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`http://127.0.0.1:${port}/`);await page.locator('#market-tab-screener').click();
     await page.waitForFunction(()=>document.querySelector('#opportunity-status').textContent.includes('Core Market Screener'));
@@ -16,6 +16,8 @@ let browser;
     assert.equal(await page.locator('.opportunity-main > .screener-guide').count(),0);
     const desktop=await page.evaluate(()=>{const main=document.querySelector('.opportunity-main').getBoundingClientRect(),help=document.querySelector('.opportunity-help').getBoundingClientRect();return {mainRight:main.right,helpLeft:help.left};});
     assert.ok(desktop.helpLeft>desktop.mainRight,'Help must be beside the results on desktop');
+    assert.ok(await page.locator('.seasonality-wrap').evaluate(e=>e.getBoundingClientRect().width)>1440,'Screener must use the available screen width');
+    assert.ok(await page.locator('.opportunity-table').evaluate(e=>e.getBoundingClientRect().width)>=1560,'Table must retain readable column widths');
     const first=await page.locator('#opportunity-results tr').first().textContent();assert.match(first,/Skóre podkladů · V2 raw/);assert.match(first,/Relativní pořadí: #1 z 51 · TOP 2 %/);assert.match(first,/Spolehlivost: nízká/);assert.doesNotMatch(first,/V3:/);
     await page.locator('#opportunity-search').fill('USD');
     await page.locator('#opportunity-search').fill('');
@@ -48,7 +50,7 @@ let browser;
     const mobile=await page.evaluate(()=>{const main=document.querySelector('.opportunity-main').getBoundingClientRect(),help=document.querySelector('.opportunity-help').getBoundingClientRect();return {mainBottom:main.bottom,helpTop:help.top,overflow:document.documentElement.scrollWidth>window.innerWidth};});
     assert.ok(mobile.helpTop>=mobile.mainBottom,'Help must follow the results on narrow screens');
     assert.equal(mobile.overflow,false,'Page must not overflow horizontally');
-    await page.setViewportSize({width:1500,height:1000});
+    await page.setViewportSize({width:2200,height:1000});
     await page.screenshot({path:path.join(directory,'core-screener-browser.png'),fullPage:false});
     console.log(`Browser passed: ${keys.length} core rows, research toggle, blocked gold, NQ dialog source labels, no JS errors; HTTP startup ready.`);
 }finally{await browser?.close();server.kill();}})().catch(e=>{console.error(e);process.exitCode=1;});

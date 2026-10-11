@@ -1,5 +1,16 @@
 .seasonality-page { padding:24px 32px 40px; }
 .seasonality-wrap { max-width:1440px; margin:0 auto; gap:20px; min-width:0; }
+.is-screener .seasonality-wrap { max-width:none; }
+.is-screener .opportunity-table { min-width:1560px; }
+.is-screener .opportunity-table th:nth-child(1) { width:14%; }
+.is-screener .opportunity-table th:nth-child(2) { width:11%; }
+.is-screener .opportunity-table th:nth-child(3) { width:14%; }
+.is-screener .opportunity-table th:nth-child(4) { width:5%; }
+.is-screener .opportunity-table th:nth-child(5) { width:14%; }
+.is-screener .opportunity-table th:nth-child(6) { width:15%; }
+.is-screener .opportunity-table th:nth-child(7) { width:9%; }
+.is-screener .opportunity-table th:nth-child(8) { width:10%; }
+.is-screener .opportunity-table th:nth-child(9) { width:8%; }
 .seasonality-header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); padding:0 0 16px; min-height:0; align-items:center; gap:24px; border-bottom:1px solid #ffffff12; }
 .seasonality-header>div { min-width:0; }
 .seasonality-header h1 { font-size:1.25rem; font-weight:700; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

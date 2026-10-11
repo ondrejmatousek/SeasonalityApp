@@ -43,7 +43,11 @@
                         const note=doc.createElement('p');note.textContent=`PNG: ${Math.min(rows.length,20)} z ${rows.length} výsledků v aktuálním řazení. Historické výsledky nejsou předpovědí.`;
                         doc.querySelector(screenerView).append(note);
                         const tableWrap=doc.querySelector(`${screenerView} .screener-table-wrap`);tableWrap.style.overflow='visible';
-                        const captureWidth=Math.max(rect.width, root.querySelector(`${screenerView} .screener-table`).scrollWidth);
+                        const layout=doc.querySelector(`${screenerView} .opportunity-layout`);
+                        // Preserve space for both the full table and sidebar in the PNG,
+                        // even when the live viewport stacks the help below the results.
+                        const captureWidth=Math.max(rect.width, root.querySelector(`${screenerView} .screener-table`).scrollWidth+(layout?340:0));
+                        if(layout)layout.style.gridTemplateColumns='minmax(0, 1fr) 320px';
                         doc.querySelector('.seasonality-wrap').style.width=captureWidth+'px';
                         doc.querySelector('.seasonality-wrap').style.maxWidth='none';
                         // Native number inputs can clip their values in html2canvas.
