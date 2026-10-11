@@ -186,8 +186,11 @@
     }
 
     async function renderAnalogs() {
-        const selectedMarket=market();
+        const mapping=asset?window.CoreMarkets.get(asset.key):null,relative=mapping?.cotMode==='relative-cot-state-v1';
+        const selectedMarket=relative?window.CoreCot.market(mapping,payload?.markets||[],window.StaticMarketData?.exportedAt):market();
         if(!selectedMarket||!asset)return;
+        byId('cot-analog-group').disabled=relative;
+        if(relative)byId('cot-analog-group').value='commercial';
         const version=++analogVersion,key=asset.key,name=asset.name;
         const resultNode=byId('cot-analog-results'),message=byId('cot-analog-status');
         const mode=byId('cot-analog-mode').value;
@@ -209,11 +212,14 @@
             if(version!==analogVersion||panel.hidden)return;
             const asOf=(window.StaticMarketData?.exportedAt||new Date().toISOString()).slice(0,10);
             const result=window.CotAnalogs.analyze(selectedMarket.reports,prices,{group:byId('cot-analog-group').value,
-                mode,tolerance:Number(byId('cot-analog-tolerance').value),asOf});
+                mode,tolerance:Number(byId('cot-analog-tolerance').value),lookback:relative?52:Number(lookback.value),asOf,
+                evaluationAt:window.StaticMarketData?.exportedAt||asOf});
             if(!result.range){message.textContent='Pro poslední report není index této skupiny dostupný. Zkus jinou skupinu nebo historický extrém.';return;}
             const n=result.samples.length;
+            if(relative)resultNode.append(element('p',window.CoreMarkets.sourceText(mapping)+'. Relative COT používá vždy 52 reportů; horní lookback ovládá jen grafy jednotlivých měn. Historicky neznámá dostupnost není doplněna zpětně.'));
             message.textContent=`COT ${selectedMarket.name} → výnos ceny ${name}. Index ${number(result.range[0])}–${number(result.range[1])}, lookback ${lookback.value} reportů. Reference ${dateLabel(result.referenceDate)}${mode==='latest'?` · index ${number(result.target)}`:''}. ${n} nepřekrývajících se případů z ${result.candidates} podobných reportů. Ceny ${result.firstPriceDate?dateLabel(result.firstPriceDate):'—'} až ${result.lastPriceDate?dateLabel(result.lastPriceDate):'—'}.`;
             const caution=element('p',n<8?'Malý vzorek: méně než 8 případů. Výsledky mohou být náhodné.':'Historické srovnání, nikoli nákupní / prodejní signál.');
+            if(relative)message.textContent=message.textContent.replace(`lookback ${lookback.value} reportů`,'lookback 52 reportů');
             caution.className='cot-analog-caution';resultNode.append(caution);
             if(!n){resultNode.append(element('p','Žádný případ s kompletními cenami pro všechny tři horizonty. Zkus širší toleranci nebo jinou skupinu / situaci.'));return;}
             const pct=value=>value==null?'—':`${value>0?'+':''}${new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:2}).format(value)} %`;

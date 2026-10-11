@@ -24,7 +24,7 @@
         if(value>=6)return 'Smíšené podklady';
         return 'Slabé / omezené podklady';
     }
-    function rank(asset,candidate,{history=10,asOf,today=asOf}={}){
+    function rank(asset,candidate,{history=10,asOf,today=asOf,evaluationAt=asOf}={}){
         if(![5,10,20].includes(history)||!['up','down'].includes(candidate.direction)||!Number.isFinite(Date.parse(asOf))||!Number.isFinite(Date.parse(today)))throw new Error('Invalid ranking settings');
         const h=candidate.histories?.[history];if(!h)throw new Error('Missing ranking history');
         const s=h.seasonal,v=candidate.validation,c=h.cot,b=h.baseline;
@@ -32,7 +32,8 @@
         const age=days(asOf,asset.lastDate),snapshotAge=days(today,asOf);
         const pricesFresh=Number.isFinite(age)&&age>=0&&age<=7;
         const ref=candidate.cotReference,refAge=days(asOf,ref?.date);
-        const currentCot=!!ref&&Number.isFinite(ref.index)&&ref.index>=0&&ref.index<=100&&Number.isFinite(refAge)&&refAge>=7&&refAge<=21;
+        const currentCot=!!ref&&Number.isFinite(ref.index)&&ref.index>=0&&ref.index<=100&&Number.isFinite(refAge)&&refAge>=0&&refAge<=21
+            &&!!ref.availableAt&&Number.isFinite(Date.parse(ref.availableAt))&&Date.parse(ref.availableAt)<=Date.parse(evaluationAt);
         const snapshotFresh=snapshotAge>=0&&snapshotAge<=2;
         // Coverage counts refer to usable historical years, not the number of weekly reports.
         const coverage=[clamp(sn/history),clamp(vn/8),sn?clamp(bn/sn):0,pricesFresh&&currentCot&&snapshotFresh?1:0];

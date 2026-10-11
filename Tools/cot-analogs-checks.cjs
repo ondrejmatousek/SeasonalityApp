@@ -3,6 +3,7 @@ const {analyze,summarize}=require('../wwwroot/js/cot-analogs.js');
 const day=86400000,iso=t=>new Date(t).toISOString().slice(0,10),start=Date.parse('2020-01-07T00:00:00Z');
 const reports=Array.from({length:40},(_,i)=>({date:iso(start+i*7*day),commercial:{index:i===39?95:90},nonCommercial:{index:10}}));
 const prices=Array.from({length:340},(_,i)=>({date:iso(start+i*day),close:100+i}));
+reports.forEach(r=>{r.availableAt=new Date(Date.parse(r.date)+7*day).toISOString();r.availabilitySource='test-fixture';});
 const opts={group:'commercial',mode:'latest',tolerance:10,asOf:'2020-12-31'};
 const result=analyze(reports,prices,opts);
 assert.deepEqual(result.range,[85,100]);

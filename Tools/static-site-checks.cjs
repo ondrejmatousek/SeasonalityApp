@@ -87,8 +87,9 @@ function exportChecks(directory) {
             for(const cot of asset.cot) {
                 const market=catalog.cot.markets.find(m=>m.key===cot.key);
                 assert.ok(market);
-                const latest=read(manifest.contracts[market.contractCode].files['52']).reports.filter(r=>r.date<=screener.asOf).at(-1);
-                assert.equal(cot.index,latest?.commercial.index ?? null);
+                const availability=require('../wwwroot/js/cot-availability.js'),reports=read(manifest.contracts[market.contractCode].files['52']).reports;
+                const latest=availability.latest(reports,manifest.exportedAt);
+                assert.equal(cot.index,availability.indexAt(reports,latest,manifest.exportedAt));
                 assert.equal(cot.change,latest?.commercial.change ?? null);
             }
         }
@@ -98,24 +99,28 @@ function exportChecks(directory) {
         assert.equal(snapshot.schemaVersion,1);assert.equal(snapshot.modelVersion,'seasonal-extremes-v1');
         assert.equal(snapshot.asOf,manifest.opportunities.asOf);assert.equal(snapshot.exportedAt,manifest.exportedAt);
         assert.deepEqual(snapshot.config,model.config);
-        assert.equal(snapshot.assets.length,manifest.assets.filter(a=>a.cot.markets.length).length);
+        const registry=require('../wwwroot/js/core-market-registry.js');
+        assert.equal(snapshot.assets.length,manifest.assets.filter(a=>a.cot.markets.length||a.assetClass==='index'||registry.get(a.key)?.executionKind!=='futures-profile'&&registry.get(a.key)).length+4);
+        assert.equal(snapshot.mappingVersion,registry.version);
         const unique=new Set();
         for(const asset of snapshot.assets){
             assert.ok(!unique.has(asset.key));unique.add(asset.key);
-            const catalog=manifest.assets.find(a=>a.key===asset.key);assert.ok(catalog);
+            const catalog=manifest.assets.find(a=>a.key===asset.mapping.priceKey);assert.ok(catalog);
             assert.equal(asset.assetClass,catalog.assetClass);
             assert.equal(asset.commodityGroup,catalog.commodityGroup);
-            const market=catalog.cot.markets.find(m=>!m.isDollarIndex)||catalog.cot.markets[0];
-            assert.deepEqual(asset.market,market,'Primary COT market cannot be selected from outcomes');
-            const reports=read(manifest.contracts[market.contractCode].files['52']).reports;
+            const {reports,asset:reference}=require('./methodology-data.cjs')(directory,catalog.key);
+            const market=reference.market;
+            assert.deepEqual(asset.market,market,'Registry COT market cannot be selected from outcomes');
             const prices=read(catalog.prices.path).prices.map(([date,close])=>({date,close}));
             // Compare the wire representation: JSON intentionally serializes -0 as 0.
-            const expected=JSON.parse(JSON.stringify(model.analyzeAsset(prices,reports,snapshot.asOf)));
-            for(const [key,value] of Object.entries(expected))assert.deepEqual(asset[key],value,`Daily model parity ${asset.key}/${key}`);
+            const analysis=model.analyzeAsset(prices,reports,snapshot.asOf,{evaluationAt:manifest.exportedAt});
+            for(const c of analysis.candidates)c.scoringV2=require('../wwwroot/js/opportunity-scoring-v2.js').prepare(model,prices,catalog,c,snapshot.asOf);
+            const expected=JSON.parse(JSON.stringify(analysis));
+            for(const [key,value] of Object.entries(expected))assert.deepEqual(key==='candidates'?asset[key].map(({scoringV3,...c})=>c):asset[key],value,`Daily model parity ${asset.key}/${key}`);
             assert.ok(asset.candidates.length<=2);
             for(const c of asset.candidates){
                 assert.ok(c.startDate>=snapshot.asOf&&c.training.count>=10);
-                assert.ok(c.cases.every(s=>!s.reportDate||Date.parse(s.reportDate)+7*86400000<=Date.parse(s.signalDate)));
+                assert.ok(c.cases.every(s=>!s.reportDate||s.availableAt&&Date.parse(s.availableAt)<=Date.parse(s.signalDate)));
                 for(const history of [5,10,20]){
                     const score=ranking.rank(asset,c,{history,asOf:snapshot.asOf});
                     assert.ok(Number.isFinite(score.value)&&score.value>=1&&score.value<=10,`Ranking range ${asset.key}/${history}`);

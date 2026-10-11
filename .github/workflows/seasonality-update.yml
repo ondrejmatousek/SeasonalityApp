@@ -8,6 +8,10 @@ on:
     - cron: '15 5 * * *'
   workflow_dispatch:
     inputs:
+      reuse_snapshot:
+        description: 'Reuse latest static price/COT artifact; no SQL access or source update'
+        type: boolean
+        default: false
       export_only:
         description: 'Export and publish current SQL snapshot without updating sources'
         type: boolean
@@ -19,7 +23,7 @@ concurrency:
 
 jobs:
   cot-update:
-    if: inputs.export_only != true
+    if: inputs.export_only != true && inputs.reuse_snapshot != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +36,7 @@ jobs:
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
   update:
-    if: inputs.export_only != true
+    if: inputs.export_only != true && inputs.reuse_snapshot != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,10 +50,11 @@ jobs:
   export-static:
     # Never publish a partially updated or failed data snapshot.
     needs: [update, cot-update]
-    if: ${{ !cancelled() && (inputs.export_only == true || (needs.update.result == 'success' && needs['cot-update'].result == 'success')) }}
+    if: ${{ !cancelled() && (inputs.reuse_snapshot == true || inputs.export_only == true || (needs.update.result == 'success' && needs['cot-update'].result == 'success')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -71,7 +76,19 @@ jobs:
       - run: node Tools/opportunities-checks.cjs
       - run: node Tools/opportunity-ranking-checks.cjs
       - run: node Tools/opportunity-sorting-checks.cjs
+      - run: node Tools/opportunity-scoring-v2-checks.cjs
+      - run: node Tools/opportunity-scoring-v3-checks.cjs
+      - name: Reuse latest successful immutable dataset (no SQL)
+        if: inputs.reuse_snapshot == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "seasonality-static-site" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
+          test "$run_id" != null
+          gh run download "$run_id" --name seasonality-static-site --dir artifacts/static-site
+          dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --render-static-shell --output artifacts/static-site
       - name: Export read-only SQL snapshot to static HTML and JSON
+        if: inputs.reuse_snapshot != true
         run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --export-static --output artifacts/static-site --Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command=Warning
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
@@ -79,8 +96,24 @@ jobs:
         run: node Tools/build-screener.cjs artifacts/static-site
       - name: Find daily seasonal extremes and compare historical COT
         run: node Tools/build-opportunities.cjs artifacts/static-site
+      - name: Restore cumulative V3 ledger
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "seasonality-v3-live-ledger" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
+          if [ "$run_id" != null ]; then
+            gh run download "$run_id" --name seasonality-v3-live-ledger --dir artifacts/v3-live-ledger
+            test -s artifacts/v3-live-ledger/ledger.json
+          fi
+      - name: Append immutable V3 forecasts and close-based completed outcomes
+        run: node Tools/v3-live-tracking.cjs artifacts/static-site artifacts/v3-live-ledger/ledger.json
       - name: Validate every exported ticker, COT index and immutable file
         run: node Tools/static-site-checks.cjs artifacts/static-site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seasonality-v3-live-ledger
+          path: artifacts/v3-live-ledger/ledger.json
+          retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
           name: seasonality-static-site

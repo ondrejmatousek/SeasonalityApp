@@ -8,6 +8,8 @@ for(let year=1995;year<=2026;year++){
     for(let date=new Date(Date.UTC(year,0,3));date.getUTCFullYear()===year;date=new Date(+date+7*86400000))
         reports.push({date:date.toISOString().slice(0,10),commercial:{index:50}});
 }
+// Synthetic fixture: publication times are explicit test inputs, not inferred by production code.
+reports.forEach(r=>{r.availableAt=new Date(Date.parse(r.date)+7*86400000).toISOString();r.availabilitySource='test-fixture';});
 const asOf='2026-10-10',result=model.analyzeAsset(prices,reports,asOf);
 assert.equal(result.validationStart,2018);assert.equal(result.trainingYears.length,20);
 assert.ok(result.trainingYears.every(y=>y<2018));assert.equal(result.candidates.length,2);
@@ -48,7 +50,7 @@ const newCot=model.analyzeAsset(prices,reports.map(r=>({...r,commercial:{index:r
 assert.deepEqual(newCot.candidates.map(c=>[c.startDate,c.endDate,c.direction,c.score]),result.candidates.map(c=>[c.startDate,c.endDate,c.direction,c.score]),'COT cannot cherry-pick endpoints');
 const gap=prices.filter(r=>r.date<'2020-10-01'||r.date>'2020-11-30');
 assert.equal(model.historySamples(gap,asOf,'2026-10-01','2026-12-01',[2020]).length,0,'Long price gaps exclude an outcome');
-assert.equal(model.cotAt([{date:'2020-10-01',commercial:{index:50}},{date:'2020-10-02',commercial:{index:null}}],'2020-10-10'),null,'Missing latest index cannot fall back to an older report');
+assert.equal(model.cotAt([{date:'2020-10-01',availableAt:'2020-10-08',commercial:{index:50}},{date:'2020-10-02',availableAt:'2020-10-09',commercial:{index:null}}],'2020-10-10'),null,'Missing latest index cannot fall back to an older report');
 const noCot=model.analyzeAsset(prices,[],asOf);
 assert.ok(noCot.candidates.every(c=>c.warnings.includes('no-current-cot')&&c.cot.count===0));
 const short=model.analyzeAsset(prices.filter(r=>r.date>='2010-01-01'),reports,asOf);
@@ -59,6 +61,7 @@ const cross=model.historySamples(prices,'2026-12-20','2026-12-27','2027-01-20',[
 assert.equal(cross.length,3);assert.equal(cross.at(-1).end,'2026-01-20');
 assert.equal(cross[0].signalDate,'2017-12-20');
 const early=[{date:'2020-10-01',commercial:{index:10}},{date:'2020-10-06',commercial:{index:90}}];
+early.forEach(r=>{r.availableAt=new Date(Date.parse(r.date)+7*86400000).toISOString();});
 assert.equal(model.cotAt(early,'2020-10-10').commercial.index,10,'Do not use an entry-date report for a forecast made earlier');
 assert.equal(model.cotAt(early,'2020-11-01'),null,'Stale report excluded');
 assert.throws(()=>model.analyzeAsset([],[],'bad'));

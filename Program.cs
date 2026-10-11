@@ -39,6 +39,14 @@ builder.Services.AddControllersWithViews().ConfigureApplicationPartManager(parts
 });
 
 var app = builder.Build();
+if (args.Contains("--render-static-shell", StringComparer.OrdinalIgnoreCase))
+{
+    var outputIndex = Array.IndexOf(args, "--output");
+    if (outputIndex < 0 || outputIndex + 1 >= args.Length) throw new ArgumentException("Missing --output.");
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<StaticSiteExporter>().RefreshShellAsync(args[outputIndex + 1]);
+    return;
+}
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SeasonalityDbContext>();

@@ -1,7 +1,7 @@
 (function(root,factory){
-    if(typeof module==='object'&&module.exports)module.exports=factory(require('./seasonality-reliability.js'));
-    else root.SeasonalityConfluence=factory(root.SeasonalityReliability);
-}(typeof globalThis==='object'?globalThis:this,function(reliability){
+    if(typeof module==='object'&&module.exports)module.exports=factory(require('./seasonality-reliability.js'),require('./cot-availability.js'));
+    else root.SeasonalityConfluence=factory(root.SeasonalityReliability,root.CotAvailability);
+}(typeof globalThis==='object'?globalThis:this,function(reliability,availability){
     const day=86400000,z=1.959963984540054;
     const time=date=>Date.parse(date+'T00:00:00Z');
     const validIndex=value=>Number.isFinite(value)&&value>=0&&value<=100;
@@ -27,17 +27,17 @@
             medianAdverse:reliability.quantile(adverse,.5),worstAdverse:count?Math.max(...adverse):null};
     }
 
-    function analyze(reports,prices,{startDay,endDay,asOf,group='commercial',direction='up',tolerance=10,historyYears=null,selectedYears=null,comparison='entry'}={}){
+    function analyze(reports,prices,{startDay,endDay,asOf,evaluationAt=asOf,group='commercial',direction='up',tolerance=10,historyYears=null,selectedYears=null,comparison='entry',lookback=52}={}){
         if(!['commercial','nonCommercial','nonReportable'].includes(group)||!['up','down'].includes(direction)
             ||!Number.isFinite(tolerance)||tolerance<0||tolerance>100||!Number.isFinite(time(asOf))
             ||!Number.isInteger(startDay)||!Number.isInteger(endDay)||startDay<0||endDay>364||startDay>=endDay
             ||!(historyYears===null||(Number.isInteger(historyYears)&&historyYears>0))
             ||!['entry','snapshot'].includes(comparison))throw new Error('Invalid confluence settings');
         const cutoff=time(asOf),year=Number(asOf.slice(0,4));
-        // Never reference a report not yet available under the publication approximation.
-        const ordered=reports.filter(r=>Number.isFinite(time(r.date))&&time(r.date)+7*day<=cutoff)
-            .sort((a,b)=>a.date.localeCompare(b.date));
-        const latest=ordered.at(-1),target=latest?.[group]?.index;
+        // Never reference a report without documented availability at this evaluation time.
+        if(!Number.isFinite(availability.cutoff(evaluationAt))||evaluationAt.slice(0,10)!==asOf)throw new Error('Evaluation timestamp must match calendar asOf');
+        const ordered=availability.known(reports,evaluationAt);
+        const latest=ordered.at(-1),target=availability.indexAt(reports,latest,evaluationAt,group,lookback);
         const reference=latest?{date:latest.date,index:target,ageDays:(cutoff-time(latest.date))/day}:null;
         const referenceUsable=!!reference&&reference.ageDays<=21&&validIndex(target);
         const range=referenceUsable?[Math.max(0,target-tolerance),Math.min(100,target+tolerance)]:null;
@@ -53,12 +53,10 @@
             if(anniversary.getUTCMonth()!==Number(asOf.slice(5,7))-1)anniversary.setUTCDate(0);
             const forecastDate=anniversary.toISOString().slice(0,10);
             const signalDate=comparison==='snapshot'&&forecastDate<sample.start?forecastDate:sample.start;
-            const entry=time(signalDate);let lo=0,hi=ordered.length;
-            while(lo<hi){const mid=(lo+hi)>>>1;if(time(ordered[mid].date)+7*day<=entry)lo=mid+1;else hi=mid;}
-            const report=ordered[lo-1];
+            const entry=time(signalDate),report=availability.latest(ordered,signalDate);
             if(!report){missing++;continue;}
             if(entry-time(report.date)>21*day){stale++;continue;}
-            const index=report[group]?.index;
+            const index=availability.indexAt(reports,report,signalDate,group,lookback);
             // Do not substitute an older index if the latest report has no valid index.
             if(!validIndex(index)){missingIndex++;continue;}
             const row={...sample,signalDate,reportDate:report.date,index,matched:!!range&&index>=range[0]&&index<=range[1]};

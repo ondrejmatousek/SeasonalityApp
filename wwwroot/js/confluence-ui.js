@@ -62,8 +62,10 @@
     }
 
     async function render(currentVersion){
-        const captured=state,key=captured.asset.key,lookback=Number(byId('confluence-lookback').value);
-        const group=byId('confluence-group').value,direction=byId('confluence-direction').value;
+        const captured=state,key=captured.asset.key,mapping=window.CoreMarkets.get(key),relative=mapping?.cotMode==='relative-cot-state-v1';
+        for(const id of ['group','lookback','market'])byId('confluence-'+id).disabled=relative;
+        if(relative){byId('confluence-group').value='commercial';byId('confluence-lookback').value='52';}
+        const lookback=Number(byId('confluence-lookback').value),group=byId('confluence-group').value,direction=byId('confluence-direction').value;
         const tolerance=Number(byId('confluence-tolerance').value),history=byId('confluence-history').value;
         panel.setAttribute('aria-busy','true');
         try{
@@ -72,24 +74,27 @@
             const selector=byId('confluence-market');
             const previous=marketAsset===key?selector.value:null;
             selector.replaceChildren();
-            for(const m of payload.markets)selector.append(new Option(`${m.isDollarIndex?'DXY / USD':m.key} · ${m.name}`,m.key));
-            selector.value=payload.markets.some(m=>m.key===previous)?previous:(payload.markets.find(m=>!m.isDollarIndex)||payload.markets[0])?.key||'';
+            const markets=mapping?[window.CoreCot.market(mapping,payload.markets,window.StaticMarketData?.exportedAt)]:payload.markets;
+            for(const m of markets)selector.append(new Option(`${m.isDollarIndex?'DXY / USD':m.key} · ${m.name}`,m.key));
+            selector.value=markets.some(m=>m.key===previous)?previous:(markets.find(m=>!m.isDollarIndex)||markets[0])?.key||'';
             marketAsset=key;
             // Avoid a redundant resize-driven request after populating the market select.
             signature=JSON.stringify([captured.asset.key,captured.interval,captured.asOf,captured.historyYears,captured.selectedYears,...controls.map(k=>byId('confluence-'+k).value)]);
-            const market=payload.markets.find(m=>m.key===selector.value);
+            const market=markets.find(m=>m.key===selector.value);
             if(!market){status.textContent='Pro tento instrument nemáme odpovídající COT. Společné srovnání nelze spočítat; sezonální analýza nad tím zůstává dostupná.';return;}
             const r=window.SeasonalityConfluence.analyze(market.reports,captured.prices,{...captured.interval,asOf:captured.asOf,
-                group,direction,tolerance,historyYears:captured.historyYears,selectedYears:captured.selectedYears,comparison:'snapshot'});
+                evaluationAt:window.StaticMarketData?.exportedAt?.slice(0,10)===captured.asOf?window.StaticMarketData.exportedAt:captured.asOf,
+                group,direction,tolerance,lookback,historyYears:captured.historyYears,selectedYears:captured.selectedYears,comparison:'snapshot'});
             if(!r.referenceUsable){
-                status.textContent=!r.reference?'Chybí odhadovaně dostupný referenční COT report.':r.reference.ageDays>21
-                    ?`Poslední odhadovaně dostupný report je z ${date(r.reference.date)} (${number(r.reference.ageDays,0)} dní). Je příliš starý pro srovnání s dneškem.`
-                    :'Poslední odhadovaně dostupný report nemá index této skupiny. Zkus jinou skupinu nebo kratší lookback.';
+                status.textContent=!r.reference?'Chybí doloženě dostupný referenční COT report.':r.reference.ageDays>21
+                    ?`Poslední doloženě dostupný report je z ${date(r.reference.date)} (${number(r.reference.ageDays,0)} dní). Je příliš starý pro srovnání s dneškem.`
+                    :'Poslední doloženě dostupný report nemá index této skupiny. Zkus jinou skupinu nebo kratší lookback.';
                 return;
             }
             const year=Number(captured.asOf.slice(0,4)),yearsLabel=captured.historyYears?`${year-captured.historyYears}–${year-1}`:'vybrané dokončené roky';
             status.textContent=`${captured.asset.name} · ${period(captured.interval)} · historie ${yearsLabel}, stejný výběr roků jako v grafu. COT ${market.name} / ${byId('confluence-group').selectedOptions[0].textContent}. Reference: pozice k ${date(r.reference.date)}, index ${number(r.reference.index,2)}, podobnost ${number(r.range[0],2)}–${number(r.range[1],2)} / 100; lookback ${lookback} reportů. COT v historii posuzujeme k výročí ${date(captured.asOf)}, stejně jako Screener (nikoli až k budoucímu vstupu).`;
-            if(payload.note)results.append(el('p',payload.note,'cot-market-note'));
+            if(relative)results.append(el('p',window.CoreMarkets.sourceText(mapping)+'. Obě non-USD měny musí být synchronní a známé. USD je neutrální reference, nikoli DXY. Normalizace commercial net/OI: 52 reportů.','cot-market-note'));
+            else if(payload.note)results.append(el('p',payload.note,'cot-market-note'));
             results.append(el('h3',`Jak často byla cena ${captured.asset.name} na konci období ${direction==='up'?'výše':'níže'}?`));
             const caution=r.conditional.count<8?'Málo společných případů. Pro rozhodování zatím nemáme dost podkladů.':r.conditional.count<20
                 ?'Malý společný vzorek. Procento ber jako nejistou historickou četnost, ne obchodní signál.'
@@ -122,7 +127,7 @@
                 s.year,date(s.start),date(s.end),date(s.reportDate),number(s.index,2),s.matched?'Ano':'Ne',signed(s.returnPct),pct(direction==='up'?-s.maxDrop:s.maxRise)
             ])));
             results.append(cases);
-            results.append(el('p','Zatím bez nezávislého ověření na nedotčených datech. Dostupnost COT je odhadnutá jako datum pozic + 7 dní; obchodní náklady nejsou započtené.','confluence-footnote'));
+            results.append(el('p','Zatím bez nezávislého ověření na nedotčených datech. Neznámá historická dostupnost COT se nepoužívá; observed-upper-bound je doložené pozorování, nikoli přesná publikace; obchodní náklady nejsou započtené.','confluence-footnote'));
         }catch(error){
             if(currentVersion!==version)return;
             status.textContent='Společnou analýzu se nepodařilo načíst. Sezonalita a grafy mohou dál fungovat.';

@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const {summarize} = require('../wwwroot/js/screener-metrics.js');
+const availability = require('../wwwroot/js/cot-availability.js');
 const dir = path.resolve(process.argv[2]);
 const manifestPath = path.join(dir, 'data/manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -12,7 +13,8 @@ function latestCot(market) {
     if (!contracts.has(market.contractCode)) {
         const file = manifest.contracts[market.contractCode].files['52'];
         const reports = JSON.parse(fs.readFileSync(path.join(dir, file))).reports;
-        contracts.set(market.contractCode, reports.filter(r => r.date <= asOf).at(-1));
+        const latest=availability.latest(reports,manifest.exportedAt);
+        contracts.set(market.contractCode,latest?{...latest,commercial:{...latest.commercial,index:availability.indexAt(reports,latest,manifest.exportedAt)}}:null);
     }
     const report = contracts.get(market.contractCode);
     return {key:market.key,name:market.name,isQuoteCurrency:market.isQuoteCurrency,isDollarIndex:market.isDollarIndex,

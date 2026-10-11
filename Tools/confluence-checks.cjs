@@ -13,7 +13,8 @@ for(let year=2000;year<=2026;year++){
     reports.push({date:`${year}-01-09`,commercial:{index:100}}); // Only available after the Jan 10 entry.
 }
 reports.push({date:'2026-09-29',commercial:{index:90}});
-reports.push({date:'2026-10-06',commercial:{index:10}}); // Not yet available under +7 day estimate.
+reports.push({date:'2026-10-06',commercial:{index:10}}); // Fixture explicitly declares later availability below.
+reports.forEach(r=>{r.availableAt=new Date(Date.parse(r.date)+7*86400000).toISOString();r.availabilitySource='test-fixture';});
 const settings={startDay:9,endDay:23,asOf:'2026-10-10'};
 const r=c.analyze(reports,prices,settings);
 assert.equal(r.reference.date,'2026-09-29');assert.equal(r.reference.index,90);

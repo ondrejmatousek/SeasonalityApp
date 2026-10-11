@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),{assess}=require('../wwwroot/js/opportunity-confidence.js');
+const input={seasonal:12,recent:8,similar:8,other:8,verifiedPublications:true,completePrices:true,currentCot:true,priceProvenance:true,proxy:false,pricesFresh:true};
+assert.equal(assess(input).level,'vyšší');
+assert.equal(assess({...input,proxy:true}).level,'střední');
+assert.equal(assess({...input,similar:1}).level,'nízká');
+assert.equal(assess({...input,verifiedPublications:false}).level,'nízká');
+assert.equal(assess({...input,currentCot:false}).level,'nízká');
+assert.ok(assess({...input,currentCot:false}).reasons.some(r=>r.includes('neověřeno')));
+assert.equal(assess({...input,successes:0}).level,assess({...input,successes:12}).level,'Confidence does not measure outcome direction');
+console.log('Confidence: categorical, support/provenance separate from outcome strength passed.');

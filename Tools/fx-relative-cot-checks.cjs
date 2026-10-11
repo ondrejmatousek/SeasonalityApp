@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict'),fx=require('../wwwroot/js/fx-relative-cot.js');
+const date=i=>new Date(Date.UTC(2020,0,7)+i*7*86400000).toISOString().slice(0,10);
+const series=(sign,scale=1)=>Array.from({length:60},(_,i)=>({date:date(i),availableAt:date(i+1),
+    availabilitySource:'test-fixture',openInterest:1000*scale,commercial:{net:sign*i*scale}}));
+const s={GBP:series(1),CAD:series(-1),AUD:series(2)},asOf=date(60);
+const cad=fx.state('GBPCAD',s,asOf),aud=fx.state('GBPAUD',s,asOf);
+assert.ok(cad.relativeCot>aud.relativeCot);
+assert.equal(fx.state('CADGBP',s,asOf).relativeCot,-cad.relativeCot);
+assert.deepEqual(fx.currency(series(1,100),asOf),fx.currency(series(1),asOf),'Contract/count scaling cancels in net/OI');
+assert.equal(fx.state('USDJPY',{JPY:series(1)},asOf).relativeCot,-fx.state('JPYUSD',{JPY:series(1)},asOf).relativeCot);
+assert.ok(fx.state('USDJPY',{JPY:series(1)},asOf).relativeCot<0,'Higher JPY state points opposite to USDJPY');
+assert.deepEqual(fx.currency([...s.GBP,{date:'2030-01-01',availableAt:'2030-01-08',openInterest:1,commercial:{net:1e9}}],asOf),fx.currency(s.GBP,asOf));
+assert.equal(fx.state('GBPUSD',{GBP:s.GBP,USD:series(-1)},asOf).quote.u,0,'DXY never replaces USD numeraire');
+assert.equal(fx.state('GBPCAD',{GBP:s.GBP},asOf),null,'Missing quote is unverified, not neutral CAD');
+assert.equal(fx.currency(series(1).slice(0,10),asOf),null);
+const lateWindow=series(1).slice(8),lateAt=date(60)+'T12:00:00Z';
+lateWindow[0]={...lateWindow[0],availableAt:lateAt};
+assert.equal(fx.currency(lateWindow,asOf),null,'An incomplete known window cannot be normalized');
+assert.equal(fx.currency(lateWindow,date(61)).availableAt,lateAt,'State availability includes all normalization inputs, not just latest positions');
+const lateStates=fx.reports('GBPUSD',{GBP:lateWindow}),availability=require('../wwwroot/js/cot-availability.js');
+assert.equal(availability.latest(lateStates,asOf),null,'Later completion of the window must not backdate a derived state');
+console.log('Relative COT: two currencies, inversion, future invariance, scale invariance and USDJPY passed.');

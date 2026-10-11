@@ -130,6 +130,21 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
         return path;
     }
 
+    public async Task RefreshShellAsync(string output)
+    {
+        var directory = Path.GetFullPath(output);
+        var artifacts = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "artifacts")) + Path.DirectorySeparatorChar;
+        if (!directory.StartsWith(artifacts, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Preview must stay under artifacts/.");
+        var manifest = await File.ReadAllTextAsync(Path.Combine(directory, "data", "manifest.json"));
+        await RenderPageAsync(directory, manifest);
+        foreach (var file in Directory.EnumerateFiles(environment.WebRootPath, "*", SearchOption.AllDirectories))
+        {
+            var destination = Path.Combine(directory, Path.GetRelativePath(environment.WebRootPath, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(file, destination, true);
+        }
+    }
+
     private async Task RenderPageAsync(string directory, string manifest)
     {
         var http = new DefaultHttpContext { RequestServices = services };

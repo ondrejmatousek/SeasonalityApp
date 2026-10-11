@@ -27,11 +27,14 @@
         cycle:'Filtr vybere sudé nebo liché kalendářní roky. Mění vzorek i počet výsledků; kontroluj, zda dobrý výsledek nestojí jen na několika letech.',
         election:'Filtr podle čtyřletého cyklu amerických prezidentských voleb: Election = volební rok, Pre-election = rok před ním, Post-election = rok po něm, Midterm = druhý rok po volbách. Vzorek může být velmi malý.',
         date:'Navržené kalendářní období, ne pokyn k okamžitému vstupu. Historicky používáme první dostupnou závěrečnou cenu od začátku a poslední nejpozději v konci. Před budoucím vstupem znovu ověř cenu a COT.',
-        forecast:'Datum, ke kterému byl historický COT posouzen. U budoucího období používáme výročí dne snapshotu, tedy stejný předstih jako dnes; ne až report známý při budoucím vstupu. Dostupnost reportu odhadujeme jako datum pozic +7 dní.',
+        forecast:'Datum, ke kterému byl historický COT posouzen. U budoucího období používáme výročí dne snapshotu, tedy stejný předstih jako dnes; ne až report známý při budoucím vstupu. Report musí mít doložené availableAt nejpozději v tento okamžik. Neznámou dostupnost vyřazujeme.',
         quality:'Filtr podkladů, nikoli záruka úspěchu. Oddělená kontrola vyžaduje všech 8 let, alespoň 62,5 % ve směru a souhlas mediánu. COT volba navíc požaduje alespoň 8 podobných případů ve zvolené historii a více než polovinu ve směru.',
         sort:'Automatický Screener výchozí řadí podle skóre podkladů 1–10. Pevné váhy zohledňují četnosti, malé vzorky a kvalitu dat; nejde o pravděpodobnost zisku. Jiné řazení mění pouze pořadí, ne období ani výsledky. Řazení podle samotné četnosti může zvýhodnit malé náhodně silné vzorky.',
         small:'Méně než 8 použitelných případů: velké procento by působilo přesněji, než data dovolují. Ukazujeme skutečné počty, ale procento nezvýrazňujeme. Tři úspěchy ze tří nejsou důkaz 100% šance příštího obchodu.',
-        ranking:'Skóre podkladů 1–10 je pořadí pro další průzkum, ne pravděpodobnost. 8 bodů NEZNAMENÁ 80% šanci zisku. Váhy: sezonalita 45 %, novější kontrola 25 %, podobný COT 20 %, kvalita dat 10 %. Malé vzorky tlumíme, omezení skóre zastropují. Složky se překrývají; procenta nenásobíme. Složení i stropy jsou v Detailu.',
+        ranking:'Skóre je priorita pro další průzkum, ne pravděpodobnost zisku. 8 bodů NEZNAMENÁ 80% šanci zisku. V1 zachovává váhy 45/25/20/10 a stropy. Experimentální V2 má váhy 30/25/25/20: sezonalita proti běžným obdobím, nepřekrývající se novější blok, velikost a stabilita pohybu, přidaná informace COT. Spolehlivost V2 je oddělená; malý vzorek nesnižuje raw score automaticky. Rozklad je v Detailu.',
+        confidence:'Nízká / střední / vyšší spolehlivost popisuje dostupnost a počet podkladů, nikoli šanci zisku. Kontrolujeme sezonální a recent případy, obě COT skupiny, doložení dostupnosti, úplnost a čerstvost cen, proxy a datovou provenienci. Chybějící COT není důkaz proti směru.',
+        scoringModel:'V1 zůstává výchozí. V2 je experimentální raw score s oddělenou spolehlivostí a pevným kontextem 20 let. Volba 5/10/20 let mění diagnostické sloupce, nikoli V2. Model zatím nemá dokončenou walk-forward validaci.',
+        exposureOrder:'Nejsilnější podklady řadí podle skóre. Diverzifikované příležitosti nejdříve ukážou kandidáty bez společné směrové expoziční skupiny, další odloží níže. Skóre se nemění. QQQ a NDX sdílejí Nasdaq; u FX zohledňujeme směr base i quote měny. Není to optimalizace portfolia.',
         limitedCot:'Ve zvolené historii je méně než 8 dokončených ročních období s podobným COT indexem. Neznamená to chybějící všechny COT reporty. Například 4 podobné případy z 10 let jsou jen podmnožina deseti let. Práh 8 není statistická záruka. Skóre má postupný strop 6 + počet / 8, nejvýše 7: jeden případ má strop 6,1 bodu, šest 6,8 po zaokrouhlení; filtr vzorek nezvětší.',
         dataQuality:'Pokrytí skutečně použitelných cenových roků, osmi novějších kontrolních let, historických COT reportů a čerstvost dat. Každá ze čtyř kontrol má stejnou váhu uvnitř této 10% složky. Čerstvé ceny nejvýše 7 dní, dostupný současný COT nejvýše 21 dní od pozic a snapshot nejvýše 2 dny. Nehodnotí ziskovost ani riziko.',
         contribution:'Příspěvek dané složky do váženého součtu 0–100 po utlumení malého vzorku a kontrole směru mediánu. Například 30 / 45 znamená 30 bodů z maximálních 45 pro sezonalitu. Není to 30% pravděpodobnost. Součet převádíme na 1–10 a následně uplatníme stropy uvedené pod tabulkou.',
@@ -47,11 +50,11 @@
         ,count:'Počet skutečně použitelných dokončených období, ne počet všech dostupných reportů. Letošní rok, neúplné ceny a dlouhé mezery vynecháváme. U podobného COT zbývají jen roky nebo situace s odpovídajícím indexem.'
         ,rise:'Největší růst denní závěrečné ceny od vstupní ceny během období. U poklesového směru je to pohyb proti směru; u růstu příznivý pohyb. Nezachycuje intradenní maxima.'
         ,fall:'Největší pokles denní závěrečné ceny od vstupní ceny během období. U růstu jde o pohyb proti směru. Není to největší propad od libovolného průběžného vrcholu ani intradenní minimum.'
-        ,positionDate:'Datum, ke kterému byly pozice evidované, nikoli okamžik zveřejnění. Report vychází se zpožděním; pro historické porovnání odhadujeme dostupnost jako datum pozic +7 dní.'
+        ,positionDate:'Datum evidovaných pozic, nikoli zveřejnění. Dostupnost posuzujeme zvlášť podle availableAt. Pouhé datum pozic neznamená, že tehdy report už byl znám; neznámou dostupnost vyřadíme.'
         ,analogMode:'Vybere podobnost poslednímu reportu nebo historické extrémy indexu 0–20 / 80–100. Následné výnosy za 2, 4 a 8 týdnů používají celý dostupný souběh cen a COT, ne pouze roky zobrazené v grafu. Extrém sám není nákupní ani prodejní signál.'
     };
     const rules=[
-        [/skóre podkladů|minimum skóre/, 'ranking'],[/jen \d+ podobn|žádný podobný případ|cot omezený/,'limitedCot'],[/kvalita dat/,'dataQuality'],[/příspěvek ze 100/,'contribution'],
+        [/spolehlivost podkladů/,'confidence'],[/skóre podkladů|minimum skóre|raw score/, 'ranking'],[/jen \d+ podobn|žádný podobný případ|cot omezený/,'limitedCot'],[/kvalita dat/,'dataQuality'],[/příspěvek ze 100/,'contribution'],
         [/nejistot|95%/, 'uncertainty'],[/oddělená kontrola/,'validation'],[/podobný cot|podobnost|souběh/,'cot'],
         [/sezonalita ·|ve směru|četnost|win rate|kladné (roky|období|případy)|podíl kladných/,'frequency'],
         [/prostředních 50/,'middle'],[/medián/,'median'],[/bez nejlepšího/,'trimmed'],[/průměr/,'mean'],
@@ -67,7 +70,7 @@
     const controls={
         'screener-asset-class':'assetClass','screener-commodity-group':'commodityGroup',
         'seasonality-years':'history','opportunity-history':'history','confluence-history':'history',
-        'opportunity-direction':'direction','opportunity-horizon':'date','opportunity-quality':'quality','opportunity-sort':'sort','opportunity-min-score':'ranking',
+        'opportunity-direction':'direction','opportunity-horizon':'date','opportunity-quality':'quality','opportunity-sort':'sort','opportunity-min-score':'ranking','opportunity-model':'scoringModel','opportunity-exposure-order':'exposureOrder',
         'confluence-direction':'direction','confluence-group':'groups','confluence-tolerance':'tolerance','confluence-lookback':'lookback',
         'confluence-market':'cot','cot-lookback':'lookback','cot-history':'chartHistory','cot-analog-group':'groups','cot-analog-mode':'analogMode',
         'cot-analog-tolerance':'tolerance','screener-lookback':'history','screener-minimum':'small','screener-sort':'sort'

@@ -1,7 +1,7 @@
 (function(root,factory){
-    if(typeof module==='object'&&module.exports)module.exports=factory(require('./seasonality-confluence.js'));
-    else root.DailyOpportunities=factory(root.SeasonalityConfluence);
-}(typeof globalThis==='object'?globalThis:this,function(confluence){
+    if(typeof module==='object'&&module.exports)module.exports=factory(require('./seasonality-confluence.js'),require('./cot-availability.js'));
+    else root.DailyOpportunities=factory(root.SeasonalityConfluence,root.CotAvailability);
+}(typeof globalThis==='object'?globalThis:this,function(confluence,availability){
     const day=86400000,config=Object.freeze({validationYears:8,minTrainingYears:10,maxTrainingYears:20,
         entryHorizon:60,minDuration:14,maxDuration:60,smoothRadius:3,extremeRadius:7,cotTolerance:10,cotLookback:52});
     const iso=d=>d.toISOString().slice(0,10),time=s=>Date.parse(s+'T00:00:00Z');
@@ -93,14 +93,17 @@
     }
 
     function cotAt(reports,date){
-        let lo=0,hi=reports.length;
-        while(lo<hi){const mid=(lo+hi)>>>1;if(time(reports[mid].date)+7*day<=time(date))lo=mid+1;else hi=mid;}
-        const r=reports[lo-1];
-        if(!r||time(date)-time(r.date)>21*day||!Number.isFinite(r.commercial?.index)||r.commercial.index<0||r.commercial.index>100)return null;
+        const latest=availability.latest(reports,date);
+        const r=latest?{...latest,commercial:{...latest.commercial,index:availability.indexAt(reports,latest,date)}}:null;
+        if(!r||availability.cutoff(date)-time(r.date)>21*day||!Number.isFinite(r.commercial?.index)||r.commercial.index<0||r.commercial.index>100)return null;
+        if(Number.isFinite(r.commercial.net)){
+            const inputs=availability.known(reports,date).filter(p=>p.date<=r.date).slice(-config.cotLookback);
+            if(inputs.some(p=>p.availabilitySource!=='verified-publication-day'))r.availabilitySource='observed-upper-bound';
+        }
         return r;
     }
 
-    function analyzeAsset(prices,reports,asOf){
+    function analyzeAsset(prices,reports,asOf,options={}){
         if(!Number.isFinite(time(asOf)))throw Error('Invalid snapshot date');
         const rows=prices.filter(r=>Number.isFinite(time(r.date))&&r.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date));
         const cot=reports.filter(r=>Number.isFinite(time(r.date))&&r.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date));
@@ -126,13 +129,13 @@
             choices.sort((a,b)=>b.score-a.score||b.tie-a.tie||a.window.startsIn-b.window.startsIn);
             const best=choices[0];if(!best)continue;
             const validation=historySamples(rows,asOf,best.window.startDate,best.window.endDate,validationYears);
-            const all=[...best.samples,...validation],reference=cotAt(cot,asOf);
+            const all=[...best.samples,...validation],reference=cotAt(cot,options.evaluationAt||asOf);
             const range=reference?[Math.max(0,reference.commercial.index-config.cotTolerance),Math.min(100,reference.commercial.index+config.cotTolerance)]:null;
             const covered=[],matched=[];
             for(const sample of all){
                 const report=cotAt(cot,sample.signalDate);if(!report)continue;
                 const index=report.commercial.index,isMatch=!!range&&index>=range[0]&&index<=range[1];
-                const row={...sample,index,reportDate:report.date,matched:isMatch,validation:sample.year>=discovered.validationStart};
+                const row={...sample,index,relativeCot:report.relativeCot,reportDate:report.date,availableAt:report.availableAt,availabilitySource:report.availabilitySource,matched:isMatch,validation:sample.year>=discovered.validationStart};
                 covered.push(row);if(isMatch)matched.push(row);
             }
             const validationStats=confluence.summarize(validation,direction),cotStats=confluence.summarize(matched,direction);
@@ -143,7 +146,7 @@
             const recentCovered=recent.flatMap(sample=>{
                 const report=cotAt(cot,sample.signalDate);if(!report)return [];
                 const index=report.commercial.index;
-                return [{...sample,index,reportDate:report.date,matched:!!range&&index>=range[0]&&index<=range[1]}];
+                return [{...sample,index,relativeCot:report.relativeCot,reportDate:report.date,availableAt:report.availableAt,availabilitySource:report.availabilitySource,matched:!!range&&index>=range[0]&&index<=range[1]}];
             });
             const histories=Object.fromEntries([5,10,20].map(years=>{
                 const from=Number(asOf.slice(0,4))-years;
@@ -161,7 +164,7 @@
             else if(!(sign*cotStats.median>0)||cotStats.rate<=50)warnings.push('cot-disagrees');
             selected.push({...best.window,histories,training:best.stats,trainingYears:best.samples.map(s=>s.year),validation:validationStats,
                 validationYears:validation.map(s=>s.year),cot:cotStats,cotBaseline,cotValidation:confluence.summarize(matched.filter(s=>s.validation),direction),
-                cotReference:reference?{date:reference.date,index:reference.commercial.index}:null,cotRange:range,
+                cotReference:reference?{date:reference.date,index:reference.commercial.index,relativeCot:reference.relativeCot,base:reference.base,quote:reference.quote,availableAt:reference.availableAt,availabilitySource:reference.availabilitySource}:null,cotRange:range,
                 score:best.score,warnings,cases:all.map(s=>covered.find(c=>c.year===s.year)||{...s,index:null,reportDate:null,matched:false,validation:s.year>=discovered.validationStart})});
         }
         return {...displayFields,trainingYears:discovered.years,validationStart:discovered.validationStart,curve:discovered.curve.map(v=>Math.round(v*10000)/10000),

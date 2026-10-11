@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),ranking=require('../wwwroot/js/opport
 const asOf='2026-10-10',stats=(k,n,median=1)=>({successes:k,count:n,median}),empty=stats(0,0,null);
 const asset={lastDate:'2026-10-09'};
 function candidate(s=stats(8,10),v=stats(6,8),cot=stats(7,8),baseline=stats(8,10)){
-    return {direction:'up',cotReference:{date:'2026-09-29',index:80},validation:v,
+    return {direction:'up',cotReference:{date:'2026-09-29',availableAt:'2026-10-02T20:00:00Z',index:80},validation:v,
         histories:{10:{seasonal:s,cot,baseline}}};
 }
 const rank=c=>ranking.rank(asset,c,{asOf});
@@ -21,7 +21,7 @@ assert.ok(rank(candidate(stats(10,10),stats(4,8,-1),stats(8,8))).value<=5.5,'Val
 assert.ok(rank(candidate(stats(10,10),stats(8,8),stats(3,8,-1))).value<=6.5,'Sufficient adverse COT must limit ranking');
 assert.ok(rank(candidate(stats(4,10,-1),stats(8,8),stats(8,8))).value<=5.5,'Seasonal conflict cannot earn strong score');
 const missing=candidate();missing.cotReference=null;assert.ok(rank(missing).value<=6);
-const unavailable=candidate();unavailable.cotReference.date='2026-10-06';assert.ok(!rank(unavailable).currentCot,'No future/unpublished reference');
+const unavailable=candidate();unavailable.cotReference.availableAt='2026-10-13';assert.ok(!rank(unavailable).currentCot,'No future/unpublished reference');
 const stale=candidate();stale.cotReference.date='2026-09-01';assert.ok(!rank(stale).currentCot);
 assert.ok(ranking.rank({lastDate:'2026-09-20'},candidate(),{asOf}).value<=5);
 assert.ok(ranking.rank(asset,candidate(),{asOf,today:'2026-10-13'}).value<=5);

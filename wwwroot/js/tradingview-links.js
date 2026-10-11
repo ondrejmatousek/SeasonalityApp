@@ -1,8 +1,8 @@
 (function(root,factory){
-    const api=factory();
+    const api=factory(typeof module==='object'&&module.exports?require('./core-market-registry.js'):root.CoreMarkets);
     if(typeof module==='object'&&module.exports)module.exports=api;
     else root.TradingViewLinks=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(){
+})(typeof globalThis!=='undefined'?globalThis:this,function(registry){
     // Map the price instrument, never its COT proxy (e.g. QQQ must not open NDX).
     const symbols={
         DXY:'TVC:DXY',SPX:'SP:SPX',NDX:'NASDAQ:NDX',DJI:'DJ:DJI',RUT:'TVC:RUT',VIX:'CBOE:VIX',NIKKEI225:'TVC:NI225',
@@ -17,9 +17,9 @@
     };
     for(const key of ['SPY','DIA','IWM','EFA','EEM','GLD','SLV','USO','UNG','CPER','WEAT','CANE','XLE','XLF','XLK','XLV','XLY','XLP','XLI','XLU','XLB'])symbols[key]='AMEX:'+key;
     const currencies=new Set(['EUR','GBP','USD','JPY','CHF','AUD','NZD','CAD']);
-    function chart(key){
+    function chart(key,{tradingProfile=false}={}){
         if(typeof key!=='string')return null;
-        let symbol=Object.hasOwn(symbols,key)?symbols[key]:null;
+        let symbol=(tradingProfile?registry?.get(key)?.tradingViewSymbol:null)||(Object.hasOwn(symbols,key)?symbols[key]:null);
         if(!symbol&&key.length===6&&currencies.has(key.slice(0,3))&&currencies.has(key.slice(3))&&key.slice(0,3)!==key.slice(3))symbol='OANDA:'+key;
         if(!symbol)return null; // Do not silently send unknown assets to an unrelated ticker.
         const kind=symbol.endsWith('1!')?'Průběžný futures kontrakt. ':symbol.startsWith('OANDA:')?'Spotový graf OANDA. ':'';

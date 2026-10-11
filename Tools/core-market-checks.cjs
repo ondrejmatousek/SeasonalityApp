@@ -1,0 +1,52 @@
+const assert=require('node:assert/strict'),registry=require('../wwwroot/js/core-market-registry.js'),cot=require('../wwwroot/js/core-cot.js'),fx=require('../wwwroot/js/fx-relative-cot.js');
+const exposures=require('../wwwroot/js/opportunity-exposures.js');
+assert.equal(registry.pairs.length,28);assert.equal(new Set(registry.pairs).size,28);
+for(const pair of registry.pairs){const m=registry.get(pair);assert.equal(m.base,pair.slice(0,3));assert.equal(m.quote,pair.slice(3));
+    assert.equal(m.priceKey,pair);assert.equal(m.priceKind,'fx-spot');assert.equal(m.cotSources[0].key,m.base);assert.equal(m.cotSources[1].key,m.quote);
+    for(const s of m.cotSources)assert.equal(s.kind==='neutral-reference',s.key==='USD');}
+assert.deepEqual(registry.get('GBPCAD').cotSources.map(s=>s.key),['GBP','CAD']);
+assert.deepEqual(registry.get('GBPAUD').cotSources.map(s=>s.key),['GBP','AUD']);
+assert.equal(registry.get('GBPUSD').cotSources[1].kind,'neutral-reference');
+const date=i=>new Date(Date.UTC(2020,0,7)+i*7*86400000).toISOString().slice(0,10);
+const series=sign=>Array.from({length:60},(_,i)=>({date:date(i),availableAt:date(i+1),availabilitySource:'test-fixture',openInterest:1000,commercial:{net:sign*i}}));
+const s={GBP:series(1),CAD:series(-1),JPY:series(1)},asOf=date(60);
+assert.equal(fx.state('CADGBP',s,asOf).relativeCot,-fx.state('GBPCAD',s,asOf).relativeCot);
+assert.ok(fx.state('USDJPY',s,asOf).relativeCot<0);
+assert.equal(fx.state('GBPCAD',{GBP:s.GBP},asOf),null);
+assert.equal(fx.state('GBPCAD',{GBP:s.GBP,CAD:s.CAD.slice(0,-1)},asOf),null,'Different report weeks unavailable');
+const market=k=>({key:k,contractCode:registry.get('GBPCAD').cotSources.find(x=>x.key===k).contractCode,reports:s[k]});
+assert.deepEqual(cot.market(registry.get('GBPCAD'),[market('GBP'),market('CAD')]).reports,fx.reports('GBPCAD',s),'Detail and builder use identical reports');
+assert.equal(cot.market(registry.get('GBPCAD'),[market('GBP')]).reports.length,0);
+const unknown=s.GBP.map(({availableAt,availabilitySource,...r})=>r),observedAt=asOf+'T12:00:00Z';
+const observed=cot.observedReports(unknown,observedAt);
+assert.ok(observed.every(r=>r.availableAt===observedAt&&r.availabilitySource==='observed-upper-bound'));
+assert.equal(fx.state('GBPUSD',{GBP:observed},asOf),null,'Export observation cannot leak into an earlier evaluation');
+assert.ok(fx.state('GBPUSD',{GBP:observed},observedAt));
+const confluence=require('../wwwroot/js/seasonality-confluence.js'),model=require('../wwwroot/js/daily-opportunities.js');
+const referenceReports=fx.reports('GBPUSD',{GBP:observed});
+const settings={startDay:100,endDay:130,asOf,historyYears:20,comparison:'snapshot'};
+assert.equal(confluence.analyze(referenceReports,[],settings).referenceUsable,false);
+const detailReference=confluence.analyze(referenceReports,[],{...settings,evaluationAt:observedAt});
+assert.equal(detailReference.reference.index,model.cotAt(referenceReports,observedAt).commercial.index,'Detail uses same snapshot timestamp as screener');
+assert.equal(detailReference.conditional.count,0,'Observed export does not fabricate historical COT cases');
+for(const [key,ref,code,family] of [['NQ','NDX','209742','Nasdaq'],['MNQ','NDX','209742','Nasdaq'],['ES','SPX','13874A','S&P500'],['MES','SPX','13874A','S&P500']]){
+    const m=registry.get(key);assert.equal(m.priceKey,ref);assert.equal(m.cotSources[0].contractCode,code);assert.equal(m.exposureFamily,family);
+    assert.equal(exposures.exposures({key,assetClass:'index'},{direction:'up'})[0].group,family);}
+assert.equal(registry.get('QQQ').priceKey,'QQQ');assert.equal(registry.get('SPY').priceKey,'SPY');
+assert.equal(registry.resolve({key:'ES',assetClass:'equity'}).scope,'research','Eversource ticker ES is not the ES futures profile');
+assert.equal(registry.resolve({key:'ES',isTradingProfile:true}).priceKey,'SPX');
+const links=require('../wwwroot/js/tradingview-links.js');
+assert.equal(links.chart('ES'),null,'Do not send stock ES to futures TradingView');
+assert.equal(links.chart('ES',{tradingProfile:true}).symbol,'CME_MINI:ES1!');
+assert.equal(registry.get('XAUUSD').status,'data-source-not-validated');
+assert.equal(registry.get('XAUUSD').futureSpotSeriesId,'gold-spot:XAUUSD:v1');
+assert.equal(registry.resolve({key:'LEANHOGS',assetClass:'commodity'}).status,'research-only');
+assert.equal(registry.visible({dataStatus:'research-only'}),false);assert.equal(registry.visible({dataStatus:'research-only'},true),true);
+assert.equal(registry.visible({dataStatus:'COT-unavailable'}),false);assert.equal(registry.visible({}),false,'Old exports fail closed');
+assert.equal(registry.visible({dataStatus:'validated-ranking-ready'}),true);
+const fs=require('node:fs');const catalog=fs.readFileSync('Services/SeasonalityService.cs','utf8');
+for(const p of registry.pairs)assert.ok(catalog.includes('new("'+p+'"'),'Existing spot catalog '+p);
+const cotCatalog=fs.readFileSync('Services/CotCatalog.cs','utf8');
+for(const m of Object.values(registry.entries))for(const s of m.cotSources.filter(s=>s.contractCode))
+    assert.match(cotCatalog,new RegExp('new\\("'+s.key+'",[^\\n]+"'+s.contractCode+'"\\)'),`CFTC catalog agrees with registry: ${s.key}`);
+console.log('Core registry: 28 FX mappings, dual-currency COT, inversion, missing/asynchronous quote, execution profiles, blocked gold, research visibility passed.');

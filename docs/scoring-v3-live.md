@@ -1,0 +1,19 @@
+# V3 live experimental, version 1
+
+V3 retains the original V2 raw calculation, components and confidence unchanged. It adds no new COT availability heuristics. Working historical source remains the current exported dataset; this is not strict PIT validation. Unknown inputs remain neutral as in V2, not bullish evidence. Publication/provenance limitations still appear in confidence. All current candidates may therefore be low confidence.
+
+Calibration: collect raw scores of all eligible canonical core candidate windows before user filters. Include both proposed directions. Exclude NQ/MNQ/ES/MES execution aliases, research-only assets, blocked gold and unavailable data. Index and ETF references remain distinct price series but concentration warnings identify their shared family. Equal raw values get their midrank; percentile = 100 × midrank/(N−1). Single/constant cohorts get percentile 50. Interpolate between (0,1), (25,3.5), (50,5.5), (75,7.5), (90,9), (100,10), round display to one decimal.
+
+This intentionally ranks relative strength, not absolute quality. The strongest candidate can receive 10 even when no absolute edge is demonstrated. Never label 10 as a validated exceptional trade or convert it into profit probability. Same raw may get a different display score on another day. Filters cannot change the reference cohort. Fixed V2 20-year context remains; 5/10-year selections change descriptive tables only.
+
+Default model is V3 Experimental in the automatic screener's Model dropdown. V1 and V2 remain available with unchanged score definitions. V3 research ranking is unavailable, even when research visibility is requested. Sort by rounded V3, unchanged confidence category, unrounded raw. Diversification still reorders exposures without modifying scores.
+
+## Prospective tracking
+
+Every successful build-time screener calculation appends one idempotent run to a cumulative ledger (export timestamp + calibration identity). Browsing/filtering does not generate new predictions. Original forecast fields and calibration distribution are frozen, including profiles; profiles are explicitly marked for deduplicated performance analysis. Captured timestamp is actual build time, not backdated to the dataset date. Windows already started, including capture-day entries, are marked non-prospective and excluded from forward outcome filling.
+
+Read `/data/screener/v3-live-ledger.json` or download it from Detail. Fields: timestamp, data timestamp, instrument, direction, window, V1 (20-year context), V2 raw, V3 display, percentile, S/R/M/C, unchanged confidence, family, source price key, execution-profile flag. After end date, fill directional close return, MAE (positive adverse amount), MFE (positive favorable amount), win/loss/flat, actual entry/exit dates. Require positive daily closes, no gaps over 7 days and adequate window edges. No intraday extremes, execution P&L, costs, leverage or futures proxy assumptions. Missing/delayed prices keep outcomes pending. Completed outcomes are not silently revised.
+
+The existing GitHub daily workflow restores the previous cumulative `seasonality-v3-live-ledger` artifact and uploads a new cumulative copy with 90-day retention. Every successful daily run renews the full ledger; no SQL schema/write is added. This is artifact-backed tracking, not permanent database storage: an outage exceeding retention can lose the artifact chain. Keep downloaded backups. Forecast generation precedes Azure upload; a failed deploy can leave a generated run in the ledger, so `timestamp` proves generation, not user visibility or an executed trade.
+
+Initial deployment uses `reuse_snapshot=true`: reuse an already exported immutable dataset, refresh the static shell, recompute the screener, and deploy without accessing SQL or updating providers. Existing scheduled data maintenance is unchanged. Gold and research futures remain out of V3 ranking.
