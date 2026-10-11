@@ -101,7 +101,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "seasonality-v3-live-ledger" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
-          if [ "$run_id" != null ]; then
+          if [ -n "$run_id" ] && [ "$run_id" != null ]; then
             gh run download "$run_id" --name seasonality-v3-live-ledger --dir artifacts/v3-live-ledger
             test -s artifacts/v3-live-ledger/ledger.json
           fi
