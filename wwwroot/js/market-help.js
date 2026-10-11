@@ -13,8 +13,8 @@
         index:'COT index 0–100: čisté pozice vzhledem k vlastnímu minimu a maximu za zvolený počet reportů. 0 = nejnižší a 100 = nejvyšší pozice v tomto okně. Není to procento obchodníků ani pravděpodobnost růstu ceny.',
         lookback:'Počet týdenních COT reportů použitých pro výpočet indexu 0–100. Například 52 reportů je přibližně rok. To je jiné nastavení než počet historických let použitých pro porovnání výnosů.',
         tolerance:'Rozsah podobnosti dnešnímu COT indexu v bodech, ne procentech. Při indexu 81 a toleranci ±10 vybereme historické indexy 71–91. Širší rozsah přidá případy, ale budou méně podobné. Ve Screeneru používáme komerční index 52 a ±10 bodů.',
-        validation:'Oddělená kontrola posledních 8 dokončených let. Tyto roky se nepoužily k nalezení intervalu ani jeho směru. Hlavní zvolená historie 10 nebo 20 let může částečně obsahovat výběrové roky. Ani tato kontrola není ověřením na budoucích datech.',
-        selection:'Interval a směr se hledají pouze ve starších letech, aby následná kontrola nebyla zvýhodněná stejnými daty. Tyrkysová křivka v detailu ukazuje tuto výběrovou historii, nikoli letošní cenu. Výsledky ve zvolené novější historii čti zvlášť.',
+        validation:'Kontrola konzistence posledních 8 dokončených let. Tyto roky jsou součástí maximální historie použité k výběru intervalu. Nejde o nezávislý holdout ani ověření na budoucích datech. Hledání období na stejné historii může výsledky nadhodnotit.',
+        selection:'Interval a směr se hledají na nevyhlazené denní křivce ze všech dostupných úplných roků, včetně nejnovějších. Aktuální neúplný rok a roky s mezerami přes 7 dní se vynechávají. Detail zobrazuje stejnou křivku, nikoli letošní cenu. Volba 5/10/20 let mění diagnostické četnosti, ne výběr intervalu. Členitější křivka nezaručuje přesnější obchodní vstup.',
         adverse:'Medián největšího pohybu proti zvolenému směru od vstupu do konce období: u růstu pokles, u poklesu růst. Počítáme denní závěrečné ceny, ne intradenní extrémy. Nejhorší případ může být mnohem horší; číslo není doporučený stop-loss.',
         median:'Prostřední historický výsledek po seřazení výnosů. Polovina výsledků je pod ním a polovina nad ním. Je méně citlivý na jeden výjimečný rok než průměr. Není to předpověď výnosu.',
         mean:'Součet historických výnosů dělený počtem období. Jeden výjimečně silný rok může průměr výrazně posunout. Porovnej jej s mediánem a jednotlivými roky.',
@@ -28,7 +28,7 @@
         election:'Filtr podle čtyřletého cyklu amerických prezidentských voleb: Election = volební rok, Pre-election = rok před ním, Post-election = rok po něm, Midterm = druhý rok po volbách. Vzorek může být velmi malý.',
         date:'Navržené kalendářní období, ne pokyn k okamžitému vstupu. Historicky používáme první dostupnou závěrečnou cenu od začátku a poslední nejpozději v konci. Před budoucím vstupem znovu ověř cenu a COT.',
         forecast:'Historická COT shoda: u budoucího období používáme výročí dne snapshotu, tedy stejný předstih jako dnes. Bereme poslední report ze současného CFTC datasetu podle data pozic, nejvýše 21 dní starý. Původní historical availableAt ani vintage nevyžadujeme. Nejde o strict PIT validaci.',
-        quality:'Filtr podkladů, nikoli záruka úspěchu. Oddělená kontrola vyžaduje všech 8 let, alespoň 62,5 % ve směru a souhlas mediánu. COT volba navíc požaduje alespoň 8 podobných případů ve zvolené historii a více než polovinu ve směru.',
+        quality:'Filtr podkladů, nikoli záruka úspěchu. Kontrola konzistence vyžaduje všech 8 let, alespoň 62,5 % ve směru a souhlas mediánu; není nezávislá na výběru intervalu. COT volba navíc požaduje alespoň 8 podobných případů ve zvolené historii a více než polovinu ve směru.',
         sort:'Automatický Screener výchozí řadí podle skóre podkladů 1–10. Pevné váhy zohledňují četnosti, malé vzorky a kvalitu dat; nejde o pravděpodobnost zisku. Jiné řazení mění pouze pořadí, ne období ani výsledky. Řazení podle samotné četnosti může zvýhodnit malé náhodně silné vzorky.',
         small:'Méně než 8 použitelných případů: velké procento by působilo přesněji, než data dovolují. Ukazujeme skutečné počty, ale procento nezvýrazňujeme. Tři úspěchy ze tří nejsou důkaz 100% šance příštího obchodu.',
         ranking:'Skóre je priorita pro další průzkum, ne pravděpodobnost zisku. 8 bodů NEZNAMENÁ 80% šanci zisku. V1 zachovává váhy 45/25/20/10 a stropy. Experimentální V2 má váhy 30/25/25/20: sezonalita proti běžným obdobím, nepřekrývající se novější blok, velikost a stabilita pohybu, přidaná informace COT. Spolehlivost V2 je oddělená; malý vzorek nesnižuje raw score automaticky. Rozklad je v Detailu.',
@@ -55,7 +55,7 @@
     };
     const rules=[
         [/spolehlivost podkladů/,'confidence'],[/skóre podkladů|minimum skóre|raw score/, 'ranking'],[/jen \d+ podobn|žádný podobný případ|cot omezený/,'limitedCot'],[/kvalita dat/,'dataQuality'],[/příspěvek ze 100/,'contribution'],
-        [/nejistot|95%/, 'uncertainty'],[/oddělená kontrola/,'validation'],[/podobný cot|podobnost|souběh/,'cot'],
+        [/nejistot|95%/, 'uncertainty'],[/oddělená kontrola|kontrola konzistence|konzistence posledních/,'validation'],[/podobný cot|podobnost|souběh/,'cot'],
         [/sezonalita ·|ve směru|četnost|win rate|kladné (roky|období|případy)|podíl kladných/,'frequency'],
         [/prostředních 50/,'middle'],[/medián/,'median'],[/bez nejlepšího/,'trimmed'],[/průměr/,'mean'],
         [/proti směru|typický max|typicky proti/,'adverse'],[/nejhorší|nejlepší|minimum.*maximum/,'extremes'],

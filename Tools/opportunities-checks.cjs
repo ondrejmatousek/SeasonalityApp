@@ -11,15 +11,18 @@ for(let year=1995;year<=2026;year++){
 // Synthetic fixture: publication times are explicit test inputs, not inferred by production code.
 reports.forEach(r=>{r.availableAt=new Date(Date.parse(r.date)+7*86400000).toISOString();r.availabilitySource='test-fixture';});
 const asOf='2026-10-10',result=model.analyzeAsset(prices,reports,asOf);
-assert.equal(result.validationStart,2018);assert.equal(result.trainingYears.length,20);
-assert.ok(result.trainingYears.every(y=>y<2018));assert.equal(result.candidates.length,2);
+assert.equal(result.validationStart,2018);assert.equal(result.trainingYears.length,31);
+assert.equal(result.trainingYears.at(-1),2025);assert.equal(result.candidates.length,2);
+assert.equal(result.discoveryMethod,'all-completed-years-unsmoothed-v2');assert.equal(result.recentCheckIndependent,false);
+assert.deepEqual(result.curve,result.displayCurve,'Discovery and detail must use exactly the same unsmoothed full-history curve');
 assert.equal(result.displayYears.at(-1),2025);assert.equal(result.displayYears.length,31);
 assert.equal(result.displayCurve.length,365);assert.ok(result.displayCurve.every(Number.isFinite));
 assert.ok(!result.displayYears.includes(2026),'Current partial year never enters the display curve');
 for(const c of result.candidates){
     assert.ok(c.startsIn>=0&&c.startsIn<=60&&c.days>=14&&c.days<=60);
     assert.ok(c.training.count>=10&&c.validation.count===8);
-    assert.ok(c.cases.filter(s=>!s.validation).every(s=>s.end<'2018-01-01'));
+    assert.equal(new Set(c.cases.map(s=>s.year)).size,c.cases.length,'Recent sample must not be counted twice');
+    assert.ok(c.trainingYears.includes(2025));
     assert.ok(c.cases.filter(s=>s.validation).every(s=>s.year>=2018&&s.year<2026));
     assert.ok(c.cases.every(s=>!s.reportDate||s.reportDate<=s.signalDate),'Descriptive history uses positions date, not publication vintage');
     assert.equal(c.cot.count,c.cotBaseline.count,'Constant COT yields the same covered history');
@@ -37,12 +40,11 @@ for(const c of result.candidates){
     }
 }
 const changed=model.analyzeAsset(prices.map(r=>r.date>='2018-01-01'?{...r,close:200-r.close}:r),reports,asOf);
-assert.deepEqual(changed.curve,result.curve,'Validation prices cannot change discovery curve');
+assert.notDeepEqual(changed.curve,result.curve,'Recent completed years now participate in discovery');
 assert.notDeepEqual(changed.displayCurve,result.displayCurve,'Recent completed years update the visual curve');
 const currentChanged=model.analyzeAsset(prices.map(r=>r.date>='2026-01-01'?{...r,close:r.close*5}:r),reports,asOf);
 assert.deepEqual(currentChanged.displayCurve,result.displayCurve,'Partial current-year quotes cannot bias the full-year display');
-assert.deepEqual(changed.candidates.map(c=>[c.startDate,c.endDate,c.direction,c.score]),result.candidates.map(c=>[c.startDate,c.endDate,c.direction,c.score]),'Validation outcomes cannot select endpoints or directions');
-assert.ok(changed.candidates.some(c=>c.warnings.includes('validation-disagrees')));
+assert.deepEqual(changed.curve,changed.displayCurve,'Updated discovery is still the displayed curve');
 const future=model.analyzeAsset([...prices,{date:'2030-01-01',close:1}],reports,asOf);
 assert.deepEqual(future,result,'Future quotes are never used');
 assert.deepEqual(model.analyzeAsset(prices,[...reports,{date:'2030-01-01',commercial:{index:0}}],asOf),result,'Future COT is never used');
@@ -53,7 +55,7 @@ assert.equal(model.historySamples(gap,asOf,'2026-10-01','2026-12-01',[2020]).len
 assert.equal(model.cotAt([{date:'2020-10-01',availableAt:'2020-10-08',commercial:{index:50}},{date:'2020-10-02',availableAt:'2020-10-09',commercial:{index:null}}],'2020-10-10'),null,'Missing latest index cannot fall back to an older report');
 const noCot=model.analyzeAsset(prices,[],asOf);
 assert.ok(noCot.candidates.every(c=>c.warnings.includes('no-current-cot')&&c.cot.count===0));
-const short=model.analyzeAsset(prices.filter(r=>r.date>='2010-01-01'),reports,asOf);
+const short=model.analyzeAsset(prices.filter(r=>r.date>='2019-01-01'),reports,asOf);
 assert.equal(short.reason,'short-history');assert.equal(short.candidates.length,0);
 const flat=model.analyzeAsset(prices.map(r=>({...r,close:100})),reports,asOf);
 assert.equal(flat.candidates.length,0,'No manufactured extrema for a flat seasonal curve');
@@ -65,4 +67,12 @@ early.forEach(r=>{r.availableAt=new Date(Date.parse(r.date)+7*86400000).toISOStr
 assert.equal(model.cotAt(early,'2020-10-10').commercial.index,10,'Do not use an entry-date report for a forecast made earlier');
 assert.equal(model.cotAt(early,'2020-11-01'),null,'Stale report excluded');
 assert.throws(()=>model.analyzeAsset([],[],'bad'));
-console.log('Daily opportunity checks passed: training-only extrema/selection, fixed separated validation, no future quotes or COT, forecast lead time, cross-year windows, short history and flat curves.');
+for(const c of result.candidates){
+    const start=result.curve[c.startDay],end=result.curve[c.endDay];
+    for(let offset=-7;offset<=7;offset++){
+        const at=d=>result.curve[(d+365)%365]*Math.pow(result.curve[364]/result.curve[0],Math.floor(d/365));
+        assert.ok(c.direction==='up'?start<=at(c.startDay+offset):start>=at(c.startDay+offset),'Entry must be an extremum of the raw curve');
+        assert.ok(c.direction==='up'?end>=at(c.endDay+offset):end<=at(c.endDay+offset),'Exit must be an opposite raw extremum');
+    }
+}
+console.log('Daily opportunities passed: all completed years, unsmoothed displayed/discovery curve, raw extrema, no duplicate years, no future quotes/COT, recent in-sample labels, cross-year windows and short history.');

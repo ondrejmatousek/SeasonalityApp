@@ -2,8 +2,8 @@
     if(typeof module==='object'&&module.exports)module.exports=factory(require('./seasonality-confluence.js'),require('./cot-availability.js'));
     else root.DailyOpportunities=factory(root.SeasonalityConfluence,root.CotAvailability);
 }(typeof globalThis==='object'?globalThis:this,function(confluence,availability){
-    const day=86400000,config=Object.freeze({validationYears:8,minTrainingYears:10,maxTrainingYears:20,
-        entryHorizon:60,minDuration:14,maxDuration:60,smoothRadius:3,extremeRadius:7,cotTolerance:10,cotLookback:52});
+    const day=86400000,config=Object.freeze({discovery:'all-completed-years-unsmoothed-v2',validationYears:8,minTrainingYears:10,
+        entryHorizon:60,minDuration:14,maxDuration:60,extremeRadius:7,cotTolerance:10,cotLookback:52});
     const iso=d=>d.toISOString().slice(0,10),time=s=>Date.parse(s+'T00:00:00Z');
     const calendar=s=>{const d=new Date(time(s));return Math.round((Date.UTC(2001,d.getUTCMonth(),d.getUTCDate())-Date.UTC(2001,0,1))/day);};
     const anniversary=(s,year)=>{const d=new Date(time(s)),n=new Date(Date.UTC(year,d.getUTCMonth(),d.getUTCDate()));if(n.getUTCMonth()!==d.getUTCMonth())n.setUTCDate(0);return iso(n);};
@@ -11,7 +11,7 @@
 
     function seasonalCurve(rows,asOf,options={}){
         const validationStart=Number(asOf.slice(0,4))-config.validationYears,groups=new Map();
-        const cutoffYear=options.displayOnly?Number(asOf.slice(0,4)):validationStart;
+        const cutoffYear=Number(asOf.slice(0,4));
         for(const r of rows){const year=Number(r.date.slice(0,4));if(year>=cutoffYear)continue;
             if(!groups.has(year))groups.set(year,[]);groups.get(year).push(r);}
         const complete=[];
@@ -29,17 +29,12 @@
             complete.push({year,values});
         }
         complete.sort((a,b)=>a.year-b.year);
-        const selected=options.displayOnly?complete:complete.slice(-config.maxTrainingYears),years=selected.map(s=>s.year);
+        const selected=complete,years=selected.map(s=>s.year);
         if(years.length<(options.displayOnly?1:config.minTrainingYears))return {years,validationStart,curve:null};
         const mean=Array.from({length:365},(_,d)=>selected.reduce((sum,s)=>sum+s.values[d],0)/selected.length);
         // Carry the average annual change through Dec/Jan, rather than inventing a reset extremum.
         const factor=mean[364]/mean[0];
-        const at=d=>mean[((d%365)+365)%365]*Math.pow(factor,Math.floor(d/365));
-        const smooth=Array.from({length:365},(_,d)=>{
-            let sum=0;for(let i=-config.smoothRadius;i<=config.smoothRadius;i++)sum+=at(d+i);
-            return sum/(2*config.smoothRadius+1);
-        });
-        return {years,validationStart,curve:smooth,factor};
+        return {years,validationStart,curve:mean,factor};
     }
 
     function candidates(rows,asOf){
@@ -109,17 +104,16 @@
         const rows=prices.filter(r=>Number.isFinite(time(r.date))&&r.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date));
         const cot=reports.filter(r=>Number.isFinite(time(r.date))&&r.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date));
         const discovered=candidates(rows,asOf),selected=[];
-        // Read-only visual context: recent years MUST NOT change discovery or validation.
+        // Display and discovery share all eligible completed years and the same unsmoothed daily curve.
         const display=seasonalCurve(rows,asOf,{displayOnly:true});
-        const displayFields={displayYears:display.years,displayCurve:display.curve?.map(v=>Math.round(v*10000)/10000)||null};
+        const displayFields={discoveryMethod:config.discovery,recentCheckIndependent:false,displayYears:display.years,displayCurve:display.curve?.map(v=>Math.round(v*10000)/10000)||null};
         if(!discovered.curve)return {...displayFields,trainingYears:discovered.years,validationStart:discovered.validationStart,curve:null,candidates:[],reason:'short-history'};
         const validationYears=Array.from({length:config.validationYears},(_,i)=>discovered.validationStart+i);
-        const cutoff=`${discovered.validationStart}-01-01`;
-        // Selection sees ONLY training statistics. No COT or validation outcomes affect endpoints, direction or ranking.
+        // Selection uses all completed price years. COT never chooses endpoints. The recent check is in-sample, not a holdout.
         for(const direction of ['up','down']){
             const choices=[];
             for(const window of discovered.windows.filter(w=>w.direction===direction)){
-                const samples=historySamples(rows,asOf,window.startDate,window.endDate,discovered.years).filter(s=>s.end<cutoff);
+                const samples=historySamples(rows,asOf,window.startDate,window.endDate,discovered.years);
                 const stats=confluence.summarize(samples,direction),sign=direction==='up'?1:-1;
                 if(stats.count<config.minTrainingYears||!(sign*stats.median>0))continue;
                 const sorted=samples.map(s=>sign*s.returnPct).sort((a,b)=>a-b);
@@ -130,7 +124,7 @@
             choices.sort((a,b)=>b.score-a.score||b.tie-a.tie||a.window.startsIn-b.window.startsIn);
             const best=choices[0];if(!best)continue;
             const validation=historySamples(rows,asOf,best.window.startDate,best.window.endDate,validationYears);
-            const all=[...best.samples,...validation],reference=cotAt(cot,options.evaluationAt||asOf);
+            const all=best.samples,reference=cotAt(cot,options.evaluationAt||asOf);
             const range=reference?[Math.max(0,reference.commercial.index-config.cotTolerance),Math.min(100,reference.commercial.index+config.cotTolerance)]:null;
             const covered=[],matched=[];
             for(const sample of all){

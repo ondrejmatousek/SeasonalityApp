@@ -363,7 +363,8 @@
 
             // Seasonality is aligned to the calendar day, not to each year's
             // nth trading session. Missing weekends/holidays are interpolated.
-            const daily = yearRows.map(row => {
+            // A shared 365-day calendar: February 29 must not collide with March 1.
+            const daily = yearRows.filter(row => !row.date.endsWith('02-29')).map(row => {
                 const date = new Date(row.date);
                 const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
                 let day = Math.floor((date - start) / 86400000);

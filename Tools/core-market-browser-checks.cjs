@@ -23,7 +23,7 @@ let browser;
     assert.ok(desktop.helpLeft>desktop.mainRight,'Help must be beside the results on desktop');
     assert.ok(await page.locator('.seasonality-wrap').evaluate(e=>e.getBoundingClientRect().width)>1440,'Screener must use the available screen width');
     assert.ok(await page.locator('.opportunity-table').evaluate(e=>e.getBoundingClientRect().width)>=1560,'Table must retain readable column widths');
-    const first=await page.locator('#opportunity-results tr').first().textContent();assert.match(first,/Skóre podkladů · V2 raw/);assert.match(first,/Relativní pořadí: #1 z 51 · TOP 2 %/);assert.match(first,/Spolehlivost: nízká/);assert.doesNotMatch(first,/V3:/);
+    const first=await page.locator('#opportunity-results tr').first().textContent();assert.match(first,/Skóre podkladů · V2 raw/);assert.match(first,/Relativní pořadí: #[\d,]+ z \d+ · TOP \d+ %/);assert.match(first,/Spolehlivost:/);assert.doesNotMatch(first,/V3:/);
     await page.locator('#opportunity-search').fill('USD');
     await page.locator('#opportunity-search').fill('');
     assert.equal(await page.locator('#opportunity-results tr').first().textContent(),first,'Filters must not recalibrate scores');

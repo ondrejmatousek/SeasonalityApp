@@ -253,7 +253,7 @@
         const table=element('table',undefined,'opportunity-score-table'),thead=element('thead'),tr=element('tr');
         ['Složka a skutečné podklady','Váha','Příspěvek ze 100'].forEach(label=>tr.append(element('th',label)));thead.append(tr);table.append(thead);
         const labels={seasonal:[`Sezonalita · posledních ${history()} let`,`${h.seasonal.successes} z ${h.seasonal.count} ve směru (${pct(h.seasonal.rate)}) · ${rangeText(h)}`],
-            validation:['Oddělená kontrola · posledních 8 let',`${c.validation.successes} z ${c.validation.count} ve směru (${pct(c.validation.rate)})`],
+            validation:['Kontrola konzistence · posledních 8 let (ne nezávislý test)',`${c.validation.successes} z ${c.validation.count} ve směru (${pct(c.validation.rate)})`],
             cot:['Podobný COT · stejná historie',cotUnavailable(h)?noHistoricalCot:r.currentCot?`${h.cot.successes} z ${h.cot.count} podobných případů ve směru${h.cot.count<8?' · omezený vzorek':''}`:'Chybí použitelný dnešní report · neutrální příspěvek, nikoli potvrzení'],
             quality:['Kvalita dat',`Ceny ${h.seasonal.count} / ${history()} let · kontrola ${c.validation.count} / 8 · COT pokrytí ${h.baseline.count} / ${h.seasonal.count} let · ${r.pricesFresh&&r.currentCot&&r.snapshotFresh?'aktuální data':'část dat není aktuální'}`]};
         const tbody=element('tbody');
@@ -368,20 +368,18 @@
         const chartSection=element('section',undefined,'opportunity-detail-chart');
         const chartLabel=element('label','Historie grafu ', 'opportunity-chart-choice'),chartHistory=element('select');
         chartHistory.id='opportunity-chart-history';chartHistory.setAttribute('aria-label','Historie grafu v detailu');
-        chartHistory.title='Mění pouze zobrazenou křivku. Nemění interval, skóre, zvolenou historii statistik ani oddělenou kontrolu posledních 8 let.';
-        for(const [value,text] of [['all','Všechny dokončené roky'],['training','Starší historie použitá pro výběr']]){
+        chartHistory.title='Interval vybírají všechny dostupné úplné roky bez vyhlazení. Volba 5/10/20 let mění četnosti statistik, nikoli výběrovou křivku.';
+        for(const [value,text] of [['all','Všechny dokončené roky'],['training','Křivka použitá pro výběr intervalu']]){
             const option=element('option',text);option.value=value;option.disabled=value==='all'&&!a.displayCurve;chartHistory.append(option);
         }
         chartHistory.value=a.displayCurve?'all':'training';chartLabel.append(chartHistory);
         const chartCaption=element('p',undefined,'opportunity-context'),chartHost=element('div');
         function renderDetailCurve(){
             const all=chartHistory.value==='all',years=all?a.displayYears:a.trainingYears,values=all?a.displayCurve:a.curve;
-            chartCaption.textContent=all
-                ?`Křivka ze všech ${years.length} dokončených let (${years[0]}–${years.at(-1)}), včetně nejnovějších. Rok ${snapshot.asOf.slice(0,4)} je neúplný a není zahrnutý. Tyrkysový výřez označuje původně navržené období (${c.days} dní); na této křivce nemusí ležet přesně na minimu a maximu.`
-                :`Výběrová křivka ze starších let ${years.join(', ')}. Tyrkysový výřez: ${c.direction==='up'?'od minima k prvnímu následujícímu maximu':'od maxima k prvnímu následujícímu minimu'} · ${c.days} dní. Novější roky zůstaly oddělené pro kontrolu.`;
-            chartCaption.textContent+=' Graf je vyhlazený 7denním průměrem pro přehlednost. Přepnutí grafu nemění statistiky níže; ty jsou z původních cen.';
+            chartCaption.textContent=`Nevyhlazená denní křivka ze všech ${years.length} úplných dostupných let (${years[0]}–${years.at(-1)}). Rok ${snapshot.asOf.slice(0,4)} je neúplný a není zahrnutý. Tyrkysový výřez: ${c.direction==='up'?'od minima k prvnímu vhodnému maximu':'od maxima k prvnímu vhodnému minimu'} · ${c.days} dní. Interval vybírá stejná křivka. Roky s neúplnými okraji nebo mezerou přes 7 dní se vyřazují; zahrnuté roky: ${years.join(', ')}.`;
+            chartCaption.textContent+=' Index 100 = první cena roku; víkendy a svátky interpolujeme stejně jako v Seasonality. Novější roky jsou součástí výběru, jejich kontrola není nezávislý test.';
             chartCaption.textContent+=' Pohyb myší ukáže den a index; tažením lze prohlížet jiný výřez bez změny statistik kandidáta.';
-            chartHost.replaceChildren(curve(a,c,values,all?'sezonální křivka ze všech dokončených let':'starší výběrová sezonální křivka'));
+            chartHost.replaceChildren(curve(a,c,values,'nevyhlazená sezonální křivka ze všech dokončených let'));
         }
         chartHistory.onchange=renderDetailCurve;renderDetailCurve();chartSection.append(chartLabel,chartHost,chartCaption);
         head.after(chartSection);
@@ -389,7 +387,7 @@
         for(const [label,s,description] of [
             [`Sezonalita · posledních ${history()} let (${rangeText(h)})`,h.seasonal,'Dokončená roční období ve vybrané historii.'],
             [`Historická COT shoda · stejných ${history()} let (${rangeText(h)})`,h.cot,'Současný historický CFTC dataset podle data pozic; nikoli PIT validace.'],
-            ['Oddělená kontrola · posledních 8 let',c.validation,`${snapshot.asOf.slice(0,4)-8}–${snapshot.asOf.slice(0,4)-1}: tyto roky neměnily interval ani směr. Výše zvolená historie může částečně obsahovat výběrové roky; není nezávislým testem.`]]){
+            ['Kontrola konzistence · posledních 8 let',c.validation,`${snapshot.asOf.slice(0,4)-8}–${snapshot.asOf.slice(0,4)-1}: tyto roky se účastní výběru období. Nejde o nezávislý test ani ověřenou pravděpodobnost.`]]){
             const card=element('div',undefined,'opportunity-metric');card.append(element('span',label));
             if(label.startsWith('Historická COT shoda')&&cotUnavailable(h))card.append(element('strong',noHistoricalCot));
             else frequency(card,s,true,label.startsWith('Historická COT shoda')?'podobných COT případů ve směru':'dokončených ročních období ve směru');card.append(element('small',description));cards.append(card);
@@ -403,7 +401,7 @@
         const table=element('table',undefined,'screener-table'),thead=element('thead'),header=element('tr');
         ['Vzorek','Ve směru · počet / četnost','Medián ceny','Prostředních 50 % výnosů','Typicky proti směru'].forEach(t=>header.append(element('th',t)));thead.append(header);table.append(thead);
         const tbody=element('tbody');
-        for(const [label,s] of [[`Sezonalita · ${rangeText(h)}`,h.seasonal],[`Stejné roky s dostupným COT · ${rangeText(h)}`,h.baseline],['Z toho podobný COT',h.cot],['Starší výběrová historie · ne nezávislý test',c.training],['Oddělená kontrola · posledních 8 let',c.validation]]){
+        for(const [label,s] of [[`Sezonalita · ${rangeText(h)}`,h.seasonal],[`Stejné roky s dostupným COT · ${rangeText(h)}`,h.baseline],['Z toho podobný COT',h.cot],['Všechny výběrové roky · ne nezávislý test',c.training],['Kontrola konzistence · posledních 8 let',c.validation]]){
             const tr=element('tr');cell(tr,label);
             if(cotUnavailable(h)&&(s===h.baseline||s===h.cot)){cell(tr,noHistoricalCot).colSpan=4;tbody.append(tr);continue;}
             cell(tr,`${s.successes} / ${s.count}${s.count>=8?` · ${pct(s.rate)}`:' · málo dat'}`);cell(tr,move(s.median));cell(tr,`${move(s.q25)} až ${move(s.q75)}`);cell(tr,pct(s.medianAdverse));tbody.append(tr);
@@ -415,7 +413,7 @@
         ['Rok · část historie','COT posouzen k','Vstup → výstup','Změna ceny','Pohyb proti směru','COT pozice · index','Podobný COT'].forEach(t=>cr.append(element('th',t)));ch.append(cr);ct.append(ch);
         const cb=element('tbody');
         for(const s of [...h.cases].sort((x,y)=>y.year-x.year)){
-            const tr=element('tr');cell(tr,`${s.year} · ${s.year>=a.validationStart?'oddělená kontrola':'výběrová historie'}`);cell(tr,date(s.signalDate));cell(tr,`${date(s.start)} → ${date(s.end)}`);
+            const tr=element('tr');cell(tr,`${s.year} · ${s.year>=a.validationStart?'výběrová historie + recent kontrola':'výběrová historie'}`);cell(tr,date(s.signalDate));cell(tr,`${date(s.start)} → ${date(s.end)}`);
             cell(tr,move(s.returnPct));cell(tr,pct(c.direction==='up'?-s.maxDrop:s.maxRise));cell(tr,s.reportDate?`${date(s.reportDate)} · ${number(a.cotModel==='relative-cot-state-v1'?s.relativeCot:s.index)}`:'Chybí použitelný report');cell(tr,s.index===null?'—':s.matched?'Ano':'Ne');cb.append(tr);
         }
         ct.append(cb);const cw=element('div',undefined,'seasonality-table-wrap');cw.append(ct);cases.append(cw);detail.append(cases);

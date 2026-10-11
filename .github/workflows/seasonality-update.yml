@@ -97,6 +97,8 @@ jobs:
         run: node Tools/build-screener.cjs artifacts/static-site
       - name: Find daily seasonal extremes and compare historical COT
         run: node Tools/build-opportunities.cjs artifacts/static-site
+      - name: Verify unsmoothed full-history discovery and displayed curve parity
+        run: node Tools/raw-seasonality-checks.cjs artifacts/static-site
       - name: Restore cumulative V3 ledger
         env:
           GH_TOKEN: ${{ github.token }}
