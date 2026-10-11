@@ -40,6 +40,6 @@ for(const id of ['seasonality-years','seasonality-monthly-years','confluence-his
     assert.doesNotMatch(select[1],/<option value="10" selected>/);
 }
 assert.match(auto,/history:'20'/,'Best-preset must keep the 20-year default');
-const preset=auto.slice(auto.indexOf("byId('opportunity-best')"));
+const preset=auto.slice(auto.indexOf("byId('opportunity-best').onclick"));
 assert.ok(!preset.includes("byId('screener-asset-class').value="),'Best-preset must preserve chosen market');
 console.log('Asset-category checks passed: exclusive classes, food subgroups, hidden-group behavior, shared modes and preset preservation.');
