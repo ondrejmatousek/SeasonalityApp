@@ -84,7 +84,7 @@
             if(!market){status.textContent='Pro tento instrument nemáme odpovídající COT. Společné srovnání nelze spočítat; sezonální analýza nad tím zůstává dostupná.';return;}
             const r=window.SeasonalityConfluence.analyze(market.reports,captured.prices,{...captured.interval,asOf:captured.asOf,
                 evaluationAt:window.StaticMarketData?.exportedAt?.slice(0,10)===captured.asOf?window.StaticMarketData.exportedAt:captured.asOf,
-                group,direction,tolerance,lookback,historyYears:captured.historyYears,selectedYears:captured.selectedYears,comparison:'snapshot'});
+                group,direction,tolerance,lookback,historyYears:captured.historyYears,selectedYears:captured.selectedYears,comparison:'snapshot',historical:true});
             if(!r.referenceUsable){
                 status.textContent=!r.reference?'Chybí doloženě dostupný referenční COT report.':r.reference.ageDays>21
                     ?`Poslední doloženě dostupný report je z ${date(r.reference.date)} (${number(r.reference.ageDays,0)} dní). Je příliš starý pro srovnání s dneškem.`
@@ -101,7 +101,7 @@
                 :'Historická četnost, nikoli ověřená pravděpodobnost budoucího obchodu.';
             results.append(el('p',caution,'confluence-caution'));
             const tiles=el('div',null,'confluence-tiles');
-            tiles.append(probabilityTile(`Podobný COT · ${yearsLabel}`,r.conditional,true),probabilityTile(`Sezonalita · ${yearsLabel}`,r.seasonal,false));
+            tiles.append(probabilityTile(`Historická COT shoda · ${yearsLabel}`,r.conditional,true),probabilityTile(`Sezonalita · ${yearsLabel}`,r.seasonal,false));
             const delta=el('div',null,'confluence-tile');
             delta.append(el('span','Rozdíl historických četností'),el('strong',r.conditional.count<8||r.delta==null?'—':`${r.delta>0?'+':''}${number(r.delta)} p. b.`),
                 el('p',r.conditional.count<8?'Vzorek je příliš malý pro zvýraznění rozdílu.':'Souběh minus sezonalita na stejné dostupné historii.'),
@@ -127,7 +127,7 @@
                 s.year,date(s.start),date(s.end),date(s.reportDate),number(s.index,2),s.matched?'Ano':'Ne',signed(s.returnPct),pct(direction==='up'?-s.maxDrop:s.maxRise)
             ])));
             results.append(cases);
-            results.append(el('p','Zatím bez nezávislého ověření na nedotčených datech. Neznámá historická dostupnost COT se nepoužívá; observed-upper-bound je doložené pozorování, nikoli přesná publikace; obchodní náklady nejsou započtené.','confluence-footnote'));
+            results.append(el('p','Historická COT shoda používá současný oficiální historický CFTC dataset podle data pozic. Historické availableAt ani vintage nevyžadujeme; nejde o strict PIT validaci. Obchodní náklady nejsou započtené.','confluence-footnote'));
         }catch(error){
             if(currentVersion!==version)return;
             status.textContent='Společnou analýzu se nepodařilo načíst. Sezonalita a grafy mohou dál fungovat.';

@@ -15,7 +15,7 @@ assert.ok(fx.state('USDJPY',s,asOf).relativeCot<0);
 assert.equal(fx.state('GBPCAD',{GBP:s.GBP},asOf),null);
 assert.equal(fx.state('GBPCAD',{GBP:s.GBP,CAD:s.CAD.slice(0,-1)},asOf),null,'Different report weeks unavailable');
 const market=k=>({key:k,contractCode:registry.get('GBPCAD').cotSources.find(x=>x.key===k).contractCode,reports:s[k]});
-assert.deepEqual(cot.market(registry.get('GBPCAD'),[market('GBP'),market('CAD')]).reports,fx.reports('GBPCAD',s),'Detail and builder use identical reports');
+assert.deepEqual(cot.market(registry.get('GBPCAD'),[market('GBP'),market('CAD')]).reports,fx.reports('GBPCAD',s,{historical:true}),'Detail and builder use identical descriptive reports');
 assert.equal(cot.market(registry.get('GBPCAD'),[market('GBP')]).reports.length,0);
 const unknown=s.GBP.map(({availableAt,availabilitySource,...r})=>r),observedAt=asOf+'T12:00:00Z';
 const observed=cot.observedReports(unknown,observedAt);

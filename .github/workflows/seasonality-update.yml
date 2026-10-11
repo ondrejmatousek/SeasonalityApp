@@ -77,6 +77,7 @@ jobs:
       - run: node Tools/opportunity-ranking-checks.cjs
       - run: node Tools/opportunity-sorting-checks.cjs
       - run: node Tools/opportunity-scoring-v2-checks.cjs
+      - run: node Tools/historical-cot-comparison-checks.cjs
       - run: node Tools/opportunity-scoring-v3-checks.cjs
       - name: Reuse latest successful immutable dataset (no SQL)
         if: inputs.reuse_snapshot == true

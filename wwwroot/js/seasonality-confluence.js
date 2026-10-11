@@ -27,7 +27,7 @@
             medianAdverse:reliability.quantile(adverse,.5),worstAdverse:count?Math.max(...adverse):null};
     }
 
-    function analyze(reports,prices,{startDay,endDay,asOf,evaluationAt=asOf,group='commercial',direction='up',tolerance=10,historyYears=null,selectedYears=null,comparison='entry',lookback=52}={}){
+    function analyze(reports,prices,{startDay,endDay,asOf,evaluationAt=asOf,group='commercial',direction='up',tolerance=10,historyYears=null,selectedYears=null,comparison='entry',lookback=52,historical=false}={}){
         if(!['commercial','nonCommercial','nonReportable'].includes(group)||!['up','down'].includes(direction)
             ||!Number.isFinite(tolerance)||tolerance<0||tolerance>100||!Number.isFinite(time(asOf))
             ||!Number.isInteger(startDay)||!Number.isInteger(endDay)||startDay<0||endDay>364||startDay>=endDay
@@ -53,10 +53,10 @@
             if(anniversary.getUTCMonth()!==Number(asOf.slice(5,7))-1)anniversary.setUTCDate(0);
             const forecastDate=anniversary.toISOString().slice(0,10);
             const signalDate=comparison==='snapshot'&&forecastDate<sample.start?forecastDate:sample.start;
-            const entry=time(signalDate),report=availability.latest(ordered,signalDate);
+            const entry=time(signalDate),report=historical?availability.positionsKnown(reports,signalDate).at(-1):availability.latest(ordered,signalDate);
             if(!report){missing++;continue;}
             if(entry-time(report.date)>21*day){stale++;continue;}
-            const index=availability.indexAt(reports,report,signalDate,group,lookback);
+            const index=(historical?availability.positionsIndexAt:availability.indexAt)(reports,report,signalDate,group,lookback);
             // Do not substitute an older index if the latest report has no valid index.
             if(!validIndex(index)){missingIndex++;continue;}
             const row={...sample,signalDate,reportDate:report.date,index,matched:!!range&&index>=range[0]&&index<=range[1]};

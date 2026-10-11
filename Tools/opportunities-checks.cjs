@@ -21,7 +21,7 @@ for(const c of result.candidates){
     assert.ok(c.training.count>=10&&c.validation.count===8);
     assert.ok(c.cases.filter(s=>!s.validation).every(s=>s.end<'2018-01-01'));
     assert.ok(c.cases.filter(s=>s.validation).every(s=>s.year>=2018&&s.year<2026));
-    assert.ok(c.cases.every(s=>!s.reportDate||Date.parse(s.reportDate)+7*86400000<=Date.parse(s.signalDate)));
+    assert.ok(c.cases.every(s=>!s.reportDate||s.reportDate<=s.signalDate),'Descriptive history uses positions date, not publication vintage');
     assert.equal(c.cot.count,c.cotBaseline.count,'Constant COT yields the same covered history');
     for(const years of [5,10,20]){
         const h=c.histories[years];
@@ -30,7 +30,7 @@ for(const c of result.candidates){
         assert.ok(h.cases.every(s=>s.year>=2026-years&&s.year<=2025));
         if(c.startDay<c.endDay){
             const manual=require('../wwwroot/js/seasonality-confluence.js').analyze(reports,prices,
-                {startDay:c.startDay,endDay:c.endDay,asOf,direction:c.direction,historyYears:years,comparison:'snapshot'});
+                {startDay:c.startDay,endDay:c.endDay,asOf,direction:c.direction,historyYears:years,comparison:'snapshot',historical:true});
             assert.deepEqual(manual.seasonal,h.seasonal,'Chart and screener use identical price samples');
             assert.deepEqual(manual.conditional,h.cot,'Chart and screener use identical COT timing and calendar range');
         }

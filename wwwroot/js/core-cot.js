@@ -14,7 +14,7 @@
         if(mapping.cotMode==='relative-cot-state-v1'){
             const series=Object.fromEntries(markets.filter(m=>mapping.cotSources.some(s=>s.contractCode&&s.contractCode===m.contractCode)).map(m=>[m.key,m.reports||[]]));
             return {key:mapping.tradingInstrument,name:`Relative COT ${mapping.base}/${mapping.quote} · commercial net/OI percentile 52`,
-                reports:fx.reports(mapping.tradingInstrument,series),isRelative:true};
+                reports:fx.reports(mapping.tradingInstrument,series,{historical:true}),isRelative:true};
         }
         const code=mapping.cotSources[0]?.contractCode;
         return markets.find(m=>m.contractCode===code)||{key:mapping.tradingInstrument,name:'COT unavailable',reports:[]};

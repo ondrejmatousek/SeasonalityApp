@@ -92,11 +92,12 @@
         return result;
     }
 
-    function cotAt(reports,date){
-        const latest=availability.latest(reports,date);
-        const r=latest?{...latest,commercial:{...latest.commercial,index:availability.indexAt(reports,latest,date)}}:null;
+    function cotAt(reports,date,{historical=false}={}){
+        const latest=historical?availability.positionsKnown(reports,date).at(-1):availability.latest(reports,date);
+        const r=latest?{...latest,commercial:{...latest.commercial,index:(historical?availability.positionsIndexAt:availability.indexAt)(reports,latest,date)}}:null;
+        if(r&&historical)r.availabilitySource='historical-dataset-positions-date';
         if(!r||availability.cutoff(date)-time(r.date)>21*day||!Number.isFinite(r.commercial?.index)||r.commercial.index<0||r.commercial.index>100)return null;
-        if(Number.isFinite(r.commercial.net)){
+        if(!historical&&Number.isFinite(r.commercial.net)){
             const inputs=availability.known(reports,date).filter(p=>p.date<=r.date).slice(-config.cotLookback);
             if(inputs.some(p=>p.availabilitySource!=='verified-publication-day'))r.availabilitySource='observed-upper-bound';
         }
@@ -133,7 +134,7 @@
             const range=reference?[Math.max(0,reference.commercial.index-config.cotTolerance),Math.min(100,reference.commercial.index+config.cotTolerance)]:null;
             const covered=[],matched=[];
             for(const sample of all){
-                const report=cotAt(cot,sample.signalDate);if(!report)continue;
+                const report=cotAt(cot,sample.signalDate,{historical:true});if(!report)continue;
                 const index=report.commercial.index,isMatch=!!range&&index>=range[0]&&index<=range[1];
                 const row={...sample,index,relativeCot:report.relativeCot,reportDate:report.date,availableAt:report.availableAt,availabilitySource:report.availabilitySource,matched:isMatch,validation:sample.year>=discovered.validationStart};
                 covered.push(row);if(isMatch)matched.push(row);
@@ -144,7 +145,7 @@
             const recent=historySamples(rows,asOf,best.window.startDate,best.window.endDate,
                 Array.from({length:20},(_,i)=>Number(asOf.slice(0,4))-20+i));
             const recentCovered=recent.flatMap(sample=>{
-                const report=cotAt(cot,sample.signalDate);if(!report)return [];
+                const report=cotAt(cot,sample.signalDate,{historical:true});if(!report)return [];
                 const index=report.commercial.index;
                 return [{...sample,index,relativeCot:report.relativeCot,reportDate:report.date,availableAt:report.availableAt,availabilitySource:report.availabilitySource,matched:!!range&&index>=range[0]&&index<=range[1]}];
             });

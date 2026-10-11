@@ -38,5 +38,19 @@
         const nets=window.map(r=>r[group].net),min=Math.min(...nets),max=Math.max(...nets);
         return min===max?null:Math.round(100*(report[group].net-min)/(max-min)*100)/100;
     }
-    return {metadata,known,latest,indexAt,cutoff,published,source};
+    // Descriptive history from today's archive; not a publication/vintage reconstruction.
+    function positionsKnown(reports,date){
+        const end=cutoff(date);
+        return reports.filter(r=>Number.isFinite(cutoff(r.date))&&cutoff(r.date)<=end)
+            .map(r=>({...r,...metadata(r)})).sort((a,b)=>a.date.localeCompare(b.date));
+    }
+    function positionsIndexAt(reports,report,date,group='commercial',lookback=52){
+        if(!report)return null;
+        if(!Number.isFinite(report[group]?.net))return report[group]?.index??null;
+        const window=positionsKnown(reports,date).filter(r=>r.date<=report.date).slice(-lookback);
+        if(window.length<lookback||window.some(r=>!Number.isFinite(r[group]?.net)))return null;
+        const values=window.map(r=>r[group].net),min=Math.min(...values),max=Math.max(...values);
+        return min===max?null:Math.round(100*(report[group].net-min)/(max-min)*100)/100;
+    }
+    return {metadata,known,latest,indexAt,positionsKnown,positionsIndexAt,cutoff,published,source};
 }));

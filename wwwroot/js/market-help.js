@@ -27,7 +27,7 @@
         cycle:'Filtr vybere sudé nebo liché kalendářní roky. Mění vzorek i počet výsledků; kontroluj, zda dobrý výsledek nestojí jen na několika letech.',
         election:'Filtr podle čtyřletého cyklu amerických prezidentských voleb: Election = volební rok, Pre-election = rok před ním, Post-election = rok po něm, Midterm = druhý rok po volbách. Vzorek může být velmi malý.',
         date:'Navržené kalendářní období, ne pokyn k okamžitému vstupu. Historicky používáme první dostupnou závěrečnou cenu od začátku a poslední nejpozději v konci. Před budoucím vstupem znovu ověř cenu a COT.',
-        forecast:'Datum, ke kterému byl historický COT posouzen. U budoucího období používáme výročí dne snapshotu, tedy stejný předstih jako dnes; ne až report známý při budoucím vstupu. Report musí mít doložené availableAt nejpozději v tento okamžik. Neznámou dostupnost vyřazujeme.',
+        forecast:'Historická COT shoda: u budoucího období používáme výročí dne snapshotu, tedy stejný předstih jako dnes. Bereme poslední report ze současného CFTC datasetu podle data pozic, nejvýše 21 dní starý. Původní historical availableAt ani vintage nevyžadujeme. Nejde o strict PIT validaci.',
         quality:'Filtr podkladů, nikoli záruka úspěchu. Oddělená kontrola vyžaduje všech 8 let, alespoň 62,5 % ve směru a souhlas mediánu. COT volba navíc požaduje alespoň 8 podobných případů ve zvolené historii a více než polovinu ve směru.',
         sort:'Automatický Screener výchozí řadí podle skóre podkladů 1–10. Pevné váhy zohledňují četnosti, malé vzorky a kvalitu dat; nejde o pravděpodobnost zisku. Jiné řazení mění pouze pořadí, ne období ani výsledky. Řazení podle samotné četnosti může zvýhodnit malé náhodně silné vzorky.',
         small:'Méně než 8 použitelných případů: velké procento by působilo přesněji, než data dovolují. Ukazujeme skutečné počty, ale procento nezvýrazňujeme. Tři úspěchy ze tří nejsou důkaz 100% šance příštího obchodu.',
@@ -50,7 +50,7 @@
         ,count:'Počet skutečně použitelných dokončených období, ne počet všech dostupných reportů. Letošní rok, neúplné ceny a dlouhé mezery vynecháváme. U podobného COT zbývají jen roky nebo situace s odpovídajícím indexem.'
         ,rise:'Největší růst denní závěrečné ceny od vstupní ceny během období. U poklesového směru je to pohyb proti směru; u růstu příznivý pohyb. Nezachycuje intradenní maxima.'
         ,fall:'Největší pokles denní závěrečné ceny od vstupní ceny během období. U růstu jde o pohyb proti směru. Není to největší propad od libovolného průběžného vrcholu ani intradenní minimum.'
-        ,positionDate:'Datum evidovaných pozic, nikoli zveřejnění. Dostupnost posuzujeme zvlášť podle availableAt. Pouhé datum pozic neznamená, že tehdy report už byl znám; neznámou dostupnost vyřadíme.'
+        ,positionDate:'Datum evidovaných pozic, nikoli zveřejnění. Historická COT shoda používá současný CFTC dataset podle data pozic bez původních publication/vintage údajů; nejde o PIT validaci. Dnešní referenci posuzujeme zvlášť podle dostupnosti ve snapshotu.'
         ,analogMode:'Vybere podobnost poslednímu reportu nebo historické extrémy indexu 0–20 / 80–100. Následné výnosy za 2, 4 a 8 týdnů používají celý dostupný souběh cen a COT, ne pouze roky zobrazené v grafu. Extrém sám není nákupní ani prodejní signál.'
     };
     const rules=[

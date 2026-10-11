@@ -30,7 +30,7 @@ for(const asset of catalog){
     assets.push({key:asset.key,name:asset.name,aliases:asset.aliases,assetClass:asset.assetClass,commodityGroup:asset.commodityGroup,lastDate:asset.prices.lastDate,market,cotModel,cotNote:asset.cot.note,mapping,dataStatus,...analysis});
 }
 const calibrationV3=scoringV3.calibrate(assets);
-const payload=JSON.stringify({schemaVersion:1,modelVersion:'seasonal-extremes-v1',mappingVersion:registry.version,scoringVersions:['research-priority-v1','research-priority-v2-experimental',scoringV3.version],calibrationV3,asOf,exportedAt:manifest.exportedAt,config:model.config,assets});
+const payload=JSON.stringify({schemaVersion:1,historicalCotMode:'positions-date-current-cftc-history-v1',modelVersion:'seasonal-extremes-v1',mappingVersion:registry.version,scoringVersions:['research-priority-v1','research-priority-v2-experimental',scoringV3.version],calibrationV3,asOf,exportedAt:manifest.exportedAt,config:model.config,assets});
 const hash=crypto.createHash('sha256').update(payload).digest('hex').slice(0,20),url=`/data/screener/opportunities.${hash}.json`;
 fs.mkdirSync(path.join(dir,'data/screener'),{recursive:true});fs.writeFileSync(path.join(dir,url),payload);
 manifest.opportunities={path:url,asOf,modelVersion:'seasonal-extremes-v1'};

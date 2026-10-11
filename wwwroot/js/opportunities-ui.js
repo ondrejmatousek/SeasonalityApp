@@ -292,17 +292,17 @@
         const cards=element('div',undefined,'opportunity-metrics');
         for(const [label,s,description] of [
             [`Sezonalita · posledních ${history()} let (${rangeText(h)})`,h.seasonal,'Dokončená roční období ve vybrané historii.'],
-            [`Podobný COT · stejných ${history()} let (${rangeText(h)})`,h.cot,'Jen roky z této historie, kdy byl COT podobný dnešnímu.'],
+            [`Historická COT shoda · stejných ${history()} let (${rangeText(h)})`,h.cot,'Současný historický CFTC dataset podle data pozic; nikoli PIT validace.'],
             ['Oddělená kontrola · posledních 8 let',c.validation,`${snapshot.asOf.slice(0,4)-8}–${snapshot.asOf.slice(0,4)-1}: tyto roky neměnily interval ani směr. Výše zvolená historie může částečně obsahovat výběrové roky; není nezávislým testem.`]]){
             const card=element('div',undefined,'opportunity-metric');card.append(element('span',label));
-            if(label.startsWith('Podobný COT')&&cotUnavailable(h))card.append(element('strong',noHistoricalCot));
-            else frequency(card,s,true,label.startsWith('Podobný COT')?'podobných COT případů ve směru':'dokončených ročních období ve směru');card.append(element('small',description));cards.append(card);
+            if(label.startsWith('Historická COT shoda')&&cotUnavailable(h))card.append(element('strong',noHistoricalCot));
+            else frequency(card,s,true,label.startsWith('Historická COT shoda')?'podobných COT případů ve směru':'dokončených ročních období ve směru');card.append(element('small',description));cards.append(card);
         }
         detail.append(cards);
         const reference=c.cotReference?(a.cotModel==='relative-cot-state-v1'
             ?`Relative COT state ${number(c.cotReference.relativeCot)} (−1 až +1), base ${number(c.cotReference.base?.u)}, quote ${number(c.cotReference.quote?.u)}, tolerance ±0,2`
             :`index ${number(c.cotReference.index)}, pozice k ${date(c.cotReference.date)}, podobnost ${number(c.cotRange[0])}–${number(c.cotRange[1])} / 100`):'bez použitelné současné reference';
-        detail.append(element('p',`${a.cotModel==='relative-cot-state-v1'?'Relative COT state '+a.key+' · percentil commercial net / open interest · 52 známých reportů':'COT '+a.market.key+' / '+a.market.name+' · komerční index 52'} · ${reference}. Historický COT kontrolujeme k ${snapshot.asOf.slice(8,10)}. ${Number(snapshot.asOf.slice(5,7))}. v daném roce, tedy přibližně ${c.startsIn} dní před vstupem. Dostupnost používá availableAt; neznámé historické publikace se nepoužijí.`,`opportunity-context`));
+        detail.append(element('p',`${a.cotModel==='relative-cot-state-v1'?'Relative COT state '+a.key+' · percentil commercial net / open interest · 52 reportů podle data pozic':'COT '+a.market.key+' / '+a.market.name+' · komerční index 52'} · ${reference}. Historická COT shoda: současný oficiální historický CFTC dataset. Report vybíráme podle data pozic k ${snapshot.asOf.slice(8,10)}. ${Number(snapshot.asOf.slice(5,7))}. v daném roce, přibližně ${c.startsIn} dní před vstupem. Historické availableAt ani vintage nevyžadujeme. Nejde o strict PIT validaci.`,`opportunity-context`));
         if(a.cotNote)detail.append(element('p',a.assetClass==='forex'?usdNote:a.cotNote,'opportunity-context'));
         const table=element('table',undefined,'screener-table'),thead=element('thead'),header=element('tr');
         ['Vzorek','Ve směru · počet / četnost','Medián ceny','Prostředních 50 % výnosů','Typicky proti směru'].forEach(t=>header.append(element('th',t)));thead.append(header);table.append(thead);

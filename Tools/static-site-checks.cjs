@@ -120,7 +120,7 @@ function exportChecks(directory) {
             assert.ok(asset.candidates.length<=2);
             for(const c of asset.candidates){
                 assert.ok(c.startDate>=snapshot.asOf&&c.training.count>=10);
-                assert.ok(c.cases.every(s=>!s.reportDate||s.availableAt&&Date.parse(s.availableAt)<=Date.parse(s.signalDate)));
+                assert.ok(c.cases.every(s=>!s.reportDate||s.reportDate<=s.signalDate&&s.availabilitySource==='historical-dataset-positions-date'));
                 for(const history of [5,10,20]){
                     const score=ranking.rank(asset,c,{history,asOf:snapshot.asOf});
                     assert.ok(Number.isFinite(score.value)&&score.value>=1&&score.value<=10,`Ranking range ${asset.key}/${history}`);
