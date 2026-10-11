@@ -24,6 +24,19 @@
     const date=s=>s?new Date(s+'T00:00:00Z').toLocaleDateString('cs-CZ',{timeZone:'UTC'}):'—';
     const band=s=>s.uncertainty?`${pct(s.uncertainty[0])} až ${pct(s.uncertainty[1])}`:'—';
     const element=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
+    // Move the existing help, without duplicating its live status or changing calculations.
+    const help=element('aside',undefined,'opportunity-help');
+    help.setAttribute('aria-labelledby','opportunity-help-title');
+    const helpTitle=element('h3','Nápověda a kontext');helpTitle.id='opportunity-help-title';help.append(helpTitle);
+    const guides=[...auto.querySelectorAll(':scope > .screener-guide')];
+    help.append(...guides);
+    const context=element('section',undefined,'opportunity-help-context');
+    context.append(element('strong','Aktuální přehled'),status);help.append(context);
+    const methodology=auto.querySelector(':scope > .screener-methodology');
+    if(methodology)help.append(methodology);
+    const main=element('div',undefined,'opportunity-main');
+    while(auto.firstChild)main.append(auto.firstChild);
+    const layout=element('div',undefined,'opportunity-layout');layout.append(main,help);auto.append(layout);
     const cell=(tr,text,cls)=>{const td=element('td',text,cls);tr.append(td);return td;};
     const priceStale=a=>!a.lastDate||(Date.parse(snapshot.asOf)-Date.parse(a.lastDate))/86400000>7;
     const fresh=s=>s.count===8&&s.rate>=62.5&&s.median!==0;
