@@ -174,6 +174,11 @@
 .opportunity-detail p,.opportunity-detail details { color:#aeb9c7; font-size:.78rem; line-height:1.6; }
 .opportunity-detail .confluence-caution { color:#eac782; border-left:2px solid #eac78288; padding:5px 10px; }
 .opportunity-detail svg { display:block; width:100%; max-height:320px; }
+.opportunity-interactive-chart svg { max-height:none; aspect-ratio:1000 / 340; touch-action:none; cursor:crosshair; }
+.opportunity-interactive-chart svg:focus-visible { outline:2px solid #24dfcf; outline-offset:2px; }
+.opportunity-detail-chart { background:#24292c; border:1px solid #ffffff18; border-radius:8px; padding:14px; margin:16px 0; }
+.opportunity-chart-choice { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:.8rem; margin-bottom:12px; }
+.opportunity-chart-exploration { border-left:2px solid #24dfcf; padding-left:10px; }
 .opportunity-detail .seasonality-table-wrap { max-width:100%; overflow-x:auto; }
 .opportunity-detail summary { cursor:pointer; margin:12px 0; }
 .opportunity-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:12px 0; }

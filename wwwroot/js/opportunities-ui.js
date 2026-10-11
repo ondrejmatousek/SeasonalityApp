@@ -3,9 +3,10 @@
     if(!root||!byId('screener-auto-view'))return;
     const auto=byId('screener-auto-view'),manual=byId('screener-manual-view'),body=byId('opportunity-results');
     const status=byId('opportunity-status'),retry=byId('opportunity-retry'),detail=byId('opportunity-detail');
-    let snapshot,pending=false,selected=null,returnFocus=null,lockedScroll=[];
+    let snapshot,pending=false,selected=null,returnFocus=null,lockedScroll=[],disposeDetailChart=()=>{};
     function closeDetail(){if(detail.open)detail.close();}
     detail.addEventListener('close',()=>{
+        disposeDetailChart();disposeDetailChart=()=>{};
         selected=null;
         for(const {node,overflow,top,left} of lockedScroll){node.style.overflow=overflow;node.scrollTop=top;node.scrollLeft=left;}
         lockedScroll=[];
@@ -265,19 +266,71 @@
         method.append(element('p','Složky se překrývají a nejsou nezávislé. COT sleduje výnosy při podobném komerčním reportu, ne počet shodných křivek. Skóre nehodnotí náklady, poměr zisku k riziku, vstup, stop-loss ani ziskovost. Typický pohyb proti směru a rozptyl zkontroluj zvlášť. Nezvyšuj číslo přepínáním historie a filtrů; to může zvýhodnit náhodu.'));section.append(method);return section;
     }
     function curve(a,c,values,label){
+        disposeDetailChart();
+        const host=element('div',undefined,'opportunity-interactive-chart'),geometry=window.SeasonalityChartGeometry;
         const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
-        svg.setAttribute('viewBox','0 0 1000 270');svg.setAttribute('role','img');svg.setAttribute('aria-label',`${a.key}: ${label} s vyznačeným obdobím`);
+        svg.setAttribute('viewBox','0 0 1000 340');svg.setAttribute('role','img');svg.setAttribute('aria-label',`${a.key}: ${label} s vyznačeným obdobím`);
+        svg.setAttribute('tabindex','0');svg.setAttribute('preserveAspectRatio','none');
         const add=(tag,attrs,text)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;svg.append(e);return e;};
         const low=Math.min(...values),high=Math.max(...values),pad=Math.max((high-low)*.12,.05),min=low-pad,max=high+pad;
-        const x=d=>60+d/364*920,y=v=>225-(v-min)/(max-min)*205;
-        const shade=(start,end)=>add('rect',{x:x(start),y:20,width:x(end)-x(start),height:205,fill:'#24dfcf',opacity:'.12'});
+        const plot=geometry.forWidth(1000),bottom=295,top=30;
+        const x=d=>geometry.xFor(1000,d),y=v=>bottom-(v-min)/(max-min)*(bottom-top);
+        const shade=(start,end)=>add('rect',{'data-chart-interval':'candidate',x:x(start),y:top,width:x(end)-x(start),height:bottom-top,fill:'#24dfcf',opacity:'.12'});
         if(c.endDay<c.startDay){shade(c.startDay,364);shade(0,c.endDay);}else shade(c.startDay,c.endDay);
-        for(let i=0;i<5;i++){const v=min+(max-min)*i/4;add('line',{x1:60,x2:980,y1:y(v),y2:y(v),stroke:'#ffffff14'});add('text',{x:50,y:y(v)+4,'text-anchor':'end',fill:'#9ba8b7','font-size':12},number(v));}
+        for(let i=0;i<5;i++){const v=min+(max-min)*i/4;add('line',{x1:plot.left,x2:plot.right,y1:y(v),y2:y(v),stroke:'#ffffff14'});add('text',{x:plot.left-8,y:y(v)+4,'text-anchor':'end',fill:'#9ba8b7','font-size':12},number(v));}
+        if(min<=100&&max>=100)add('line',{x1:plot.left,x2:plot.right,y1:y(100),y2:y(100),stroke:'#ffffff50','stroke-dasharray':'5 5'});
         add('polyline',{points:values.map((v,i)=>`${x(i)},${y(v)}`).join(' '),fill:'none',stroke:'#24dfcf','stroke-width':2});
-        for(const d of [c.startDay,c.endDay]){add('line',{x1:x(d),x2:x(d),y1:20,y2:225,stroke:'#c5e5e2','stroke-dasharray':'4 4'});add('circle',{cx:x(d),cy:y(values[d]),r:4,fill:'#24dfcf',stroke:'#0b0f11','stroke-width':2});}
+        for(const d of [c.startDay,c.endDay]){add('line',{x1:x(d),x2:x(d),y1:top,y2:bottom,stroke:'#c5e5e2','stroke-dasharray':'4 4'});add('circle',{cx:x(d),cy:y(values[d]),r:4,fill:'#24dfcf',stroke:'#0b0f11','stroke-width':2});}
         const months=['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
-        months.forEach((m,i)=>{const d=(Date.UTC(2001,i,1)-Date.UTC(2001,0,1))/86400000;add('text',{x:x(d),y:252,fill:'#9ba8b7','font-size':12},m);});
-        return svg;
+        months.forEach((m,i)=>{const d=(Date.UTC(2001,i,1)-Date.UTC(2001,0,1))/86400000;add('text',{x:x(d),y:325,fill:'#9ba8b7','font-size':12},m);});
+        const guide=add('line',{'data-chart-hover':'guide',x1:0,x2:0,y1:top,y2:bottom,stroke:'#ffffff80','stroke-dasharray':'4 4',visibility:'hidden','pointer-events':'none'});
+        const marker=add('circle',{'data-chart-hover':'marker',cx:0,cy:0,r:5,fill:'#24dfcf',stroke:'#15191c','stroke-width':2,visibility:'hidden','pointer-events':'none'});
+        const preview=add('rect',{'data-chart-interval':'preview',x:0,y:top,width:0,height:bottom-top,fill:'#24dfcf',opacity:'.18',visibility:'hidden','pointer-events':'none'});
+        const tooltip=element('div',undefined,'cot-chart-tooltip');tooltip.hidden=true;tooltip.setAttribute('role','status');
+        const exploration=element('p',undefined,'opportunity-chart-exploration');exploration.hidden=true;
+        const reset=element('button','Obnovit interval kandidáta');reset.type='button';reset.hidden=true;
+        const dayLabel=d=>new Date(Date.UTC(2001,0,1+d)).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',timeZone:'UTC'});
+        let drag=null,hoverDay=c.startDay;
+        function hideHover(){marker.setAttribute('visibility','hidden');guide.setAttribute('visibility','hidden');tooltip.hidden=true;}
+        const local=e=>new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());
+        function showHover(day,clientX,clientY){
+            hoverDay=day;marker.setAttribute('cx',x(day));marker.setAttribute('cy',y(values[day]));marker.setAttribute('visibility','visible');
+            guide.setAttribute('x1',x(day));guide.setAttribute('x2',x(day));guide.setAttribute('visibility','visible');
+            tooltip.textContent=drag?`${dayLabel(Math.min(drag.day,day))} – ${dayLabel(Math.max(drag.day,day))}`:`${dayLabel(day)} · index ${values[day].toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+            tooltip.hidden=false;
+            const position=window.MarketChartUi.tooltipPosition(clientX,clientY,tooltip.offsetWidth,tooltip.offsetHeight,window.innerWidth,window.innerHeight);
+            tooltip.style.left=`${position.left}px`;tooltip.style.top=`${position.top}px`;
+        }
+        function selectPreview(start,end){preview.setAttribute('x',x(Math.min(start,end)));preview.setAttribute('width',Math.max(2,Math.abs(x(end)-x(start))));preview.setAttribute('visibility','visible');}
+        svg.addEventListener('pointermove',e=>{
+            const p=local(e),day=geometry.dayForX(1000,p.x);
+            if(drag&&drag.id===e.pointerId)selectPreview(drag.day,day);
+            if(p.x<plot.left||p.x>plot.right||p.y<top||p.y>bottom){hideHover();return;}
+            showHover(day,e.clientX,e.clientY);
+        });
+        svg.addEventListener('pointerleave',hideHover);
+        svg.addEventListener('pointerdown',e=>{
+            const p=local(e);if(!e.isPrimary||e.button!==0||p.x<plot.left||p.x>plot.right||p.y<top||p.y>bottom)return;
+            e.preventDefault();drag={day:geometry.dayForX(1000,p.x),id:e.pointerId};svg.setPointerCapture(e.pointerId);selectPreview(drag.day,drag.day);
+        });
+        svg.addEventListener('pointerup',e=>{
+            if(!drag||drag.id!==e.pointerId)return;
+            const end=geometry.dayForX(1000,local(e).x),start=drag.day;drag=null;
+            if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);
+            if(start===end){preview.setAttribute('visibility','hidden');return;}
+            exploration.textContent=`Průzkumný výřez ${dayLabel(Math.min(start,end))} – ${dayLabel(Math.max(start,end))}. Tyrkysové hranice kandidáta i všechny statistiky pod grafem zůstávají pro původní interval ${dayLabel(c.startDay)} – ${dayLabel(c.endDay)}.`;
+            exploration.hidden=false;reset.hidden=false;hideHover();
+        });
+        svg.addEventListener('pointercancel',()=>{drag=null;preview.setAttribute('visibility','hidden');hideHover();});
+        reset.onclick=()=>{drag=null;preview.setAttribute('visibility','hidden');exploration.hidden=true;reset.hidden=true;hideHover();};
+        svg.addEventListener('keydown',e=>{
+            if(e.key==='Escape'){hideHover();return;}
+            if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();
+            const day=Math.max(0,Math.min(364,hoverDay+(e.key==='ArrowRight'?1:-1))),p=new DOMPoint(x(day),y(values[day])).matrixTransform(svg.getScreenCTM());showHover(day,p.x,p.y);
+        });
+        detail.addEventListener('scroll',hideHover);window.addEventListener('resize',hideHover);svg.addEventListener('blur',hideHover);
+        disposeDetailChart=()=>{hideHover();detail.removeEventListener('scroll',hideHover);window.removeEventListener('resize',hideHover);};
+        host.append(svg,tooltip,exploration,reset);return host;
     }
     function showDetail(a,c,trigger){
         if(detail.open)return;
@@ -327,9 +380,11 @@
                 ?`Křivka ze všech ${years.length} dokončených let (${years[0]}–${years.at(-1)}), včetně nejnovějších. Rok ${snapshot.asOf.slice(0,4)} je neúplný a není zahrnutý. Tyrkysový výřez označuje původně navržené období (${c.days} dní); na této křivce nemusí ležet přesně na minimu a maximu.`
                 :`Výběrová křivka ze starších let ${years.join(', ')}. Tyrkysový výřez: ${c.direction==='up'?'od minima k prvnímu následujícímu maximu':'od maxima k prvnímu následujícímu minimu'} · ${c.days} dní. Novější roky zůstaly oddělené pro kontrolu.`;
             chartCaption.textContent+=' Graf je vyhlazený 7denním průměrem pro přehlednost. Přepnutí grafu nemění statistiky níže; ty jsou z původních cen.';
+            chartCaption.textContent+=' Pohyb myší ukáže den a index; tažením lze prohlížet jiný výřez bez změny statistik kandidáta.';
             chartHost.replaceChildren(curve(a,c,values,all?'sezonální křivka ze všech dokončených let':'starší výběrová sezonální křivka'));
         }
-        chartHistory.onchange=renderDetailCurve;renderDetailCurve();chartSection.append(chartLabel,chartCaption,chartHost);detail.append(chartSection);
+        chartHistory.onchange=renderDetailCurve;renderDetailCurve();chartSection.append(chartLabel,chartHost,chartCaption);
+        head.after(chartSection);
         const cards=element('div',undefined,'opportunity-metrics');
         for(const [label,s,description] of [
             [`Sezonalita · posledních ${history()} let (${rangeText(h)})`,h.seasonal,'Dokončená roční období ve vybrané historii.'],
