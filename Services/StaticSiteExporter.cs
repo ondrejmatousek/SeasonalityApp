@@ -20,7 +20,7 @@ public sealed record StaticContract(IReadOnlyDictionary<string, string> Files, i
 // Build-time only. Nothing in the generated directory needs .NET or SQL.
 public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironment environment,
     IRazorViewEngine views, IModelMetadataProvider metadata, ITempDataProvider tempData,
-    IServiceProvider services, ILogger<StaticSiteExporter> logger)
+    IServiceProvider services, ILogger<StaticSiteExporter> logger, MarketPriceSources marketSources)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -36,9 +36,11 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
 
         var assets = SeasonalityService.Assets;
         var known = assets.Select(item => item.Key).ToHashSet(StringComparer.Ordinal);
+        var external = assets.Where(MarketPriceSources.IsMarket).Select(item => item.Key).ToHashSet(StringComparer.Ordinal);
         var prices = new Dictionary<string, StaticPrices>();
         string? current = null;
         var rows = new List<object[]>();
+        var stockProviders = new Dictionary<string, HashSet<string>>();
         async Task FlushPrices()
         {
             if (current is null) return;
@@ -48,9 +50,11 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
         }
         // One streaming SQL query instead of one round trip for every ticker.
         await foreach (var row in db.SeasonalityPrices.AsNoTracking().OrderBy(item => item.AssetKey).ThenBy(item => item.Date)
-            .Select(item => new { item.AssetKey, item.Date, item.Close }).AsAsyncEnumerable().WithCancellation(ct))
+            .Select(item => new { item.AssetKey, item.Date, item.Close, item.Source }).AsAsyncEnumerable().WithCancellation(ct))
         {
-            if (!known.Contains(row.AssetKey)) continue;
+            if (!known.Contains(row.AssetKey) || external.Contains(row.AssetKey)) continue;
+            if (!stockProviders.TryGetValue(row.AssetKey, out var providers)) stockProviders[row.AssetKey] = providers = [];
+            providers.Add(row.Source);
             if (current != row.AssetKey) { await FlushPrices(); current = row.AssetKey; }
             rows.Add([row.Date.ToString("yyyy-MM-dd"), row.Close]);
         }
@@ -58,6 +62,8 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
         foreach (var asset in assets.Where(item => !prices.ContainsKey(item.Key)))
         {
             current = asset.Key;
+            if (external.Contains(asset.Key))
+                rows.AddRange(marketSources.Prices(asset.Key).Select(p => new object[] { p.Date.ToString("yyyy-MM-dd"), p.Close }));
             await FlushPrices();
         }
         if (!prices.TryGetValue(assets[0].Key, out var initial) || initial.Count == 0)
@@ -89,6 +95,8 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
                 key = asset.Key, name = asset.Name, aliases = SeasonalityService.SearchAliases(asset.Key),
                 assetClass = AssetClassification.ClassFor(asset), commodityGroup = AssetClassification.CommodityGroupFor(asset.Key),
                 prices = prices[asset.Key],
+                stockProviders = external.Contains(asset.Key) ? null : stockProviders.GetValueOrDefault(asset.Key),
+                priceSource = external.Contains(asset.Key) ? marketSources.Metadata(asset.Key) : JsonSerializer.SerializeToElement(new { provider = "Yahoo", sourceIdentity = "existing-stock-sql", dailySource = "existing --update-once SQL ingestion", pricePolicy = "Existing stock/ETF parser unchanged" }),
                 cot = new
                 {
                     note = CotCatalog.NoteForAsset(asset.Key),

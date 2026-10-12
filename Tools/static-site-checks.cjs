@@ -115,6 +115,7 @@ function exportChecks(directory) {
             // Compare the wire representation: JSON intentionally serializes -0 as 0.
             const analysis=model.analyzeAsset(prices,reports,snapshot.asOf,{evaluationAt:manifest.exportedAt});
             for(const c of analysis.candidates)c.scoringV2=require('../wwwroot/js/opportunity-scoring-v2.js').prepare(model,prices,catalog,c,snapshot.asOf);
+            if(asset.candidates.some(c=>c.scoringV1ByHistory))for(const c of analysis.candidates)c.scoringV1ByHistory=Object.fromEntries([5,10,20].map(history=>[history,ranking.rank(asset,c,{history,asOf:snapshot.asOf,evaluationAt:manifest.exportedAt,today:snapshot.asOf})]));
             const expected=JSON.parse(JSON.stringify(analysis));
             for(const [key,value] of Object.entries(expected))assert.deepEqual(key==='candidates'?asset[key].map(({scoringV3,...c})=>c):asset[key],value,`Daily model parity ${asset.key}/${key}`);
             assert.ok(asset.candidates.length<=2);
@@ -181,7 +182,10 @@ function exportChecks(directory) {
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
     for(const key of ['MILK','BUTTER','CHEESE','KCWHEAT','LIVECATTLE','FEEDERCATTLE','LEANHOGS']) {
         const asset=manifest.assets.find(a=>a.key===key);assert.ok(asset);
-        assert.ok(asset.prices.count>1000 && asset.cot.markets.length===1,'Food/agricultural instruments require real prices and a dedicated COT contract: '+key);
+        if(manifest.priceRouting&&asset.priceSource?.status==='unavailable'){
+            assert.equal(asset.prices.count,0,'Unsupported market must not consume Yahoo history');
+            assert.equal(asset.coreMapping.status,'unavailable');
+        }else assert.ok(asset.prices.count>1000 && asset.cot.markets.length===1,'Food/agricultural instruments require real prices and a dedicated COT contract: '+key);
     }
     assert.ok(html.includes('id="static-market-manifest"'));
     assert.ok(!html.includes('@Url.') && !html.includes('@Model.') && !html.includes('asp-append-version='), 'HTML must be fully rendered');

@@ -32,11 +32,20 @@
         cotMode:'legacy-commercial-index-52',proxyRelationship:'Blocked: legacy GC=F / spot fallback is not validated gold spot',
         exposureFamily:'Gold',scope:'research',status:'data-source-not-validated',executionKind:'spot-or-cfd'};
     function get(key){return entries[key]||null;}
-    function resolve(asset){const known=get(asset.key);if(known&&(known.executionKind!=='futures-profile'||asset.isTradingProfile))return known;
-        return {version,tradingInstrument:asset.key,priceKey:asset.key,priceSeriesId:'legacy:'+asset.key,priceKind:'legacy-unverified',
+    function resolve(asset){const known=get(asset.key);const mapping=known&&(known.executionKind!=='futures-profile'||asset.isTradingProfile)?known:
+        {version,tradingInstrument:asset.key,priceKey:asset.key,priceSeriesId:'legacy:'+asset.key,priceKind:'legacy-unverified',
             cotSources:(asset.cot?.markets||[]).map(m=>({...m,kind:'legacy-proxy'})),cotMode:'legacy-commercial-index-52',
             proxyRelationship:'Research only / unsupported for validated ranking',exposureFamily:asset.key,
             scope:'research',status:asset.assetClass==='commodity'?'research-only':'descriptive-ready',executionKind:'legacy'};
+        const source=asset.priceSource;
+        if(!source||source.sourceIdentity==='existing-stock-sql')return mapping;
+        if(source.status==='unavailable')return {...mapping,status:'unavailable',chartSource:null,priceSource:source};
+        if(!source.sourceIdentity||!source.providerSymbol)return mapping;
+        return {...mapping,priceSeriesId:source.id,priceKind:source.instrumentKind,
+            chartSource:{provider:source.provider,symbol:source.providerSymbol},priceSource:source,
+            // Data-source review is retained; importing a bar does not validate a gold or roll model.
+            status:mapping.scope==='research'?'research-only':mapping.status,
+            proxyRelationship:mapping.scope==='research'?'TradingView source; research/review limitations retained':mapping.proxyRelationship};
     }
     const labels={'validated-ranking-ready':'Core · jasná datová identita (ne potvrzení ziskovosti)',
         'descriptive-ready':'Mimo core scope · pouze popisná analýza','research-only':'Research only / unsupported for validated ranking',

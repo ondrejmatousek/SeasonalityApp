@@ -1,0 +1,168 @@
+// Manual, private test ingestion. Immutable backfill + append-only daily overlay;
+// no SQL, production routing, analytics rebuild, network or scheduling.
+const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+const read = f => JSON.parse(fs.readFileSync(f, 'utf8'));
+const sha = b => crypto.createHash('sha256').update(b).digest('hex');
+const ny = new Intl.DateTimeFormat('sv-SE', {timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+const isoDate = t => new Date(t).toISOString().slice(0,10);
+function check(ok, reason) { if (!ok) throw Error(reason); }
+function instant(s) { check(typeof s==='string' && /Z$|[+-]\d\d:\d\d$/.test(s) && Number.isFinite(Date.parse(s)), 'invalid ISO timestamp'); return Date.parse(s); }
+function safeFile(root, relative) {
+  const f = path.resolve(root, relative);
+  check(f.startsWith(path.resolve(root)+path.sep), 'path outside test root');
+  const actual = fs.realpathSync(f);
+  check(actual.startsWith(fs.realpathSync(root)+path.sep), 'symlink outside test root');
+  return actual;
+}
+function atomic(file, value) {
+  const tmp=file+'.'+crypto.randomUUID()+'.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(value,null,2), {flag:'wx'});
+  try { fs.renameSync(tmp,file); } finally { if(fs.existsSync(tmp))fs.unlinkSync(tmp); }
+}
+function validateBar(b, e, observed, now, knownCompletion=null) {
+  check(b && typeof b==='object', 'invalid bar');
+  if(b.status!==undefined)check(b.status==='ok','provider bar status not ok');
+  check(b.symbol===e.logicalSymbol, 'unknown/logical symbol mismatch');
+  for(const k of ['provider','providerSymbol','sourceIdentity']) check(b[k]===e[k], k+' mismatch / provider splice prohibited');
+  check(b.timeframe==='1D', 'timeframe must be 1D');
+  check(Number.isSafeInteger(b.timestamp) && Number.isFinite(new Date(b.timestamp*1000).getTime()), 'timestamp must be Unix seconds');
+  check(b.timestamp*1000<=observed && b.timestamp*1000<=now, 'future bar timestamp');
+  check(['open','high','low','close'].every(k=>typeof b[k]==='number' && Number.isFinite(b[k]) && b[k]!==0), 'nonfinite/zero OHLC');
+  check(b.low<=b.open && b.open<=b.high && b.low<=b.close && b.close<=b.high, 'strict OHLC bounds');
+  if(e.assetClass!=='commodity')check(['open','high','low','close'].every(k=>b[k]>0), 'negative non-futures price');
+  let end=b.sessionEnd?instant(b.sessionEnd):null;
+  let completion='Daily producer declared completed sessionEnd';
+  if(end===null && (e.assetClass==='forex'||e.assetClass==='metal') && b.status==='ok') {
+    const start=ny.format(new Date(b.timestamp*1000)), target=isoDate(Date.parse(start.slice(0,10)+'T00:00:00Z')+86400000);
+    for(const hour of [20,21,22,23]) {
+      const candidate=Date.parse(target+'T'+hour+':00:00Z');
+      if(ny.format(new Date(candidate))===target+' 17:00:00')end=candidate;
+    }
+    completion='Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok';
+  }
+  if(end===null && knownCompletion && b.status==='ok') {
+    completion=knownCompletion.completionEvidence;
+    check(typeof completion==='string' && completion.length>0, 'stored completion evidence missing');
+  } else {
+    check(b.completed===true || b.status==='ok', 'bar not marked completed/ok');
+    check(end!==null && end>b.timestamp*1000 && end<=observed && end<=now, 'session incomplete or invalid sessionEnd; non-FX new bar needs explicit evidence');
+  }
+  check(b.completed!==false, 'bar marked unfinished');
+  // Completion is explicit producer evidence, not guessed from the OHLC or today's date.
+  const local=ny.format(new Date(b.timestamp*1000));
+  let date=isoDate(b.timestamp*1000), label='provider timestamp UTC calendar date (session-end not verified)';
+  if(e.assetClass==='forex'||e.assetClass==='metal') {
+    date=isoDate(Date.parse(local.slice(0,10)+'T00:00:00Z')+86400000);
+    const endLocal=ny.format(new Date(end));
+    check(endLocal.slice(0,10)===date && endLocal.slice(-8)==='17:00:00', 'NY17 session end mismatch');
+    if(e.assetClass==='forex')check(local.slice(-8)==='17:00:00', 'FX start not NY17');
+    label=local.slice(-8)==='17:00:00'?'timestamp-derived NY17 session-end date':'NY local start calendar date +1; exceptional cutoff requires review';
+  }
+  if(b.date!==undefined) {
+    check(typeof b.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(b.date) && isoDate(Date.parse(b.date))===b.date, 'invalid date label');
+    if(e.assetClass==='forex'||e.assetClass==='metal'||e.assetClass==='index')check(b.date===date, 'date label inconsistent with timestamp/session');
+  }
+  return {timestamp:b.timestamp,providerTimestamp:new Date(b.timestamp*1000).toISOString(),providerUtcDate:isoDate(b.timestamp*1000),date,
+    open:b.open,high:b.high,low:b.low,close:b.close,dateLabel:label,
+    completionEvidence:completion,...(end!==null?{sessionEnd:new Date(end).toISOString()}:{} )};
+}
+function equal(a,b) { return ['open','high','low','close'].every(k=>a[k]===b[k]); }
+function loadSeries(root,e,overlay) {
+  const historical=read(safeFile(root,e.seasonalitySource));
+  check(historical.id===e.canonicalTestId && historical.logicalSymbol===e.logicalSymbol && historical.activationAllowed===false, 'historical identity/activation mismatch');
+  for(const k of ['provider','providerSymbol','sourceIdentity'])check(historical[k]===e[k], 'historical '+k+' mismatch');
+  const file=path.join(overlay,e.logicalSymbol+'.json');
+  const daily=fs.existsSync(file)?read(file):null;
+  if(daily) {
+    check(daily.id===historical.id && daily.productionActive===false && daily.timeframe==='1D', 'daily identity/activation mismatch');
+    for(const k of ['provider','providerSymbol','sourceIdentity'])check(daily[k]===e[k], 'daily '+k+' mismatch');
+    check(daily.historicalSha256===sha(fs.readFileSync(safeFile(root,e.seasonalitySource))), 'historical evidence changed since overlay creation');
+  }
+  const rows=[...historical.bars,...(daily?.bars||[])].sort((a,b)=>a.timestamp-b.timestamp);
+  for(let i=1;i<rows.length;i++)check(rows[i].timestamp>rows[i-1].timestamp && rows[i].date!==rows[i-1].date, 'stored duplicate timestamp/date');
+  return {historical,daily,file,rows};
+}
+function ingest({input='data/market-daily/latest.json',root='artifacts/tradingview-backfill-36-v1',includeReview=false,now=Date.now()}={}) {
+  root=path.resolve(root);
+  const bytes=fs.readFileSync(input), payload=JSON.parse(bytes);
+  check(payload.schemaVersion===1, 'unsupported schemaVersion');
+  if(payload.timeframe!==undefined)check(payload.timeframe==='1D','payload timeframe must be 1D');
+  if(payload.generatedAt && payload.fetchedAt)check(instant(payload.generatedAt)===instant(payload.fetchedAt),'conflicting envelope timestamps');
+  const fetchedAt=payload.fetchedAt||payload.generatedAt;
+  const observed=instant(fetchedAt);
+  check(observed<=now, 'future generatedAt');
+  check(Array.isArray(payload.bars), 'bars must be an array');
+  const registry=read(path.join(root,'test-source-registry.json'));
+  check(registry.version==='tv-backfill-36-test-v1' && registry.productionRoutingChanged===false, 'unsupported/active registry');
+  const entries=new Map(registry.entries.map(e=>[e.logicalSymbol,e]));
+  check(entries.size===36, 'expected 36 unique identities');
+  for(const e of entries.values())check(/^[A-Z0-9]+$/.test(e.logicalSymbol) && !e.productionActive, 'unsafe/active registry entry');
+  const overlay=path.join(root,'daily-ingestion'), lock=path.join(overlay,'.lock');
+  fs.mkdirSync(overlay,{recursive:true});
+  check(fs.realpathSync(overlay).startsWith(fs.realpathSync(root)+path.sep),'overlay outside test root');
+  fs.mkdirSync(lock); // Exclusive manual writer; a stale lock fails closed, never auto-deleted.
+  try {
+    const report={schemaVersion:1,runId:crypto.randomUUID(),startedAt:new Date(now).toISOString(),input:path.resolve(input),inputSha256:sha(bytes),generatedAt:payload.generatedAt,
+      mode:includeReview?'all-test-and-research':'24-clean-FX-plus-NDX',fetchedAt,productionChanged:false,providerSplice:false,inserted:0,skipped:0,failed:0,notEnabled:0,instruments:[]};
+    const evidenceDir=path.join(overlay,'evidence');fs.mkdirSync(evidenceDir,{recursive:true});
+    const evidenceFile=path.join(evidenceDir,report.inputSha256+'.json');
+    if(fs.existsSync(evidenceFile))check(sha(fs.readFileSync(evidenceFile))===report.inputSha256,'raw evidence hash mismatch');
+    else fs.writeFileSync(evidenceFile,bytes,{flag:'wx'});
+    report.rawEvidence=path.relative(root,evidenceFile);
+    const groups=new Map();
+    const aliases={NASDAQ100:'NDX',SP500:'SPX',NATURALGAS:'NATGAS'};
+    for(const b of payload.bars){const inputSymbol=typeof b?.symbol==='string'?b.symbol:'<missing-symbol>',key=aliases[inputSymbol]||inputSymbol;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(b);}
+    for(const [symbol, inputBars] of groups) {
+      const r={symbol,received:inputBars.length,inserted:0,skipped:0,failed:0};report.instruments.push(r);
+      try {
+        const e=entries.get(symbol);check(e, 'symbol not in backfill registry');
+        // Validate even disabled instruments; accepting them requires an explicit test-only switch.
+        const stored=loadSeries(root,e,overlay), byTime=new Map(stored.rows.map(b=>[b.timestamp,b])), byDate=new Map(stored.rows.map(b=>[b.date,b.timestamp]));
+        const normalized=inputBars.map(b=> {
+          // SP is the exact TradingView namespace for the existing S&P identity, not a different price provider.
+          const provider=e.logicalSymbol==='SPX' && b.provider==='SP'?'S&P':b.provider;
+          if(b.assetClass!==undefined)check(b.assetClass===({forex:'fx',metal:'metals',index:'index',commodity:'futures'}[e.assetClass]),'assetClass mismatch');
+          const mapped={...b,symbol,provider,sourceIdentity:b.sourceIdentity===undefined?e.sourceIdentity:b.sourceIdentity};
+          return validateBar(mapped,e,observed,now,byTime.get(b.timestamp));
+        });
+        const seen=new Set();for(const b of normalized){check(!seen.has(b.timestamp),'duplicate timestamp in incoming instrument');seen.add(b.timestamp);}
+        const enabled=e.status==='canonical-test-candidate';
+        r.scope=enabled?'initial-test-candidate':symbol==='SPX'?'restricted-history-test':e.assetClass==='forex'?'conditional-test':'research-test';
+        if(!enabled&&!includeReview){r.notEnabled=inputBars.length;r.reason='Supported but inactive in first test; use --include-review for test/research only';report.notEnabled+=r.notEnabled;continue;}
+        const additions=[];
+        for(const b of normalized.sort((a,b)=>a.timestamp-b.timestamp)) {
+          const old=byTime.get(b.timestamp);
+          if(old){check(equal(old,b), 'OHLC_CONFLICT timestamp='+b.timestamp+' existing='+JSON.stringify({open:old.open,high:old.high,low:old.low,close:old.close})+' incoming='+JSON.stringify({open:b.open,high:b.high,low:b.low,close:b.close}));r.skipped++;continue;}
+          check(!byDate.has(b.date), 'date collision with another provider timestamp');
+          check(!stored.historical.rejected.some(x=>x.bar?.t===b.timestamp), 'timestamp quarantined by historical strict audit');
+          check(b.timestamp>stored.rows.at(-1).timestamp, 'new daily timestamp precedes/equal stored tail; historical hole repair not allowed');
+          byTime.set(b.timestamp,b);byDate.set(b.date,b.timestamp);additions.push({...b,ingestion:{inputSha256:report.inputSha256,fetchedAt,runId:report.runId}});
+        }
+        r.canonicalTestId=e.canonicalTestId;r.beforeLastTimestamp=stored.rows.at(-1).timestamp;r.beforeLastDate=stored.rows.at(-1).date;
+        if(additions.length) {
+          const bars=[...(stored.daily?.bars||[]),...additions].sort((a,b)=>a.timestamp-b.timestamp);
+          atomic(stored.file,{schemaVersion:1,id:e.canonicalTestId,logicalSymbol:symbol,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,timeframe:'1D',
+            productionActive:false,scope:'test/research only',historicalSource:e.seasonalitySource,historicalSha256:sha(fs.readFileSync(safeFile(root,e.seasonalitySource))),
+            htfPolicy:symbol==='SPX'?'Do not consume historical close-only data; HTF range not activated':'No HTF rebuild/activation',bars});
+          r.inserted=additions.length;
+        }
+        r.afterLastTimestamp=Math.max(r.beforeLastTimestamp,...normalized.map(b=>b.timestamp));r.afterLastDate=byTime.get(r.afterLastTimestamp).date;
+        r.appendedAfterHistoricalTail=additions.length>0 && additions[0].timestamp>stored.historical.bars.at(-1).timestamp;
+        report.inserted+=r.inserted;report.skipped+=r.skipped;
+      } catch(err) {
+        // Transaction boundary is the entire instrument: no partial writes on a conflict.
+        r.inserted=0;r.skipped=0;r.failed=inputBars.length;r.reason=err.message;report.failed+=r.failed;
+      }
+    }
+    fs.mkdirSync(path.join(overlay,'runs'),{recursive:true});
+    fs.writeFileSync(path.join(overlay,'runs',report.runId+'.json'),JSON.stringify(report,null,2),{flag:'wx'});
+    return report;
+  } finally { fs.rmdirSync(lock); }
+}
+module.exports={ingest,validateBar,loadSeries};
+if(require.main===module) {
+  try { const args=process.argv.slice(2),value=(key,fallback)=>args.find(x=>x.startsWith(key+'='))?.slice(key.length+1)||fallback;
+    const report=ingest({input:value('--input','data/market-daily/latest.json'),root:value('--root','artifacts/tradingview-backfill-36-v1'),includeReview:args.includes('--include-review')});
+    console.log(JSON.stringify(report,null,2));if(report.failed)process.exitCode=1;
+  } catch(err){console.error(JSON.stringify({status:'INPUT_OR_REGISTRY_BLOCKED',inserted:0,skipped:0,failed:null,reason:err.message,productionChanged:false}));process.exitCode=1;}
+}

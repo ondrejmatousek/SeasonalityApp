@@ -5,6 +5,7 @@ const registry=require('../wwwroot/js/core-market-registry.js');
 const cot=require('../wwwroot/js/core-cot.js');
 const scoring=require('../wwwroot/js/opportunity-scoring-v2.js');
 const scoringV3=require('../wwwroot/js/opportunity-scoring-v3.js');
+const rankingV1=require('../wwwroot/js/opportunity-ranking.js');
 const dir=path.resolve(process.argv[2]),manifestPath=path.join(dir,'data/manifest.json');
 const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
 const asOf=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date(manifest.exportedAt));
@@ -30,6 +31,8 @@ for(const asset of catalog){
     assets.push({key:asset.key,name:asset.name,aliases:asset.aliases,assetClass:asset.assetClass,commodityGroup:asset.commodityGroup,lastDate:asset.prices.lastDate,market,cotModel,cotNote:asset.cot.note,mapping,dataStatus,...analysis});
 }
 const calibrationV3=scoringV3.calibrate(assets);
+// Move existing V1 evaluation to build time; same formula, same snapshot context.
+for(const a of assets)for(const c of a.candidates)c.scoringV1ByHistory=Object.fromEntries([5,10,20].map(history=>[history,rankingV1.rank(a,c,{history,asOf,evaluationAt:manifest.exportedAt,today:asOf})]));
 const payload=JSON.stringify({schemaVersion:1,historicalCotMode:'positions-date-current-cftc-history-v1',modelVersion:'seasonal-extremes-v1',mappingVersion:registry.version,scoringVersions:['research-priority-v1','research-priority-v2-experimental',scoringV3.version],calibrationV3,asOf,exportedAt:manifest.exportedAt,config:model.config,assets});
 const hash=crypto.createHash('sha256').update(payload).digest('hex').slice(0,20),url=`/data/screener/opportunities.${hash}.json`;
 fs.mkdirSync(path.join(dir,'data/screener'),{recursive:true});fs.writeFileSync(path.join(dir,url),payload);

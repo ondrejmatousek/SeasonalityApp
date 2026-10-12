@@ -576,17 +576,19 @@ public sealed class SeasonalityService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<SeasonalityService> _logger;
     private readonly SeasonalityDbContext? _context;
+    private readonly MarketPriceSources? _marketSources;
 
     public SeasonalityService(IHttpClientFactory httpClientFactory, ILogger<SeasonalityService> logger)
         : this(httpClientFactory, logger, null)
     {
     }
 
-    public SeasonalityService(IHttpClientFactory httpClientFactory, ILogger<SeasonalityService> logger, SeasonalityDbContext? context)
+    public SeasonalityService(IHttpClientFactory httpClientFactory, ILogger<SeasonalityService> logger, SeasonalityDbContext? context, MarketPriceSources? marketSources = null)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _context = context;
+        _marketSources = marketSources;
     }
 
     public async Task<SeasonalityViewModel> LoadAsync(CancellationToken cancellationToken = default)
@@ -642,6 +644,11 @@ public sealed class SeasonalityService
         var processedAssets = 0;
         foreach (var asset in pendingAssets)
         {
+            if (MarketPriceSources.IsMarket(asset))
+            {
+                _logger.LogInformation("Market {Ticker}: refreshed through TradingView daily JSON, not Yahoo/Stooq SQL ingestion.", asset.Key);
+                continue;
+            }
             var current = ++processedAssets;
             var percent = (int)Math.Round(current * 100d / pendingAssets.Length);
             _logger.LogInformation("Sezonalita {Index}/{Total} ({Percent}%): {Ticker}", current, pendingAssets.Length, percent, asset.Key);
@@ -650,7 +657,7 @@ public sealed class SeasonalityService
                 .ToDictionaryAsync(item => item.Date, cancellationToken);
             var period1 = cached.Count == 0
                 ? 0
-                : new DateTimeOffset(cached.Keys.Max().ToDateTime(TimeOnly.MinValue), TimeSpan.Zero).AddDays(-1).ToUnixTimeSeconds();
+                : new DateTimeOffset(cached.Keys.Max().ToDateTime(TimeOnly.MinValue), TimeSpan.Zero).AddDays(-7).ToUnixTimeSeconds();
             try
             {
                 var yahoo = await client.GetStringAsync(
@@ -688,6 +695,11 @@ public sealed class SeasonalityService
         var prices = new Dictionary<string, IReadOnlyList<SeasonalityPrice>>();
         foreach (var asset in Assets)
         {
+            if (MarketPriceSources.IsMarket(asset))
+            {
+                prices[asset.Key] = _marketSources?.Prices(asset.Key) ?? throw new InvalidOperationException("Market price routing is not configured; refusing Yahoo fallback.");
+                continue;
+            }
             try
             {
                 var yahoo = await client.GetStringAsync($"https://query1.finance.yahoo.com/v8/finance/chart/{Uri.EscapeDataString(asset.YahooSymbol)}?period1=0&period2={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}&interval=1d&events=history", cancellationToken);
@@ -717,6 +729,9 @@ public sealed class SeasonalityService
         {
             return [];
         }
+        var asset = Assets.FirstOrDefault(a => a.Key == assetKey);
+        if (asset is not null && MarketPriceSources.IsMarket(asset))
+            return _marketSources?.Prices(assetKey) ?? throw new InvalidOperationException("Market price routing is not configured; refusing Yahoo fallback.");
         if (_context is null) return [];
 
         return await _context.SeasonalityPrices
@@ -730,20 +745,27 @@ public sealed class SeasonalityService
     private async Task<IReadOnlyDictionary<string, IReadOnlyList<SeasonalityPrice>>> LoadAllCachedPricesAsync(CancellationToken cancellationToken)
     {
         var rows = await _context!.SeasonalityPrices.AsNoTracking().OrderBy(item => item.Date).ToListAsync(cancellationToken);
-        return rows.GroupBy(item => item.AssetKey).ToDictionary(
+        var result = rows.Where(item => !Assets.Any(a => a.Key == item.AssetKey && MarketPriceSources.IsMarket(a))).GroupBy(item => item.AssetKey).ToDictionary(
             group => group.Key,
             group => (IReadOnlyList<SeasonalityPrice>)group.Select(item => new SeasonalityPrice(item.Date, item.Close)).ToList());
+        foreach (var asset in Assets.Where(MarketPriceSources.IsMarket))
+            result[asset.Key] = _marketSources?.Prices(asset.Key) ?? throw new InvalidOperationException("Market price routing is not configured; refusing Yahoo fallback.");
+        return result;
     }
 
     private async Task UpsertAsync(string assetKey, string source, IReadOnlyList<SeasonalityPrice> prices, Dictionary<DateOnly, SeasonalityPriceEntity> cached, CancellationToken cancellationToken)
     {
+        // Check the whole series before changing tracked entities. A fallback must
+        // not append a different provider, even when its dates do not overlap.
+        if (cached.Values.Any(item => !string.Equals(item.Source, source, StringComparison.Ordinal)))
+            throw new InvalidOperationException($"{assetKey}: provider change/mixed legacy history requires an explicit parallel-series migration.");
         var added = 0;
         var skipped = 0;
         foreach (var price in prices.DistinctBy(price => price.Date))
         {
-            if (cached.ContainsKey(price.Date))
+            if (cached.TryGetValue(price.Date, out var existing))
             {
-                skipped++;
+                if (!DailyPriceImport.RefreshSameSource(existing, price, source, DateTimeOffset.UtcNow)) skipped++;
                 continue;
             }
 
@@ -775,34 +797,24 @@ public sealed class SeasonalityService
 
     public static IReadOnlyList<SeasonalityPrice> ParseStooq(string csv)
     {
+        if (!csv.TrimStart().StartsWith("Date,Open,High,Low,Close", StringComparison.OrdinalIgnoreCase))
+            throw new FormatException("Stooq response is not a daily price CSV (possibly a challenge/error page).");
         var result = new List<SeasonalityPrice>();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         foreach (var line in csv.Split('\n', StringSplitOptions.RemoveEmptyEntries).Skip(1))
         {
             var fields = line.Trim().Split(',');
             if (fields.Length < 5 || !DateOnly.TryParse(fields[0], CultureInfo.InvariantCulture, out var date) ||
                 !decimal.TryParse(fields[4], NumberStyles.Any, CultureInfo.InvariantCulture, out var close))
                 continue;
-            result.Add(new SeasonalityPrice(date, close));
+            if (date < today && close > 0) result.Add(new SeasonalityPrice(date, close));
         }
         return result.OrderBy(item => item.Date).ToList();
     }
 
     public static IReadOnlyList<SeasonalityPrice> ParseYahoo(string json)
     {
-        using var document = JsonDocument.Parse(json);
-        var result = new List<SeasonalityPrice>();
-        var chart = document.RootElement.GetProperty("chart").GetProperty("result")[0];
-        var timestamps = chart.GetProperty("timestamp");
-        var closes = chart.GetProperty("indicators").GetProperty("quote")[0].GetProperty("close");
-        for (var index = 0; index < timestamps.GetArrayLength(); index++)
-        {
-            if (timestamps[index].ValueKind != JsonValueKind.Number || closes[index].ValueKind is JsonValueKind.Null)
-                continue;
-            result.Add(new SeasonalityPrice(
-                DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeSeconds(timestamps[index].GetInt64()).UtcDateTime),
-                closes[index].GetDecimal()));
-        }
-        return result.Where(item => item.Close > 0).DistinctBy(item => item.Date).OrderBy(item => item.Date).ToList();
+        return DailyPriceImport.YahooCompleted(json, DateTimeOffset.UtcNow);
     }
 }
 

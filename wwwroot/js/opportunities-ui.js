@@ -95,7 +95,7 @@
         if(!c.cotReference||!v||v.samples.similar<8||v.samples.other<8||!Number.isFinite(v.components.C))return 'insufficient';
         return v.components.C>.5?'confirms':v.components.C<.5?'against':'neutral';
     }
-    const legacyRanking=(a,c)=>window.OpportunityRanking.rank(a,c,{history:history(),asOf:snapshot.asOf,evaluationAt:snapshot.exportedAt,today:today()});
+    const legacyRanking=(a,c)=>c.scoringV1ByHistory?.[history()]||window.OpportunityRanking.rank(a,c,{history:history(),asOf:snapshot.asOf,evaluationAt:snapshot.exportedAt,today:today()});
     const ranking=(a,c)=>{const r=legacyRanking(a,c);if(modelChoice.value==='v3')return c.scoringV3
         ?{...r,value:c.scoringV2.value,uncapped:c.scoringV2.rawScore,label:'Skóre podkladů · V2 raw'}
         :{...r,value:null,label:'V3 není dostupné pro tento trh'};return modelChoice.value==='v2'&&c.scoringV2

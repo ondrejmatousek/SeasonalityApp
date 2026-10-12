@@ -7,6 +7,11 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - 'data/generated/**'
+      - 'data/market-state/**'
+      - 'data/market-daily/**'
+      - 'artifacts/daily-health/**'
   workflow_dispatch:
 
 jobs:
@@ -14,9 +19,22 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: read #This is required for actions/checkout
+      actions: read
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore TradingView state and prepare read-only market bundle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node Tools/market-history-seed.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Could not restore audited TradingView seed' }
+          node Tools/prepare-market-sources.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Could not prepare market bundle' }
 
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
@@ -47,7 +65,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -62,4 +80,4 @@ jobs:
           app-name: 'Seasonality'
           slot-name: 'Production'
           package: .
-          
+

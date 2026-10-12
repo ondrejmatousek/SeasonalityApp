@@ -10,5 +10,10 @@
     <Compile Remove="Tools/**/*.cs" />
     <Content Remove="Tools/**" />
     <None Remove="Tools/**" />
+    <!-- Build inputs/state and published static snapshots are not runtime web content. -->
+    <Content Remove="data/market-history/**;data/market-state/**;data/market-daily/**;data/generated/**;data/oanda-daily/**" />
+    <!-- Explicit read-only market bundle; raw backfill/SQL remain outside web publication. -->
+    <Content Include="artifacts/tradingview-backfill-36-v1/analytics-sources-v1/**"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

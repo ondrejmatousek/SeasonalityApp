@@ -1,9 +1,29 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),zones=require('../wwwroot/js/htf-zones.js');
 const dir=path.resolve(process.argv[2]),feedDir=path.resolve(process.argv[3]),read=p=>JSON.parse(fs.readFileSync(p,'utf8').replace(/^\uFEFF/,''));
 const manifest=read(path.join(dir,'data/manifest.json')),opps=read(path.join(dir,manifest.opportunities.path.slice(1))),asOf=opps.asOf,prices={},assets=[];
-for(const a of opps.assets.filter(a=>a.mapping.scope==='core')){
+const bundlePath=process.argv[4]?path.resolve(process.argv[4]):null;
+const bundle=bundlePath?read(bundlePath):null;
+for(const a of opps.assets.filter(a=>a.mapping.scope==='core'||a.mapping.priceSource?.id)){
     const key=a.mapping.priceKey;if(!prices[key]){
         try{
+            const source=a.mapping.priceSource;
+            if(source?.id){
+                if(!bundle)throw Error('TradingView market bundle required; Yahoo fallback prohibited');
+                const entry=bundle.entries.find(e=>e.assetKey===key);
+                if(!entry||entry.status==='unavailable')throw Error('TradingView series unavailable');
+                const data=read(path.join(path.dirname(bundlePath),entry.file));
+                if(data.id!==source.id||data.providerSymbol!==source.providerSymbol||data.sourceIdentity!==source.sourceIdentity)throw Error('HTF/seasonality source mismatch');
+                const bars=data.htfBars.filter(b=>b.date<asOf&&zones.valid(b)).slice(-1500);
+                if(bars.length<100)throw Error('Insufficient modern valid OHLC');
+                if(Date.parse(asOf)-Date.parse(bars.at(-1).date)>7*86400000)throw Error('Stale TradingView OHLC (>7 days)');
+                if(bars.slice(-100).some((b,i,s)=>i&&Date.parse(b.date)-Date.parse(s[i-1].date)>7*86400000))throw Error('Recent TradingView gap >7 days');
+                const latest=bars.at(-1),found=['D1','W1'].flatMap(tf=>zones.detect(bars,tf,asOf));
+                prices[key]={status:'ready',provider:data.provider,symbol:data.providerSymbol,sourceIdentity:data.sourceIdentity,priceSeriesId:data.id,
+                    observedAt:bundle.builtAt,timezone:data.timezone,priceType:'Exact TradingView provider OHLC',cutoff:data.sessionContract,revisionPolicy:'Daily OHLC conflicts fail closed; immutable raw backfill',
+                    review:data.review,sourceStatus:data.status,htfFrom:data.htfFrom,barCount:bars.length,excludedBars:data.bars.length-bars.length,latestDate:latest.date,latestClose:latest.close,
+                    bars:bars.slice(-400),weekly:zones.weekly(bars,asOf).slice(-104),zones:found};
+            }else{
+            if(manifest.priceRouting&&a.mapping.priceKind!=='etf')throw Error('No registered market source; Yahoo fallback prohibited');
             const feed=read(path.join(feedDir,key+'.json'));if(feed.error)throw Error(feed.error);
             const r=feed.payload.chart.result[0],q=r.indicators.quote[0],timezone=r.meta.exchangeTimezoneName;
             if(r.meta.symbol!==a.mapping.chartSource.symbol||!timezone)throw Error('Symbol/timezone mismatch');
@@ -19,6 +39,7 @@ for(const a of opps.assets.filter(a=>a.mapping.scope==='core')){
             const lastSplit=splitDates.at(-1),detectionBars=lastSplit?bars.filter(b=>b.date>=lastSplit):bars;
             const found=['D1','W1'].flatMap(tf=>zones.detect(detectionBars,tf,asOf));
             prices[key]={status:'ready',provider:feed.provider,symbol:feed.symbol,url:feed.url,observedAt:feed.observedAt,timezone,priceType:'unadjusted provider OHLC',cutoff:'Completed daily candles only: trading date before evaluation date; W1 excludes current week',revisionPolicy:'Provider may revise history; snapshot retained per deployment, not strict PIT',lastSplit:lastSplit||null,barCount:bars.length,excludedBars:r.timestamp.length-bars.length,latestDate:bars.at(-1).date,latestClose:bars.at(-1).close,bars:detectionBars.slice(-400),weekly:zones.weekly(detectionBars,asOf).slice(-104),zones:found};
+            }
         }catch(e){prices[key]={status:'unavailable',error:e.message,bars:[],weekly:[],zones:[]};}
     }
     const p=prices[key];assets.push({key:a.key,name:a.name,mapping:a.mapping,matches:p.status==='ready'?zones.match(p.zones,a.candidates,p.latestClose,asOf):[]});

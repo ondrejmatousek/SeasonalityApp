@@ -29,6 +29,7 @@ builder.Services.AddHttpClient("CFTC", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("SeasonalityApp-COT/1.0");
 });
 builder.Services.AddScoped<SeasonalityService>();
+builder.Services.AddScoped<MarketPriceSources>();
 builder.Services.AddScoped<CotService>();
 builder.Services.AddScoped<StaticSiteExporter>();
 builder.Services.AddSingleton<SeasonalityUpdateState>();

@@ -1,161 +1,117 @@
-name: Update data and publish static seasonality
+name: Morning analytics
 
 on:
-  push:
-    branches:
-      - master
   schedule:
-    - cron: '15 5 * * *'
+    - cron: '0 4 * * *'
+    - cron: '0 5 * * *'
   workflow_dispatch:
-    inputs:
-      reuse_snapshot:
-        description: 'Reuse latest static price/COT artifact; no SQL access or source update'
-        type: boolean
-        default: false
-      export_only:
-        description: 'Export and publish current SQL snapshot without updating sources'
-        type: boolean
-        default: false
 
+permissions:
+  contents: write
+  actions: read
 concurrency:
   group: seasonality-data-update
   cancel-in-progress: false
 
 jobs:
-  cot-update:
-    if: inputs.export_only != true && inputs.reuse_snapshot != true
+  morning:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
-      - run: dotnet restore SeasonalityApp.csproj
-      - name: Update CFTC COT history
-        run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-restore -- --update-cot-once
-        env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
-  update:
-    if: inputs.export_only != true && inputs.reuse_snapshot != true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - run: dotnet restore SeasonalityApp.csproj
-      - run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-restore -- --update-once
-        env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
-  export-static:
-    # Never publish a partially updated or failed data snapshot.
-    needs: [update, cot-update]
-    if: ${{ !cancelled() && (inputs.reuse_snapshot == true || inputs.export_only == true || (needs.update.result == 'success' && needs['cot-update'].result == 'success')) }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
+          ref: master
+          fetch-depth: 1
+      - name: Record actual checked-out source commit
+        run: echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: dotnet build SeasonalityApp.slnx --configuration Release
-      - run: dotnet run --project Tools/CotChecks/CotChecks.csproj --configuration Release
-      - run: node Tools/chart-ui-checks.cjs
-      - run: node Tools/market-help-checks.cjs
-      - run: node Tools/asset-category-checks.cjs
-      - run: node Tools/tradingview-link-checks.cjs
-      - run: node Tools/screener-checks.cjs
-      - run: node Tools/reliability-checks.cjs
-      - run: node Tools/cot-analogs-checks.cjs
-      - run: node Tools/confluence-checks.cjs
-      - run: node Tools/opportunities-checks.cjs
-      - run: node Tools/opportunity-ranking-checks.cjs
-      - run: node Tools/opportunity-sorting-checks.cjs
-      - run: node Tools/opportunity-scoring-v2-checks.cjs
-      - run: node Tools/historical-cot-comparison-checks.cjs
-      - run: node Tools/opportunity-scoring-v3-checks.cjs
-      - run: node Tools/htf-checks.cjs
-      - name: Reuse latest successful immutable dataset (no SQL)
-        if: inputs.reuse_snapshot == true
+      - name: Select 06:00 Europe/Prague cron (DST aware)
+        id: gate
+        run: node Tools/daily-health.cjs --gate
         env:
-          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+      - uses: actions/setup-dotnet@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore audited historical seed and cumulative same-provider state
+        if: steps.gate.outputs.run == 'true'
+        run: node Tools/market-history-seed.cjs
+      - name: Release build and regression tests
+        if: steps.gate.outputs.run == 'true'
         run: |
-          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "seasonality-static-site" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
-          test "$run_id" != null
-          gh run download "$run_id" --name seasonality-static-site --dir artifacts/static-site
-          dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --render-static-shell --output artifacts/static-site
-      - name: Export read-only SQL snapshot to static HTML and JSON
-        if: inputs.reuse_snapshot != true
-        run: dotnet run --project SeasonalityApp.csproj --configuration Release --no-build -- --export-static --output artifacts/static-site --Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command=Warning
+          dotnet build SeasonalityApp.slnx --configuration Release
+          dotnet run --project Tools/CotChecks/CotChecks.csproj --configuration Release
+          node Tools/morning-health-checks.cjs
+          node Tools/market-daily-ingest-checks.cjs
+          node Tools/core-market-checks.cjs
+          node Tools/opportunity-ranking-checks.cjs
+          node Tools/opportunity-scoring-v2-checks.cjs
+          node Tools/opportunity-scoring-v3-checks.cjs
+          node Tools/historical-cot-comparison-checks.cjs
+          node Tools/htf-checks.cjs
+      - name: Ingest, refresh existing Yahoo stocks/CFTC and rebuild staging analytics
+        if: steps.gate.outputs.run == 'true'
+        id: analytics
+        run: node Tools/morning-run.cjs
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
-      - name: Build compact screener snapshot
-        run: node Tools/build-screener.cjs artifacts/static-site
-      - name: Find daily seasonal extremes and compare historical COT
-        run: node Tools/build-opportunities.cjs artifacts/static-site
-      - name: Verify unsmoothed full-history discovery and displayed curve parity
-        run: node Tools/raw-seasonality-checks.cjs artifacts/static-site
-      - name: Fetch real daily OHLC for core chart references (no SQL)
-        shell: pwsh
-        run: ./Tools/fetch-htf-ohlc.ps1 -OutputDir artifacts/htf-ohlc
-      - name: Evaluate experimental D1/W1 zone and seasonal confluence
-        run: node Tools/build-htf-confluence.cjs artifacts/static-site artifacts/htf-ohlc
-      - name: Check HTF provenance and export consistency
-        run: node Tools/htf-export-checks.cjs artifacts/static-site
-      - name: Restore cumulative V3 ledger
+      - name: Restore unchanged cumulative V3 live tracking
+        if: steps.gate.outputs.run == 'true' && success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "seasonality-v3-live-ledger" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
           if [ -n "$run_id" ] && [ "$run_id" != null ]; then
             gh run download "$run_id" --name seasonality-v3-live-ledger --dir artifacts/v3-live-ledger
-            test -s artifacts/v3-live-ledger/ledger.json
           fi
-      - name: Append immutable V3 forecasts and close-based completed outcomes
-        run: node Tools/v3-live-tracking.cjs artifacts/static-site artifacts/v3-live-ledger/ledger.json
-      - name: Validate every exported ticker, COT index and immutable file
-        run: node Tools/static-site-checks.cjs artifacts/static-site
+          node Tools/v3-live-tracking.cjs artifacts/morning-site artifacts/v3-live-ledger/ledger.json
+          node Tools/static-site-checks.cjs artifacts/morning-site
+      - name: Publish generated data only after all critical checks
+        if: steps.gate.outputs.run == 'true' && success()
+        id: publish
+        run: node Tools/publish-morning-data.cjs
+      - name: Always record failures and Job Summary
+        if: always() && steps.gate.outputs.run == 'true'
+        run: node Tools/finalize-morning-health.cjs
+        env:
+          JOB_STATUS: ${{ job.status }}
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+      - name: Commit only generated data/state and health audits
+        if: always() && steps.gate.outputs.run == 'true'
+        env:
+          ANALYTICS_OK: ${{ steps.publish.outcome == 'success' }}
+        run: |
+          git config user.name 'seasonality-data-bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f artifacts/daily-health
+          if [ "$ANALYTICS_OK" = true ]; then
+            git add data/generated/site
+            if [ -d data/market-state ]; then git add data/market-state; fi
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Morning data and health $(TZ=Europe/Prague date +%F)"
+            # Fail on a concurrent writer; never force-push or overwrite its market input.
+            git push origin HEAD:master
+          fi
+      - name: Summarize publication/commit failure
+        if: failure() && steps.gate.outputs.run == 'true'
+        run: node Tools/finalize-morning-health.cjs
+        env:
+          JOB_STATUS: ${{ job.status }}
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
       - uses: actions/upload-artifact@v4
+        if: always() && steps.gate.outputs.run == 'true'
+        with:
+          name: daily-health
+          path: artifacts/daily-health/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: steps.publish.outcome == 'success'
         with:
           name: seasonality-v3-live-ledger
           path: artifacts/v3-live-ledger/ledger.json
           retention-days: 90
-      - uses: actions/upload-artifact@v4
-        with:
-          name: seasonality-static-site
-          path: artifacts/static-site/
-          retention-days: 1
-          compression-level: 9
-  deploy-static:
-    needs: export-static
-    if: ${{ !cancelled() && needs['export-static'].result == 'success' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      HAS_STATIC_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: seasonality-static-site
-          path: artifacts/static-site
-      - name: Deploy static site (no API, App Service or runtime SQL)
-        if: env.HAS_STATIC_TOKEN == 'true'
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: upload
-          app_location: artifacts/static-site
-          api_location: ''
-          output_location: ''
-          skip_app_build: true
-          skip_api_build: true
-          production_branch: master
-      - name: Explain pending hosting setup
-        if: env.HAS_STATIC_TOKEN != 'true'
-        run: echo 'Static site export is verified and available as an artifact. Azure publication is pending AZURE_STATIC_WEB_APPS_API_TOKEN; the existing App Service remains unchanged.' >> "$GITHUB_STEP_SUMMARY"
