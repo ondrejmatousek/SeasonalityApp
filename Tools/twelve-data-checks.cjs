@@ -4,6 +4,8 @@ const page=(values)=>({provider:'Twelve Data',endpoint:'time_series',params:{sym
 const bar=(datetime,close='1.05')=>({datetime,open:'1',high:'1.1',low:'.9',close});
 const input=[page([bar('2026-10-12'),bar('2026-10-09'),bar('2026-10-08')])],before=JSON.stringify(input);
 const v=td.validatePages('EURUSD',input,'2026-10-08','2026-10-12T12:00:00Z');
+const named=structuredClone(input);named[0].payload.meta.currency_base='Euro';named[0].payload.meta.currency_quote='US Dollar';assert.equal(td.validatePages('EURUSD',named,'2026-10-08','2026-10-12T12:00:00Z').count,2);
+named[0].payload.meta.currency_quote='Canadian Dollar';assert.throws(()=>td.validatePages('EURUSD',named,'2026-10-08','2026-10-12T12:00:00Z'),/orientation/);
 assert.equal(v.count,2);assert.equal(v.lastDate,'2026-10-09');assert.equal(v.session.status,'UNVERIFIED');assert.equal(v.session.ny17,false);assert.equal(v.activationAllowed,false);assert.equal(JSON.stringify(input),before);
 assert.throws(()=>td.validatePages('EURUSD',[page([bar('2026-10-09'),bar('2026-10-09')])],'2026-10-09','2026-10-12T12:00Z'),/Duplicate/);
 assert.throws(()=>td.validatePages('EURUSD',[page([{...bar('2026-10-09'),close:null}])],'2026-10-09','2026-10-12T12:00Z'),/Invalid/);

@@ -2,6 +2,8 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const core=require('../wwwroot/js/core-market-registry.js');
 const pilot=['EURUSD','GBPUSD','USDCAD','USDCHF'],DAY=86400000;
+const currencyNames={EUR:'Euro',USD:'US Dollar',GBP:'British Pound',CAD:'Canadian Dollar',AUD:'Australian Dollar',NZD:'New Zealand Dollar',JPY:'Japanese Yen',CHF:'Swiss Franc'};
+const matchesCurrency=(value,code)=>value===code||value===currencyNames[code];
 const read=f=>JSON.parse(fs.readFileSync(f,'utf8'));
 const digest=x=>crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const date=s=>{if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s)||new Date(s+'T00:00:00Z').toISOString().slice(0,10)!==s)throw Error('Invalid provider date');return s;};
@@ -36,7 +38,7 @@ function validatePages(key,pages,earliest,observedAt){
     for(const e of pages){const p=e.payload;if(e.provider!=='Twelve Data'||e.endpoint!=='time_series'||e.params.symbol!==symbol||p.status!=='ok'||p.meta?.symbol!==symbol||p.meta.interval!=='1day'||!Array.isArray(p.values)||!p.values.length)throw Error('Payload identity/layout mismatch');
         const m={symbol:p.meta.symbol,interval:p.meta.interval,type:p.meta.type,currencyBase:p.meta.currency_base,currencyQuote:p.meta.currency_quote,exchangeTimezone:p.meta.exchange_timezone};
         if(metadata&&JSON.stringify(m)!==JSON.stringify(metadata))throw Error('Provider metadata changed between pages');metadata=m;
-        if((m.currencyBase&&m.currencyBase!==key.slice(0,3))||(m.currencyQuote&&m.currencyQuote!==key.slice(3)))throw Error('Currency orientation mismatch');
+        if((m.currencyBase&&!matchesCurrency(m.currencyBase,key.slice(0,3)))||(m.currencyQuote&&!matchesCurrency(m.currencyQuote,key.slice(3))))throw Error('Currency orientation mismatch');
         for(const r of p.values){const d=date(r.datetime);if(seen.has(d))throw Error('Duplicate provider date');seen.add(d);
             const b={date:d,open:Number(r.open),high:Number(r.high),low:Number(r.low),close:Number(r.close)};
             if(['open','high','low','close'].some(k=>!['string','number'].includes(typeof r[k])||r[k]===''||!Number.isFinite(b[k])||b[k]<=0))throw Error('Invalid/nonpositive OHLC');
