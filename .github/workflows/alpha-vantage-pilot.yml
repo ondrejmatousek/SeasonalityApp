@@ -1,0 +1,26 @@
+name: Alpha Vantage FX pilot (no deployment)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline parser checks
+        run: node Tools/alpha-vantage-pilot.cjs --check
+      - name: Four pair read-only pilot
+        run: node Tools/alpha-vantage-pilot.cjs
+        env:
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alpha-vantage-pilot-encrypted
+          path: artifacts/alpha-vantage-encrypted/
+          retention-days: 7
