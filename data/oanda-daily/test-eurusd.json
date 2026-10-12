@@ -1,0 +1,12 @@
+{
+  "symbol": "EURUSD",
+  "providerSymbol": "OANDA:EURUSD",
+  "date": "2026-10-09",
+  "timestamp": 1791493200,
+  "open": 1.12144,
+  "high": 1.12428,
+  "low": 1.11876,
+  "close": 1.12015,
+  "provider": "OANDA",
+  "timeframe": "1D"
+}
