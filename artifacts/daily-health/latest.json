@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "status": "ok",
+  "runDate": "2026-10-12",
+  "runStartedAt": "2026-10-12T19:54:04.985Z",
+  "runFinishedAt": "2026-10-12T20:08:23.296Z",
+  "sourceCommit": "92eebbef60b6eb06be9879ec1f4294906ae90e14",
+  "marketDailyFetchedAt": "2026-10-12T16:08:31.353Z",
+  "market": {
+    "status": "ok",
+    "received": 36,
+    "inserted": 0,
+    "duplicates": 36,
+    "failed": 0,
+    "failedSymbols": [],
+    "inputSha256": "0d69c291e9dbc61c754d0ec79eff8d996086f91d73733b86e0500983f2cd1561"
+  },
+  "stocks": {
+    "status": "ok",
+    "snapshotAt": "2026-10-12T20:07:01.949Z",
+    "lastBarDate": "2026-10-12"
+  },
+  "cot": {
+    "status": "ok",
+    "latestPositionsDate": "2026-10-06",
+    "contracts": 62
+  },
+  "seasonality": {
+    "status": "ok"
+  },
+  "htf": {
+    "status": "ok"
+  },
+  "scoring": {
+    "status": "ok"
+  },
+  "staticExport": {
+    "status": "ok"
+  },
+  "seasonalityCandidates": 114,
+  "htfZones": 116,
+  "screenerRows": 114,
+  "instrumentChecks": [
+    {
+      "symbol": "AAPL",
+      "historicalSource": "existing-stock-sql",
+      "dailySource": "existing Yahoo stock refresh → SQL → fresh static export",
+      "lastBarDate": "2026-10-12",
+      "seasonalitySource": "existing-stock-sql",
+      "htfSource": null,
+      "provider": "Yahoo",
+      "status": "ok"
+    },
+    {
+      "symbol": "EURUSD",
+      "historicalSource": "validated-v2/series/EURUSD.json",
+      "dailySource": "data/market-daily/latest.json",
+      "lastBarDate": "2026-10-09",
+      "seasonalitySource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
+      "htfSource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
+      "provider": "OANDA",
+      "providerSymbol": "OANDA:EURUSD",
+      "status": "ok"
+    },
+    {
+      "symbol": "NDX",
+      "historicalSource": "validated-v2/series/NDX.json",
+      "dailySource": "data/market-daily/latest.json",
+      "lastBarDate": "2026-10-09",
+      "seasonalitySource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
+      "htfSource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
+      "provider": "NASDAQ",
+      "providerSymbol": "NASDAQ:NDX",
+      "status": "ok"
+    },
+    {
+      "symbol": "SPX",
+      "historicalSource": "validated-v2/series/SPX.json",
+      "dailySource": "data/market-daily/latest.json",
+      "lastBarDate": "2026-10-09",
+      "seasonalitySource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
+      "htfSource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
+      "provider": "S&P",
+      "providerSymbol": "SP:SPX",
+      "status": "ok"
+    },
+    {
+      "symbol": "XAUUSD",
+      "historicalSource": "validated-v2/series/XAUUSD.json",
+      "dailySource": "data/market-daily/latest.json",
+      "lastBarDate": "2026-10-09",
+      "seasonalitySource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
+      "htfSource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
+      "provider": "OANDA",
+      "providerSymbol": "OANDA:XAUUSD",
+      "status": "research/review"
+    },
+    {
+      "symbol": "WTI",
+      "historicalSource": "validated-v2/series/WTI.json",
+      "dailySource": "data/market-daily/latest.json",
+      "lastBarDate": "2026-10-08",
+      "seasonalitySource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
+      "htfSource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
+      "provider": "NYMEX",
+      "providerSymbol": "NYMEX:CL1!",
+      "status": "research/review"
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "published": true,
+  "mode": "live",
+  "eligibleForPublication": true,
+  "durationSeconds": 858,
+  "staleAfter": "2026-10-14T08:08:23.296Z",
+  "publication": "Generated files prepared for commit; hosting remains separate"
+}
