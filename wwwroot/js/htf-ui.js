@@ -30,13 +30,17 @@
     }
     function draw(){if(!selected||panel.hidden)return;tip.hidden=true;const {zone,price,match}=selected,bars=(zone.timeframe==='W1'?price.weekly:price.bars).slice(zone.timeframe==='W1'?-52:-90);if(!bars.length)return;
         const w=canvas.clientWidth,h=canvas.clientHeight,dpr=window.devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
-        const left=80,right=w-18,top=22,bottom=h-38,start=day(bars[0].date),end=Math.max(day(bars.at(-1).date)+86400000,day(match.candidate.endDate)+3*86400000),low=Math.min(zone.lower,...bars.map(b=>b.low)),high=Math.max(zone.upper,...bars.map(b=>b.high)),pad=(high-low)*.08||1,y=v=>bottom-(v-low+pad)/(high-low+2*pad)*(bottom-top),x=d=>left+(day(d)-start)/(end-start)*(right-left);
+        // Ordinal trading-bar axis: Friday and Monday are neighbouring candles.
+        // Future slots only locate the seasonal window; they never contain OHLC.
+        const slots=bars.map(b=>b.date),cursor=new Date(day(slots.at(-1)));
+        while(slots.at(-1)<match.candidate.endDate){cursor.setUTCDate(cursor.getUTCDate()+(zone.timeframe==='W1'?7:1));if(zone.timeframe==='W1'||![0,6].includes(cursor.getUTCDay()))slots.push(cursor.toISOString().slice(0,10));}
+        for(let i=0;i<4;){cursor.setUTCDate(cursor.getUTCDate()+(zone.timeframe==='W1'?7:1));if(zone.timeframe==='W1'||![0,6].includes(cursor.getUTCDay())){slots.push(cursor.toISOString().slice(0,10));i++;}}
+        const left=80,right=w-18,top=22,bottom=h-38,spacing=(right-left)/slots.length,low=Math.min(zone.lower,...bars.map(b=>b.low)),high=Math.max(zone.upper,...bars.map(b=>b.high)),pad=(high-low)*.08||1,y=v=>bottom-(v-low+pad)/(high-low+2*pad)*(bottom-top);
+        const position=d=>{const next=slots.findIndex(s=>s>=d);if(next===0)return 0;if(next<0)return slots.length-1;const fraction=(day(d)-day(slots[next-1]))/(day(slots[next])-day(slots[next-1]));return next-1+fraction;},x=d=>left+(position(d)+.5)*spacing;
         ctx.font='12px sans-serif';ctx.fillStyle='#a9b8c2';for(let i=0;i<=4;i++){const value=low-pad+(high-low+2*pad)*i/4,yy=y(value);ctx.strokeStyle='#39454a';ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(right,yy);ctx.stroke();ctx.fillText(num(value),3,yy+4);}
         ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();const sx=x(match.candidate.startDate),ex=x(match.candidate.endDate);ctx.fillStyle='#24dfcf18';ctx.fillRect(sx,top,ex-sx,bottom-top);ctx.strokeStyle='#7ecac1';ctx.setLineDash([5,5]);for(const xx of[sx,ex]){ctx.beginPath();ctx.moveTo(xx,top);ctx.lineTo(xx,bottom);ctx.stroke();}ctx.setLineDash([]);
         ctx.fillStyle=zone.type==='demand'?'#24dfcf35':'#f28aa835';ctx.strokeStyle=zone.type==='demand'?'#24dfcf':'#f28aa8';const zx=Math.max(left,x(zone.baseDate));ctx.fillRect(zx,y(zone.upper),right-zx,y(zone.lower)-y(zone.upper));ctx.strokeRect(zx,y(zone.upper),right-zx,y(zone.lower)-y(zone.upper));
-        // Real OHLC candlesticks: width follows adjacent candle spacing, not the
-        // number of bars (the calendar axis includes weekends and future dates).
-        const spacing=Math.min(...bars.slice(1).map((b,i)=>x(b.date)-x(bars[i].date))),bw=Math.max(1,Math.min(14,spacing*.78));
+        const bw=Math.max(1,spacing*.86);
         ctx.lineWidth=1;
         for(const b of bars){
             const xx=Math.round(x(b.date)*dpr)/dpr,bodyTop=Math.min(y(b.open),y(b.close)),bodyBottom=Math.max(y(b.open),y(b.close));
@@ -46,7 +50,7 @@
             const bodyHeight=Math.max(b.open===b.close?1/dpr:2,bodyBottom-bodyTop);
             ctx.fillRect(xx-bw/2,(bodyTop+bodyBottom-bodyHeight)/2,bw,bodyHeight);
         }ctx.restore();
-        ctx.fillStyle='#a9b8c2';for(let i=0;i<5;i++){const d=new Date(start+(end-start)*i/4).toISOString().slice(0,10);ctx.fillText(date(d),Math.min(right-65,x(d)),h-12);}geometry={bars,x,y,left,right,top,bottom};
+        ctx.fillStyle='#a9b8c2';for(let i=0;i<5;i++){const d=slots[Math.round((slots.length-1)*i/4)];ctx.fillText(date(d),Math.min(right-65,x(d)),h-12);}geometry={bars,x,y,left,right,top,bottom};
     }
     canvas.onpointermove=e=>{if(!geometry||!selected)return;const box=canvas.getBoundingClientRect(),px=e.clientX-box.left,py=e.clientY-box.top;if(px<geometry.left||px>geometry.x(geometry.bars.at(-1).date)+5||py<geometry.top||py>geometry.bottom){tip.hidden=true;return;}const b=geometry.bars.reduce((best,b)=>Math.abs(geometry.x(b.date)-px)<Math.abs(geometry.x(best.date)-px)?b:best);tip.textContent=`${date(b.date)}\nO ${num(b.open)} · H ${num(b.high)}\nL ${num(b.low)} · C ${num(b.close)}`;tip.hidden=false;const pos=window.MarketChartUi.tooltipPosition(px,py,tip.offsetWidth,tip.offsetHeight,box.width,box.height);tip.style.left=pos.left+'px';tip.style.top=pos.top+'px';};canvas.onpointerleave=()=>tip.hidden=true;
     for(const id of['htf-mode','htf-timeframe','htf-direction'])by(id).onchange=render;
