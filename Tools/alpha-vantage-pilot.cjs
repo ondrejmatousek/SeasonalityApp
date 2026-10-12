@@ -35,6 +35,8 @@ async function main(){
   }catch{result={pair,requestedAt,status:'ACCESS_ERROR',message:'Request failed or timed out (URL withheld)'};}
   fs.writeFileSync(`${root}/${pair}.json`,JSON.stringify(result,null,2));
   const {bars,invalid,...summary}=result;results.push(summary);
+  // Respect the free per-second burst limit; no credential-bearing retries.
+  if(pair!==pairs.at(-1))await new Promise(resolve=>setTimeout(resolve,1500));
  }
  const summary={results,productionChanged:false,activationAllowed:false,sessionCutoffVerified:false,requests:4};
  fs.writeFileSync(`${root}/summary.json`,JSON.stringify(summary,null,2));
