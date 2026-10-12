@@ -24,7 +24,7 @@ const inv={rows:[...core.pairs,'NDX','SPX','QQQ','SPY'].map(key=>{const m=core.g
         const request=td.client({fetchImpl});const response=await request('earliest_timestamp',{symbol:'EUR/USD',interval:'1day'});assert.equal(JSON.stringify(response).includes(process.env.TWELVE_DATA_API_KEY),false);assert.equal(calls,1);
         await assert.rejects(()=>td.client({fetchImpl:async()=>{throw Error('synthetic-test-key-not-real');}})('time_series',{}),/details suppressed/);
         await assert.rejects(()=>td.client({fetchImpl:async()=>({ok:false,status:401,json:async()=>({message:'synthetic-test-key-not-real',code:401})})})('time_series',{}),e=>!e.message.includes(process.env.TWELVE_DATA_API_KEY));
-        temp=fs.mkdtempSync(path.resolve('artifacts','twelve-checks-'));let requested=[];
+        fs.mkdirSync(path.resolve('artifacts'),{recursive:true});temp=fs.mkdtempSync(path.resolve('artifacts','twelve-checks-'));let requested=[];
         const mock=async(endpoint,params)=>{requested.push({endpoint,params});if(endpoint==='earliest_timestamp')return{provider:'Twelve Data',endpoint,params,payload:{datetime:'2005-01-03'}};const p=page(params.end_date==='2026-10-12'?[bar('2026-10-09'),bar('2010-01-04')]:[bar('2005-01-03')]);p.params=params;return p;};
         const clock=()=>Date.parse('2026-10-12T12:00Z');let result=await td.bootstrap(temp,'EURUSD',{request:mock,clock});assert.equal(result.historyFetchComplete,false);
         result=await td.bootstrap(temp,'EURUSD',{request:mock,clock});assert.equal(result.historyFetchComplete,true);assert.equal(requested[2].params.end_date,'2010-01-03');const count=requested.length;await td.bootstrap(temp,'EURUSD',{request:mock,clock});assert.equal(requested.length,count);

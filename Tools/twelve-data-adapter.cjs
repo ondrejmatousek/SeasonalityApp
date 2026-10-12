@@ -76,8 +76,10 @@ async function bootstrap(root,key,{request,clock=()=>Date.now()}={}){
         if(e.params.end_date!==state.endDate)throw Error('Evidence checkpoint window mismatch');
         if(e.payload.status!=='ok'||!Array.isArray(e.payload.values)||!e.payload.values.length)throw Error('Empty history before advertised earliest date');
         const ds=e.payload.values.map(r=>date(r.datetime)).sort(),first=ds[0];if(ds.at(-1)>state.endDate||first>state.endDate)throw Error('Paging window ignored');
+        // Preserve rejected provider evidence too; the analytical checkpoint advances only after validation.
+        if(!exists)saveEvidence(file,e);
         validatePages(key,[...state.pages.map(f=>read(path.join(folder,f))),e],state.earliest,new Date(clock()).toISOString());
-        if(!exists)saveEvidence(file,e);state.pages.push(filename);state.done=first<=state.earliest.slice(0,10);state.endDate=previous(first);save(stateFile,state);
+        state.pages.push(filename);state.done=first<=state.earliest.slice(0,10);state.endDate=previous(first);save(stateFile,state);
     }
     if(state.done){const pages=state.pages.map(f=>read(path.join(folder,f))),series=validatePages(key,pages,state.earliest,new Date(clock()).toISOString());if(!series.maximumHistoryConfirmed)throw Error('History truncated');save(path.join(folder,'series.json'),series);}
     return {key,provider:'Twelve Data',pages:state.pages.length,historyFetchComplete:state.done,activationAllowed:false};
