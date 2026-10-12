@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),{boundary,aggregate}=require('./dukascopy-session.cjs');
+assert.equal(new Date(boundary('2026-01-05')).toISOString(),'2026-01-05T22:00:00.000Z');
+assert.equal(new Date(boundary('2026-07-06')).toISOString(),'2026-07-06T21:00:00.000Z');
+assert.equal(boundary('2026-03-08')-boundary('2026-03-07'),23*3600000);
+assert.equal(boundary('2026-11-01')-boundary('2026-10-31'),25*3600000);
+const end=boundary('2026-10-09'),ticks=[{time:end-3600000,bid:1.1},{time:end-1,bid:1.2}],options={symbol:'EURUSD',observedAt:new Date(end).toISOString(),transportComplete:true};
+const result=aggregate(ticks,options);assert.equal(result.bars.length,1);assert.equal(result.bars[0].close,1.2);assert.equal(result.bars[0].high,1.2);assert.equal(result.activationAllowed,false);
+assert.equal(aggregate(ticks,{...options,observedAt:new Date(end-1).toISOString()}).bars.length,0);
+const monday=boundary('2026-10-12'),sundayStart=boundary('2026-10-11');assert.equal(aggregate([{time:sundayStart,bid:1.3},{time:monday-1,bid:1.4}],{...options,observedAt:new Date(monday).toISOString()}).bars[0].date,'2026-10-12');
+const tue=boundary('2026-10-13');const adjacent=aggregate([{time:monday-1,bid:1.4},{time:monday,bid:9}],{...options,observedAt:new Date(tue).toISOString()});assert.equal(adjacent.bars[0].close,1.4);assert.equal(adjacent.bars[1].open,9);
+assert.throws(()=>aggregate(ticks,{...options,transportComplete:false}),/Complete transport/);assert.throws(()=>aggregate([ticks[0],ticks[0]],options),/duplicate/);assert.throws(()=>aggregate([{time:end-1,bid:NaN}],options),/Invalid tick/);assert.throws(()=>aggregate(ticks,{...options,symbol:'AUDUSD'}),/Four-pair/);
+console.log('Dukascopy synthetic session checks passed: IANA DST, closed-only, half-open boundaries, own last-tick close, duplicates, fail-closed transport. NOT a live feed validation.');

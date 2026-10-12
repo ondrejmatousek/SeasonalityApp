@@ -1,0 +1,37 @@
+name: Dukascopy HTTPS access probe (no deployment)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dukascopy-access-probe
+  cancel-in-progress: false
+jobs:
+  access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline decoder and session checks
+        run: |
+          python Tools/dukascopy-github-checks.py
+          node Tools/dukascopy-session-checks.cjs
+      - name: Four-pair read-only HTTPS probe and gated small control
+        run: python Tools/dukascopy-github-probe.py artifacts/dukascopy-github-raw
+      - name: Preserve encrypted evidence and access outcome
+        if: always()
+        run: node Tools/dukascopy-github-result.cjs artifacts/dukascopy-github-raw artifacts/dukascopy-github-encrypted .github/keys/twelve-pilot-public.pem
+      - name: Upload audit artifacts only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dukascopy-access-encrypted
+          path: artifacts/dukascopy-github-encrypted/
+          if-no-files-found: warn
+          retention-days: 7
