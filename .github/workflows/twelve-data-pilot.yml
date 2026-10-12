@@ -1,0 +1,31 @@
+name: Twelve Data FX pilot (no deployment)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: twelve-data-pilot
+  cancel-in-progress: false
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline safety checks (no credentials)
+        run: node Tools/twelve-data-checks.cjs
+      - name: Run four-pair live pilot
+        run: node Tools/run-twelve-pilot.cjs artifacts/twelve-pilot .github/keys/twelve-pilot-public.pem artifacts/twelve-pilot-encrypted
+        env:
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+      - name: Retain encrypted evidence only (no raw prices or credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: twelve-data-pilot-encrypted
+          path: artifacts/twelve-pilot-encrypted/
+          if-no-files-found: warn
+          retention-days: 7

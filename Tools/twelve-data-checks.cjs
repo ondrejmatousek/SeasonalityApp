@@ -1,0 +1,40 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const td=require('./twelve-data-adapter.cjs'),{proposed}=require('./twelve-data-registry.cjs');
+const page=(values)=>({provider:'Twelve Data',endpoint:'time_series',params:{symbol:'EUR/USD'},payload:{status:'ok',meta:{symbol:'EUR/USD',interval:'1day',type:'Physical Currency',exchange_timezone:'Australia/Sydney',currency_base:'EUR',currency_quote:'USD'},values}});
+const bar=(datetime,close='1.05')=>({datetime,open:'1',high:'1.1',low:'.9',close});
+const input=[page([bar('2026-10-12'),bar('2026-10-09'),bar('2026-10-08')])],before=JSON.stringify(input);
+const v=td.validatePages('EURUSD',input,'2026-10-08','2026-10-12T12:00:00Z');
+assert.equal(v.count,2);assert.equal(v.lastDate,'2026-10-09');assert.equal(v.session.status,'UNVERIFIED');assert.equal(v.session.ny17,false);assert.equal(v.activationAllowed,false);assert.equal(JSON.stringify(input),before);
+assert.throws(()=>td.validatePages('EURUSD',[page([bar('2026-10-09'),bar('2026-10-09')])],'2026-10-09','2026-10-12T12:00Z'),/Duplicate/);
+assert.throws(()=>td.validatePages('EURUSD',[page([{...bar('2026-10-09'),close:null}])],'2026-10-09','2026-10-12T12:00Z'),/Invalid/);
+assert.throws(()=>td.validatePages('EURUSD',[page([bar('2026-10-09','0')])],'2026-10-09','2026-10-12T12:00Z'),/Invalid/);
+const round=page([{...bar('2026-10-09'),high:'1.049999'}]);const accepted=td.validatePages('EURUSD',[round],'2026-10-09','2026-10-12T12:00Z');assert.equal(accepted.bars[0].high,1.049999);assert.equal(accepted.flags.precisionAccepted.length,1);
+round.payload.values[0].high='1.04';assert.throws(()=>td.validatePages('EURUSD',[round],'2026-10-09','2026-10-12T12:00Z'),/tolerance/);
+assert.deepEqual(td.upsert(v,v),{bars:v.bars,inserted:0,updated:0,received:2,rejected:0});assert.throws(()=>td.upsert(v,{...v,provider:'OANDA'}),/Cross-provider/);
+const revision=structuredClone(v);revision.bars[0].close=1.04;assert.equal(td.upsert(v,revision).updated,1);assert.equal(td.upsert({...v,bars:revision.bars},revision).updated,0);
+const q={};for(let i=0;i<6;i++)td.quota(q,100000+i);assert.throws(()=>td.quota(q,100010),/Minute/);td.quota(q,160010);const daily={day:'2026-10-12',used:700};assert.throws(()=>td.quota(daily,Date.parse('2026-10-12')),/Daily/);td.quota(daily,Date.parse('2026-10-13'));assert.equal(daily.used,1);
+const core=require('../wwwroot/js/core-market-registry.js');
+const inv={rows:[...core.pairs,'NDX','SPX','QQQ','SPY'].map(key=>{const m=core.get(key);return{key,scope:'core',oandaProbe:'OANDA:'+key,assetClass:core.pairs.includes(key)?'forex':['QQQ','SPY'].includes(key)?'etf':'index',yahooSymbol:m.chartSource.symbol,seasonalitySource:{seriesId:m.priceSeriesId,primaryProvider:'Yahoo'},htfSource:m.chartSource};})},reg=proposed(inv);assert.equal(reg.entries.length,32);assert.equal(reg.entries.filter(r=>r.candidate).length,28);assert.equal(reg.activationAllowed,false);assert.equal(reg.entries.find(r=>r.key==='QQQ').candidate,null);assert.equal(reg.profiles.find(r=>r.key==='MNQ').priceKey,'NDX');
+(async()=>{
+    const originalKey=process.env.TWELVE_DATA_API_KEY;let temp;
+    try{
+        delete process.env.TWELVE_DATA_API_KEY;assert.throws(()=>td.client(),/not configured/);
+        process.env.TWELVE_DATA_API_KEY='synthetic-test-key-not-real';let calls=0;
+        const fetchImpl=async(url,options)=>{calls++;assert.equal(url.hostname,'api.twelvedata.com');assert.equal(url.searchParams.has('apikey'),false);assert.equal(options.redirect,'error');assert.equal(options.headers.Authorization,'apikey synthetic-test-key-not-real');return {ok:true,status:200,json:async()=>({status:'ok',message:'synthetic-test-key-not-real',apikey:'synthetic-test-key-not-real'})};};
+        const request=td.client({fetchImpl});const response=await request('earliest_timestamp',{symbol:'EUR/USD',interval:'1day'});assert.equal(JSON.stringify(response).includes(process.env.TWELVE_DATA_API_KEY),false);assert.equal(calls,1);
+        await assert.rejects(()=>td.client({fetchImpl:async()=>{throw Error('synthetic-test-key-not-real');}})('time_series',{}),/details suppressed/);
+        await assert.rejects(()=>td.client({fetchImpl:async()=>({ok:false,status:401,json:async()=>({message:'synthetic-test-key-not-real',code:401})})})('time_series',{}),e=>!e.message.includes(process.env.TWELVE_DATA_API_KEY));
+        temp=fs.mkdtempSync(path.resolve('artifacts','twelve-checks-'));let requested=[];
+        const mock=async(endpoint,params)=>{requested.push({endpoint,params});if(endpoint==='earliest_timestamp')return{provider:'Twelve Data',endpoint,params,payload:{datetime:'2005-01-03'}};const p=page(params.end_date==='2026-10-12'?[bar('2026-10-09'),bar('2010-01-04')]:[bar('2005-01-03')]);p.params=params;return p;};
+        const clock=()=>Date.parse('2026-10-12T12:00Z');let result=await td.bootstrap(temp,'EURUSD',{request:mock,clock});assert.equal(result.historyFetchComplete,false);
+        result=await td.bootstrap(temp,'EURUSD',{request:mock,clock});assert.equal(result.historyFetchComplete,true);assert.equal(requested[2].params.end_date,'2010-01-03');const count=requested.length;await td.bootstrap(temp,'EURUSD',{request:mock,clock});assert.equal(requested.length,count);
+        const raw=fs.readFileSync(path.join(temp,'EURUSD/page-0.json'),'utf8');assert.equal(raw.includes('synthetic-test-key-not-real'),false);
+        assert.equal(JSON.parse(fs.readFileSync(path.join(temp,'EURUSD/series.json'))).activationAllowed,false);
+        const crypto=require('node:crypto'),{pack,unpack}=require('./twelve-pilot-bundle.cjs'),pair=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
+        const encrypted=pack(temp,pair.publicKey);assert.equal(JSON.stringify(encrypted).includes('EUR/USD'),false);
+        const restored=path.join(temp,'roundtrip');unpack(encrypted,pair.privateKey,restored);assert.equal(fs.readFileSync(path.join(restored,'EURUSD/page-0.json'),'utf8'),raw);
+        const tampered={...encrypted,tag:Buffer.alloc(16).toString('base64')};assert.throws(()=>unpack(tampered,pair.privateKey,path.join(temp,'tampered')));
+    }finally{if(originalKey===undefined)delete process.env.TWELVE_DATA_API_KEY;else process.env.TWELVE_DATA_API_KEY=originalKey;
+        if(temp&&path.resolve(temp).startsWith(path.resolve('artifacts')+path.sep))fs.rmSync(temp,{recursive:true});}
+    console.log('Twelve Data offline checks passed: credentials/header redaction, paging/resume, budgets, raw OHLC, completion, idempotent upsert and blocked activation. Synthetic fixtures are NOT a live coverage audit.');
+})().catch(e=>{console.error(e.message);process.exitCode=1;});
