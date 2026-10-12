@@ -32,6 +32,12 @@
     }
     return {
         exportedAt: manifest.exportedAt,
+        async htf() {
+            if (!manifest.htfConfluence) throw new Error('HTF snapshot zatím není k dispozici');
+            const payload = await read(manifest.htfConfluence.path);
+            if (payload.schemaVersion !== 1 || !Array.isArray(payload.assets) || !payload.prices) throw new Error('Invalid HTF snapshot');
+            return payload;
+        },
         async opportunities() {
             if (!manifest.opportunities) throw new Error('Daily opportunities snapshot unavailable');
             const payload = await read(manifest.opportunities.path);

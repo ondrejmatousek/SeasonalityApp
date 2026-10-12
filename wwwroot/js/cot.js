@@ -41,6 +41,7 @@
     function switchTab(tab) {
         const cotActive = tab.dataset.marketTab === 'cot';
         const screenerActive = tab.dataset.marketTab === 'screener';
+        const htfActive = tab.dataset.marketTab === 'htf';
         tabs.forEach(button => {
             const active = button === tab;
             button.classList.toggle('is-active', active);
@@ -48,13 +49,15 @@
             button.tabIndex = active ? 0 : -1;
         });
         panel.hidden = !cotActive;
-        seasonality.hidden = cotActive || screenerActive;
+        seasonality.hidden = cotActive || screenerActive || htfActive;
         byId('market-screener-view').hidden = !screenerActive;
-        root.classList.toggle('is-screener', screenerActive);
-        byId('market-instrument-title').textContent = screenerActive ? 'Screener' : asset?.name || 'Instrument';
+        byId('market-htf-view').hidden = !htfActive;
+        root.classList.toggle('is-screener', screenerActive || htfActive);
+        byId('market-instrument-title').textContent = htfActive ? 'HTF shoda' : screenerActive ? 'Screener' : asset?.name || 'Instrument';
         tooltip.hidden = true;
         if (cotActive) load();
         else if (screenerActive) root.dispatchEvent(new CustomEvent('screener-visible'));
+        else if (htfActive) root.dispatchEvent(new CustomEvent('htf-visible'));
         else root.dispatchEvent(new CustomEvent('seasonality-visible'));
     }
     tabs.forEach(tab => {

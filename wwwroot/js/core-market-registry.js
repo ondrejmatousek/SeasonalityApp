@@ -10,6 +10,7 @@
     const cotCurrency=k=>k==='USD'?{key:k,kind:'neutral-reference',contractCode:null}:{key:k,kind:'currency-futures',contractCode:currencies[k]};
     for(const key of pairs){const base=key.slice(0,3),quote=key.slice(3);
         entries[key]={version,tradingInstrument:key,priceKey:key,priceSeriesId:'fx-spot:'+key,priceKind:'fx-spot',
+            chartSource:{provider:'Yahoo Finance',symbol:({USDJPY:'JPY=X',USDCAD:'CAD=X'})[key]||key+'=X'},
             cotSources:[cotCurrency(base),cotCurrency(quote)],cotMode:'relative-cot-state-v1',base,quote,
             proxyRelationship:'Relative currency futures positioning; USD is a neutral reference, not DXY',exposureFamily:'FX',
             scope:'core',status:'validated-ranking-ready',executionKind:'spot-or-cfd'};
@@ -19,6 +20,7 @@
         ['S&P500',['SPX','SPY'],['ES','MES'],'13874A','SPX','S&P 500 futures (ES)']]){
         for(const key of [...priceKeys,...profiles]){const profile=profiles.includes(key),priceKey=profile?priceKeys[0]:key;
             entries[key]={version,tradingInstrument:key,priceKey,priceSeriesId:(priceKey===priceKeys[0]?'cash-index:':'etf:')+priceKey,
+                chartSource:{provider:'Yahoo Finance',symbol:({NDX:'^NDX',SPX:'^GSPC',QQQ:'QQQ',SPY:'SPY'})[priceKey]},
                 priceKind:priceKey===priceKeys[0]?'cash-index':'etf',cotSources:[{key:root,contractCode:code,name,kind:'index-futures'}],
                 cotMode:'legacy-commercial-index-52',proxyRelationship:'Futures positioning proxy; reference price return is not execution P&L',
                 exposureFamily:family,scope:'core',status:'validated-ranking-ready',executionKind:profile?'futures-profile':'cash-or-etf',

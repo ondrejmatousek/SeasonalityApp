@@ -79,6 +79,7 @@ jobs:
       - run: node Tools/opportunity-scoring-v2-checks.cjs
       - run: node Tools/historical-cot-comparison-checks.cjs
       - run: node Tools/opportunity-scoring-v3-checks.cjs
+      - run: node Tools/htf-checks.cjs
       - name: Reuse latest successful immutable dataset (no SQL)
         if: inputs.reuse_snapshot == true
         env:
@@ -99,6 +100,13 @@ jobs:
         run: node Tools/build-opportunities.cjs artifacts/static-site
       - name: Verify unsmoothed full-history discovery and displayed curve parity
         run: node Tools/raw-seasonality-checks.cjs artifacts/static-site
+      - name: Fetch real daily OHLC for core chart references (no SQL)
+        shell: pwsh
+        run: ./Tools/fetch-htf-ohlc.ps1 -OutputDir artifacts/htf-ohlc
+      - name: Evaluate experimental D1/W1 zone and seasonal confluence
+        run: node Tools/build-htf-confluence.cjs artifacts/static-site artifacts/htf-ohlc
+      - name: Check HTF provenance and export consistency
+        run: node Tools/htf-export-checks.cjs artifacts/static-site
       - name: Restore cumulative V3 ledger
         env:
           GH_TOKEN: ${{ github.token }}
