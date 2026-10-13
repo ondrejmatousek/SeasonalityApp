@@ -7,6 +7,10 @@ const target=process.argv[2],remote=/^https?:/.test(target);let server,browser;
     await page.goto(remote?target:'http://127.0.0.1:54162');
     await page.locator('#seasonality-asset-search').fill('EURUSD');await page.locator('button.seasonality-asset-suggestion[data-asset-key="EURUSD"]').click();await page.locator('#market-tab-cot').click();
     await page.locator('.cot-summary-card').first().waitFor({state:'attached'});if(!await page.locator('.cot-position-overview').evaluate(e=>e.open))await page.locator('.cot-position-overview summary').click();
+    const disclosureStyles=await page.evaluate(()=>['.cot-analogs','.cot-position-overview'].map(selector=>{
+        const box=getComputedStyle(document.querySelector(selector)),heading=getComputedStyle(document.querySelector(selector+'>summary'));
+        return {background:box.backgroundColor,border:box.border,padding:box.padding,radius:box.borderRadius,font:heading.fontSize,weight:heading.fontWeight,line:heading.lineHeight,color:heading.color,headingPadding:heading.padding};
+    }));assert.deepEqual(disclosureStyles[0],disclosureStyles[1],'Both COT disclosures share the same card and heading appearance');
     assert.equal(await page.locator('details.cot-analogs').evaluate(e=>e.open),false,'Historical analog section is collapsed by default');
     assert.equal(await page.locator('#cot-analog-group').isVisible(),false);
     await page.locator('.cot-analogs>summary').click();assert.equal(await page.locator('#cot-analog-group').isVisible(),true);
