@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "status": "warning",
   "runDate": "2026-10-13",
-  "runStartedAt": "2026-10-13T11:25:24.619Z",
-  "runFinishedAt": "2026-10-13T11:39:22.802Z",
-  "sourceCommit": "e017df93252aa29afb81ef283a900f358ed0649b",
+  "runStartedAt": "2026-10-13T11:40:01.388Z",
+  "runFinishedAt": "2026-10-13T11:54:07.640Z",
+  "sourceCommit": "ede8a9a61b91fb914babb091655631e348915ec6",
   "marketDailyFetchedAt": "2026-10-13T05:31:41.620Z",
   "market": {
     "status": "ok",
@@ -18,8 +18,8 @@
   "stocks": {
     "status": "ok",
     "refresh": {
-      "startedAt": "2026-10-13T11:26:13.8737404+00:00",
-      "finishedAt": "2026-10-13T11:36:37.9423085+00:00",
+      "startedAt": "2026-10-13T11:40:07.7196508+00:00",
+      "finishedAt": "2026-10-13T11:51:26.7741141+00:00",
       "attempted": 457,
       "yahooSucceeded": [
         "DBC",
@@ -485,7 +485,7 @@
       "fallbackSucceeded": [],
       "failedSymbols": []
     },
-    "snapshotAt": "2026-10-13T11:37:57.336Z",
+    "snapshotAt": "2026-10-13T11:52:42.070Z",
     "lastBarDate": "2026-10-12"
   },
   "cot": {
@@ -582,7 +582,7 @@
   "published": true,
   "mode": "live",
   "eligibleForPublication": true,
-  "durationSeconds": 838,
-  "staleAfter": "2026-10-14T23:39:22.802Z",
+  "durationSeconds": 846,
+  "staleAfter": "2026-10-14T23:54:07.640Z",
   "publication": "Generated files prepared for commit; hosting remains separate"
 }
