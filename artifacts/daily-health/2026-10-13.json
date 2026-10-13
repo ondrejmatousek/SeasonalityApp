@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "status": "warning",
+  "status": "ok",
   "runDate": "2026-10-13",
-  "runStartedAt": "2026-10-13T11:40:01.388Z",
-  "runFinishedAt": "2026-10-13T11:54:07.640Z",
-  "sourceCommit": "ede8a9a61b91fb914babb091655631e348915ec6",
+  "runStartedAt": "2026-10-13T14:14:34.546Z",
+  "runFinishedAt": "2026-10-13T14:27:57.779Z",
+  "sourceCommit": "57a7f362c2c22f5273d06cbb609aad9656d5b8ab",
   "marketDailyFetchedAt": "2026-10-13T05:31:41.620Z",
   "market": {
     "status": "ok",
-    "received": 36,
+    "received": 39,
     "inserted": 0,
-    "duplicates": 36,
+    "duplicates": 39,
     "failed": 0,
     "failedSymbols": [],
     "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c"
@@ -18,8 +18,8 @@
   "stocks": {
     "status": "ok",
     "refresh": {
-      "startedAt": "2026-10-13T11:40:07.7196508+00:00",
-      "finishedAt": "2026-10-13T11:51:26.7741141+00:00",
+      "startedAt": "2026-10-13T14:15:23.6006734+00:00",
+      "finishedAt": "2026-10-13T14:25:20.4874702+00:00",
       "attempted": 457,
       "yahooSucceeded": [
         "DBC",
@@ -485,7 +485,7 @@
       "fallbackSucceeded": [],
       "failedSymbols": []
     },
-    "snapshotAt": "2026-10-13T11:52:42.070Z",
+    "snapshotAt": "2026-10-13T14:26:50.811Z",
     "lastBarDate": "2026-10-12"
   },
   "cot": {
@@ -575,14 +575,12 @@
       "status": "research/review"
     }
   ],
-  "warnings": [
-    "Research history only; daily refresh not configured: WHEAT, SOYBEANS, LIVECATTLE"
-  ],
+  "warnings": [],
   "errors": [],
   "published": true,
   "mode": "live",
   "eligibleForPublication": true,
-  "durationSeconds": 846,
-  "staleAfter": "2026-10-14T23:54:07.640Z",
+  "durationSeconds": 803,
+  "staleAfter": "2026-10-15T02:27:57.779Z",
   "publication": "Generated files prepared for commit; hosting remains separate"
 }
