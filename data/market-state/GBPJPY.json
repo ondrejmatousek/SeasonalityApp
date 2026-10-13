@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "OANDA_TRADINGVIEW:GBPJPY:D1:backfill-test-v1",
+  "logicalSymbol": "GBPJPY",
+  "provider": "OANDA",
+  "providerSymbol": "OANDA:GBPJPY",
+  "sourceIdentity": "OANDA_TRADINGVIEW",
+  "timeframe": "1D",
+  "productionActive": false,
+  "scope": "test/research only",
+  "historicalSource": "validated-v2/series/GBPJPY.json",
+  "historicalSha256": "2ec6b8309f1cb682e0d2cbe343a1a5c5342340b9fecdf902f22f74c6be88eaf5",
+  "htfPolicy": "No HTF rebuild/activation",
+  "bars": [
+    {
+      "timestamp": 1791752400,
+      "providerTimestamp": "2026-10-11T21:00:00.000Z",
+      "providerUtcDate": "2026-10-11",
+      "date": "2026-10-12",
+      "open": 209.395,
+      "high": 209.986,
+      "low": 209.294,
+      "close": 209.538,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-12T21:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c",
+        "fetchedAt": "2026-10-13T05:31:41.620Z",
+        "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
+      }
+    }
+  ]
+}

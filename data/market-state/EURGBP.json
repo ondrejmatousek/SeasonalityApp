@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "OANDA_TRADINGVIEW:EURGBP:D1:backfill-test-v1",
+  "logicalSymbol": "EURGBP",
+  "provider": "OANDA",
+  "providerSymbol": "OANDA:EURGBP",
+  "sourceIdentity": "OANDA_TRADINGVIEW",
+  "timeframe": "1D",
+  "productionActive": false,
+  "scope": "test/research only",
+  "historicalSource": "validated-v2/series/EURGBP.json",
+  "historicalSha256": "05e0f7ace24cf03d3a4856fbf23f1690045399306016cbf1ce1feb2469db8fdf",
+  "htfPolicy": "No HTF rebuild/activation",
+  "bars": [
+    {
+      "timestamp": 1791752400,
+      "providerTimestamp": "2026-10-11T21:00:00.000Z",
+      "providerUtcDate": "2026-10-11",
+      "date": "2026-10-12",
+      "open": 0.84546,
+      "high": 0.84659,
+      "low": 0.84454,
+      "close": 0.8446,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-12T21:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c",
+        "fetchedAt": "2026-10-13T05:31:41.620Z",
+        "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
+      }
+    }
+  ]
+}

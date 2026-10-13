@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "NYMEX_TRADINGVIEW:NATGAS:D1:backfill-test-v1",
+  "logicalSymbol": "NATGAS",
+  "provider": "NYMEX",
+  "providerSymbol": "NYMEX:NG1!",
+  "sourceIdentity": "NYMEX_TRADINGVIEW",
+  "timeframe": "1D",
+  "productionActive": false,
+  "scope": "test/research only",
+  "historicalSource": "validated-v2/series/NATGAS.json",
+  "historicalSha256": "e21aef822e71bf72e6478c7a04e2920731240e017d51e1e53b210db4d8a42f6d",
+  "htfPolicy": "No HTF rebuild/activation",
+  "bars": [
+    {
+      "timestamp": 1791756000,
+      "providerTimestamp": "2026-10-11T22:00:00.000Z",
+      "providerUtcDate": "2026-10-11",
+      "date": "2026-10-11",
+      "open": 3.17,
+      "high": 3.204,
+      "low": 3.092,
+      "close": 3.167,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Timestamp matches underlying Globex session opening 17:00 Chicago previous evening; regular daily session is over at collection time and a new active trading-date bar corroborates turnover. Columbus Day normal EOD processing is calendar context. Exact holiday/feed time_close not established, so sessionEnd is null.",
+        "checkedAt": "2026-10-13T05:31:41.620Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "id": "ng-hours",
+            "url": "https://www.cmegroup.com/cn-s/markets/energy/natural-gas/natural-gas.contractSpecs.html",
+            "finding": "NG regular Globex daily session 17:00–16:00 America/Chicago."
+          },
+          {
+            "id": "cme-calendar",
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "Calendar distinguishes Globex trading and settlement; reviewed Columbus Day links."
+          },
+          {
+            "id": "cme-columbus",
+            "url": "https://www.cmegroup.com/tools-information/holiday-calendar/files/2026/2026-columbus-day-clearing-advisory.pdf",
+            "finding": "October 12 is a processing holiday with normal end-of-day cycle. Used as calendar context only, never as a sessionEnd."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c",
+        "fetchedAt": "2026-10-13T05:31:41.620Z",
+        "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
+      }
+    }
+  ]
+}

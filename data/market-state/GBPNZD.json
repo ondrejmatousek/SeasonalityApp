@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "OANDA_TRADINGVIEW:GBPNZD:D1:backfill-test-v1",
+  "logicalSymbol": "GBPNZD",
+  "provider": "OANDA",
+  "providerSymbol": "OANDA:GBPNZD",
+  "sourceIdentity": "OANDA_TRADINGVIEW",
+  "timeframe": "1D",
+  "productionActive": false,
+  "scope": "test/research only",
+  "historicalSource": "validated-v2/series/GBPNZD.json",
+  "historicalSha256": "f0871ea9d0bc071d17e10d031b32c4cb184dc4cc7d990e5a3a944a1426a06e5a",
+  "htfPolicy": "No HTF rebuild/activation",
+  "bars": [
+    {
+      "timestamp": 1791752400,
+      "providerTimestamp": "2026-10-11T21:00:00.000Z",
+      "providerUtcDate": "2026-10-11",
+      "date": "2026-10-12",
+      "open": 2.35844,
+      "high": 2.36538,
+      "low": 2.35706,
+      "close": 2.36413,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-12T21:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c",
+        "fetchedAt": "2026-10-13T05:31:41.620Z",
+        "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
+      }
+    }
+  ]
+}

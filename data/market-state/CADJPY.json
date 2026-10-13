@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "OANDA_TRADINGVIEW:CADJPY:D1:backfill-test-v1",
+  "logicalSymbol": "CADJPY",
+  "provider": "OANDA",
+  "providerSymbol": "OANDA:CADJPY",
+  "sourceIdentity": "OANDA_TRADINGVIEW",
+  "timeframe": "1D",
+  "productionActive": false,
+  "scope": "test/research only",
+  "historicalSource": "validated-v2/series/CADJPY.json",
+  "historicalSha256": "2485fe22182cd4b6c5794b2a77325df554867c35654715c668b52df51d5bd6df",
+  "htfPolicy": "No HTF rebuild/activation",
+  "bars": [
+    {
+      "timestamp": 1791752400,
+      "providerTimestamp": "2026-10-11T21:00:00.000Z",
+      "providerUtcDate": "2026-10-11",
+      "date": "2026-10-12",
+      "open": 110.863,
+      "high": 111.266,
+      "low": 110.814,
+      "close": 111.082,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-12T21:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c",
+        "fetchedAt": "2026-10-13T05:31:41.620Z",
+        "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
+      }
+    }
+  ]
+}

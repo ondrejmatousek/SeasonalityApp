@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
+  "logicalSymbol": "NDX",
+  "provider": "NASDAQ",
+  "providerSymbol": "NASDAQ:NDX",
+  "sourceIdentity": "NASDAQ_TRADINGVIEW",
+  "timeframe": "1D",
+  "productionActive": false,
+  "scope": "test/research only",
+  "historicalSource": "validated-v2/series/NDX.json",
+  "historicalSha256": "eb1c0734fd1c6ca9d3b69915ddc6a631f9bc3696b88f067b2d24d8b4e7a1340a",
+  "htfPolicy": "No HTF rebuild/activation",
+  "bars": [
+    {
+      "timestamp": 1791811800,
+      "providerTimestamp": "2026-10-12T13:30:00.000Z",
+      "providerUtcDate": "2026-10-12",
+      "date": "2026-10-12",
+      "open": 30796.043,
+      "high": 30813.9604,
+      "low": 30618.645,
+      "close": 30664.6967,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "D1 timestamp maps to 09:30 New York on a regular U.S. trading date. Collection is after both cash close and the documented NDX dissemination/correction window. The feed's exact time_close is not asserted.",
+        "checkedAt": "2026-10-13T05:31:41.620Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "id": "ndx-methodology",
+            "url": "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
+            "finding": "Calculation/distribution for NDX until 17:16 ET, including correction window. Completion can be checked after this window, without substituting distribution time for time_close."
+          },
+          {
+            "id": "nasdaq-calendar",
+            "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+            "finding": "2026 holidays/early closes and regular 09:30–16:00 ET cash session; October 12 is not a closure/early close."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c",
+        "fetchedAt": "2026-10-13T05:31:41.620Z",
+        "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
+      }
+    }
+  ]
+}
