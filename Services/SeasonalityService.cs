@@ -577,6 +577,7 @@ public sealed class SeasonalityService
     private readonly ILogger<SeasonalityService> _logger;
     private readonly SeasonalityDbContext? _context;
     private readonly MarketPriceSources? _marketSources;
+    public object? LastStockRefreshAudit { get; private set; }
 
     public SeasonalityService(IHttpClientFactory httpClientFactory, ILogger<SeasonalityService> logger)
         : this(httpClientFactory, logger, null)
@@ -642,6 +643,12 @@ public sealed class SeasonalityService
             : [];
         var pendingAssets = Assets.Where(asset => !onlyMissing || !cachedKeys.Contains(asset.Key, StringComparer.OrdinalIgnoreCase)).ToArray();
         var processedAssets = 0;
+        var refreshStartedAt = DateTimeOffset.UtcNow;
+        var yahooSucceeded = new List<string>();
+        var yahooFailed = new List<string>();
+        var yahooEmpty = new List<string>();
+        var fallbackSucceeded = new List<string>();
+        var failedSymbols = new List<string>();
         foreach (var asset in pendingAssets)
         {
             if (MarketPriceSources.IsMarket(asset))
@@ -663,24 +670,31 @@ public sealed class SeasonalityService
                 var yahoo = await client.GetStringAsync(
                     $"https://query1.finance.yahoo.com/v8/finance/chart/{Uri.EscapeDataString(asset.YahooSymbol)}?period1={period1}&period2={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}&interval=1d&events=history",
                     cancellationToken);
-                await UpsertAsync(asset.Key, "Yahoo", ParseYahoo(yahoo), cached, cancellationToken);
+                var completed = ParseYahoo(yahoo);
+                await UpsertAsync(asset.Key, "Yahoo", completed, cached, cancellationToken);
+                if (completed.Count > 0) yahooSucceeded.Add(asset.Key); else yahooEmpty.Add(asset.Key);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Yahoo seasonality data load failed for {Asset}; trying Stooq.", asset.Key);
+                yahooFailed.Add(asset.Key);
                 try
                 {
                     var csv = await client.GetStringAsync($"https://stooq.com/q/d/l/?s={asset.StooqSymbol}&i=d", cancellationToken);
                     await UpsertAsync(asset.Key, "Stooq", ParseStooq(csv), cached, cancellationToken);
+                    fallbackSucceeded.Add(asset.Key);
                 }
                 catch (Exception fallbackException)
                 {
                     _logger.LogError(fallbackException, "Seasonality data load failed for {Asset}.", asset.Key);
+                    failedSymbols.Add(asset.Key);
                 }
             }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+        LastStockRefreshAudit = new { startedAt = refreshStartedAt, finishedAt = DateTimeOffset.UtcNow,
+            attempted = processedAssets, yahooSucceeded, yahooFailed, yahooEmpty, fallbackSucceeded, failedSymbols };
         }
         finally
         {

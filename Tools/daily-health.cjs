@@ -28,6 +28,13 @@ function ingestionGate(report,registry){
  if(report.providerSplice)errors.push('Provider splice detected');
  return {errors,warnings:failed.filter(r=>!core.has(r.symbol)).map(r=>r.symbol+': '+r.reason)};
 }
+function stockRefreshAudit(audit){
+ if(!audit||!Array.isArray(audit.yahooSucceeded)||!Array.isArray(audit.yahooFailed)||!Array.isArray(audit.failedSymbols)||!Array.isArray(audit.yahooEmpty)||!Number.isFinite(Date.parse(audit.finishedAt)))throw Error('Missing or invalid stock refresh evidence');
+ const warnings=[];
+ if(audit.yahooFailed.length||audit.failedSymbols.length||audit.yahooEmpty.length)warnings.push('Yahoo stock refresh: '+audit.yahooFailed.length+' Yahoo failures; '+audit.failedSymbols.length+' unresolved symbols; '+audit.yahooEmpty.length+' empty responses');
+ if(audit.yahooFailed.includes('AAPL')||!audit.yahooSucceeded.includes('AAPL'))throw Error('AAPL Yahoo refresh failed or returned no completed prices; refusing stale-stock publication');
+ return warnings;
+}
 function checkOutputs(dir,h,now=new Date()){
  const m=read(path.join(dir,'data/manifest.json')),op=read(path.join(dir,m.opportunities.path)),htf=read(path.join(dir,m.htfConfluence.path));
  const expected={AAPL:['Yahoo',null],EURUSD:['OANDA','OANDA:EURUSD'],NDX:['NASDAQ','NASDAQ:NDX'],SPX:['S&P','SP:SPX'],XAUUSD:['OANDA','OANDA:XAUUSD'],WTI:['NYMEX','NYMEX:CL1!']};
@@ -81,7 +88,7 @@ function summary(h){
  ...['EURUSD','AAPL'].map(k=>[k+' last date',h.instrumentChecks.find(c=>c.symbol===k)?.lastBarDate||'unavailable']),['Screener candidates',h.screenerRows],['HTF zones',h.htfZones]];
  return '## Morning analytics\n\n| Check | Result |\n|---|---|\n'+rows.map(r=>'| '+r.join(' | ')+' |').join('\n')+'\n\n'+[...h.errors.map(e=>'ERROR: '+e),...h.warnings.map(e=>'WARNING: '+e)].map(e=>'- '+e.replace(/\n/g,' ')).join('\n')+'\n';
 }
-module.exports={day,scheduleGate,create,marketFreshness,ingestionGate,checkOutputs,finish,write,summary};
+module.exports={day,scheduleGate,create,marketFreshness,ingestionGate,stockRefreshAudit,checkOutputs,finish,write,summary};
 if(require.main===module&&process.argv.includes('--gate')){
  const run=scheduleGate(process.env.SCHEDULE,new Date(),process.env.EVENT_NAME==='workflow_dispatch');
  if(process.env.GITHUB_OUTPUT)fs.appendFileSync(process.env.GITHUB_OUTPUT,'run='+run+'\n');console.log('Prague schedule gate: '+run);

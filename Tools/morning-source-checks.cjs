@@ -1,5 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const dir=path.resolve(process.argv[2]||'artifacts/morning-market-routing-v1'),legacy=path.resolve(process.argv[3]||'artifacts/htf-preview');
+const bundleRoot=path.resolve(process.argv[4]||'artifacts/tradingview-backfill-36-v1/analytics-sources-v1');
 const read=(root,p)=>JSON.parse(fs.readFileSync(path.join(root,p.replace(/^\//,'')),'utf8'));
 const m=read(dir,'data/manifest.json'),old=read(legacy,'data/manifest.json'),htf=read(dir,m.htfConfluence.path),summary=read(dir,m.screener.path),opps=read(dir,m.opportunities.path);
 const hash=f=>crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
@@ -7,7 +8,7 @@ const expected={EURUSD:['OANDA','OANDA:EURUSD'],NDX:['NASDAQ','NASDAQ:NDX'],SPX:
 for(const [key,[provider,symbol]]of Object.entries(expected)){
  const a=m.assets.find(a=>a.key===key),p=read(dir,a.prices.path);
  assert.equal(a.priceSource.provider,provider);assert.equal(a.priceSource.providerSymbol,symbol);assert.notEqual(a.prices.path,old.assets.find(a=>a.key===key).prices.path);
- assert.deepEqual(p.prices,JSON.parse(fs.readFileSync(path.join('artifacts/tradingview-backfill-36-v1/analytics-sources-v1',a.priceSource.file))).prices);
+ assert.deepEqual(p.prices,JSON.parse(fs.readFileSync(path.join(bundleRoot,a.priceSource.file))).prices);
  assert.equal(htf.prices[key].priceSeriesId,a.priceSource.id);assert.equal(htf.prices[key].symbol,symbol);
  assert.equal(opps.assets.find(a=>a.key===key).mapping.priceSeriesId,a.priceSource.id);
 }

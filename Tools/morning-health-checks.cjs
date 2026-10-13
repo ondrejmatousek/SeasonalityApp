@@ -7,6 +7,12 @@ for(const [date,cron]of [['2026-01-12T05:00:00Z','0 5 * * *'],['2026-07-12T04:00
  assert.equal(health.scheduleGate(cron,new Date(Date.parse(date)+95*60000)),true,'Late job must still select the correct seasonal cron');
 }
 assert.equal(health.scheduleGate(undefined,new Date(),true),true);
+const stockAudit={yahooSucceeded:['AAPL'],yahooFailed:[],failedSymbols:[],yahooEmpty:[],finishedAt:'2026-10-12T04:00:00Z'};
+assert.deepEqual(health.stockRefreshAudit(stockAudit),[]);
+assert.equal(health.stockRefreshAudit({...stockAudit,yahooFailed:['OTHER']}).length,1);
+assert.throws(()=>health.stockRefreshAudit({...stockAudit,yahooFailed:['AAPL']}),/AAPL/);
+assert.throws(()=>health.stockRefreshAudit({...stockAudit,yahooSucceeded:[],yahooEmpty:['AAPL']}),/AAPL/);
+assert.throws(()=>health.stockRefreshAudit(null),/evidence/);
 const input=path.join(temp,'input.json'),at='2026-10-12T01:00:00Z';fs.writeFileSync(input,JSON.stringify({schemaVersion:1,timeframe:'1D',fetchedAt:at,bars:[]}));
 assert.equal(health.marketFreshness(input,new Date('2026-10-12T04:00:00Z')),at);
 assert.throws(()=>health.marketFreshness(input,new Date('2026-10-13T04:00:00Z')),/24 hours/);

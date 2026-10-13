@@ -19,7 +19,31 @@ function atomic(file, value) {
   fs.writeFileSync(tmp, JSON.stringify(value,null,2), {flag:'wx'});
   try { fs.renameSync(tmp,file); } finally { if(fs.existsSync(tmp))fs.unlinkSync(tmp); }
 }
-function validateBar(b, e, observed, now, knownCompletion=null) {
+function auditCompletion(b, observed, audit) {
+  check(audit?.schemaVersion===1 && Array.isArray(audit.runs), 'completion audit unavailable');
+  const runs=audit.runs.filter(r=>instant(r.checkedAt)===observed);
+  check(runs.length===1, 'completion audit collection timestamp mismatch');
+  const run=runs[0], entries=run.entries.filter(x=>x.providerSymbol===b.providerSymbol && x.timestamp===b.timestamp);
+  check(entries.length===1, 'completion audit bar missing/ambiguous');
+  const a=entries[0];
+  check(a.symbol===b.symbol && a.date===b.date && a.completed===true && a.status==='ok' && !a.error && !a.errorType,
+    'completion audit identity/date/status mismatch');
+  check(a.method==='documented_session_and_bar_timestamp' && typeof a.reason==='string' && a.reason.length>20,
+    'completion audit method/reason missing');
+  check(Array.isArray(a.sourceIds) && a.sourceIds.length>=2 && a.sourceIds.every(id=>run.sources?.some(s=>s.id===id && /^https:\/\//.test(s.url) && s.finding)),
+    'completion audit documented session/calendar sources missing');
+  // Conservative acceptance window, NOT a fabricated provider time_close.
+  const policy=b.providerSymbol==='NASDAQ:NDX'||b.providerSymbol==='SP:SPX'
+    ? {zone:'America/New_York',time:'18:00:00'}
+    : b.providerSymbol==='ICEEUR:BRN1!' ? {zone:'Europe/London',time:'23:00:00'}
+    : ['NYMEX:CL1!','NYMEX:NG1!','COMEX:HG1!'].includes(b.providerSymbol)
+      ? {zone:'America/Chicago',time:'17:00:00'} : null;
+  check(policy && a.timezone===policy.zone, 'completion audit session not supported');
+  const local=new Intl.DateTimeFormat('sv-SE',{timeZone:policy.zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date(observed));
+  check(/^\d{4}-\d{2}-\d{2}$/.test(b.date||'') && local>=b.date+' '+policy.time, 'documented session completion window has not elapsed');
+  return {method:a.method,reason:a.reason,checkedAt:run.checkedAt,timezone:a.timezone,sources:a.sourceIds.map(id=>run.sources.find(s=>s.id===id))};
+}
+function validateBar(b, e, observed, now, knownCompletion=null, documentedCompletion=null) {
   check(b && typeof b==='object', 'invalid bar');
   if(b.status!==undefined)check(b.status==='ok','provider bar status not ok');
   check(b.symbol===e.logicalSymbol, 'unknown/logical symbol mismatch');
@@ -40,7 +64,9 @@ function validateBar(b, e, observed, now, knownCompletion=null) {
     }
     completion='Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok';
   }
-  if(end===null && knownCompletion && b.status==='ok') {
+  if(end===null && documentedCompletion && b.completed===true && b.status==='ok') {
+    completion='Documented session/calendar audit; exact provider sessionEnd unavailable';
+  } else if(end===null && knownCompletion && b.status==='ok') {
     completion=knownCompletion.completionEvidence;
     check(typeof completion==='string' && completion.length>0, 'stored completion evidence missing');
   } else {
@@ -64,7 +90,7 @@ function validateBar(b, e, observed, now, knownCompletion=null) {
   }
   return {timestamp:b.timestamp,providerTimestamp:new Date(b.timestamp*1000).toISOString(),providerUtcDate:isoDate(b.timestamp*1000),date,
     open:b.open,high:b.high,low:b.low,close:b.close,dateLabel:label,
-    completionEvidence:completion,...(end!==null?{sessionEnd:new Date(end).toISOString()}:{} )};
+    completionEvidence:completion,...(documentedCompletion?{documentedCompletion}:{}),...(end!==null?{sessionEnd:new Date(end).toISOString()}:{} )};
 }
 function equal(a,b) { return ['open','high','low','close'].every(k=>a[k]===b[k]); }
 function loadSeries(root,e,overlay) {
@@ -92,6 +118,10 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
   const observed=instant(fetchedAt);
   check(observed<=now, 'future generatedAt');
   check(Array.isArray(payload.bars), 'bars must be an array');
+  const runDate=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(observed));
+  const auditFile=path.join(path.dirname(input),'audit',runDate+'.json');
+  const auditBytes=fs.existsSync(auditFile)?fs.readFileSync(auditFile):null;
+  const audit=auditBytes?JSON.parse(auditBytes):null;
   const registry=read(path.join(root,'test-source-registry.json'));
   check(registry.version==='tv-backfill-36-test-v1' && registry.productionRoutingChanged===false, 'unsupported/active registry');
   const entries=new Map(registry.entries.map(e=>[e.logicalSymbol,e]));
@@ -109,6 +139,7 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
     if(fs.existsSync(evidenceFile))check(sha(fs.readFileSync(evidenceFile))===report.inputSha256,'raw evidence hash mismatch');
     else fs.writeFileSync(evidenceFile,bytes,{flag:'wx'});
     report.rawEvidence=path.relative(root,evidenceFile);
+    if(auditBytes){const auditHash=sha(auditBytes),f=path.join(evidenceDir,auditHash+'.json');if(!fs.existsSync(f))fs.writeFileSync(f,auditBytes,{flag:'wx'});report.completionAuditSha256=auditHash;}
     const groups=new Map();
     const aliases={NASDAQ100:'NDX',SP500:'SPX',NATURALGAS:'NATGAS'};
     for(const b of payload.bars){const inputSymbol=typeof b?.symbol==='string'?b.symbol:'<missing-symbol>',key=aliases[inputSymbol]||inputSymbol;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(b);}
@@ -123,7 +154,9 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
           const provider=e.logicalSymbol==='SPX' && b.provider==='SP'?'S&P':b.provider;
           if(b.assetClass!==undefined)check(b.assetClass===({forex:'fx',metal:'metals',index:'index',commodity:'futures'}[e.assetClass]),'assetClass mismatch');
           const mapped={...b,symbol,provider,sourceIdentity:b.sourceIdentity===undefined?e.sourceIdentity:b.sourceIdentity};
-          return validateBar(mapped,e,observed,now,byTime.get(b.timestamp));
+          const documented=!b.sessionEnd && !byTime.has(b.timestamp) && !['forex','metal'].includes(e.assetClass)
+            ? auditCompletion(b,observed,audit):null;
+          return validateBar(mapped,e,observed,now,byTime.get(b.timestamp),documented);
         });
         const seen=new Set();for(const b of normalized){check(!seen.has(b.timestamp),'duplicate timestamp in incoming instrument');seen.add(b.timestamp);}
         const enabled=e.status==='canonical-test-candidate';
@@ -159,7 +192,7 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
     return report;
   } finally { fs.rmdirSync(lock); }
 }
-module.exports={ingest,validateBar,loadSeries};
+module.exports={ingest,validateBar,loadSeries,auditCompletion};
 if(require.main===module) {
   try { const args=process.argv.slice(2),value=(key,fallback)=>args.find(x=>x.startsWith(key+'='))?.slice(key.length+1)||fallback;
     const report=ingest({input:value('--input','data/market-daily/latest.json'),root:value('--root','artifacts/tradingview-backfill-36-v1'),includeReview:args.includes('--include-review')});

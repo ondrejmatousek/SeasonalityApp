@@ -7,8 +7,8 @@ function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market
  const node=(script,...args)=>command(process.execPath,[script,...args]);
  const stage=(key,fn)=>{h[key].status='running';try{const value=fn();h[key].status='ok';return value;}catch(e){h[key].status='failed';throw e;}};
  try{
-  h.market.status='running';h.marketDailyFetchedAt=health.marketFreshness(input);
-  h.market.received=JSON.parse(fs.readFileSync(input)).bars.length;
+  h.market.status='running';const payload=JSON.parse(fs.readFileSync(input));h.marketDailyFetchedAt=payload.fetchedAt||payload.generatedAt||null;
+  h.market.received=Array.isArray(payload.bars)?payload.bars.length:0;health.marketFreshness(input);
   const bundle=stage('market',()=>prepare({root,input})),r=bundle.ingestion;
   h.market={status:'ok',received:r.instruments.reduce((n,a)=>n+a.received,0),inserted:r.inserted,duplicates:r.skipped,failed:r.failed,
    failedSymbols:r.instruments.filter(a=>a.failed).map(a=>a.symbol),inputSha256:r.inputSha256};
@@ -16,7 +16,10 @@ function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market
   h.warnings.push(...gates.warnings);h.errors.push(...gates.errors);if(gates.errors.length){h.market.status='failed';throw Error('Critical market ingestion failed');}
   if(gates.warnings.length)h.market.status='warning';
   if(!safe){
-   stage('stocks',()=>command('dotnet',['run','--project','SeasonalityApp.csproj','-c','Release','--no-build','--','--update-once']));
+   stage('stocks',()=>command('dotnet',['run','--project','SeasonalityApp.csproj','-c','Release','--no-build','--','--update-once','--stock-refresh-report','artifacts/stock-refresh/latest.json']));
+   const audit=JSON.parse(fs.readFileSync('artifacts/stock-refresh/latest.json'));h.stocks={...h.stocks,refresh:audit};
+   try{const warnings=health.stockRefreshAudit(audit);if(warnings.length){h.stocks.status='warning';h.warnings.push(...warnings);}}
+   catch(e){h.stocks.status='failed';throw e;}
    // Existing CFTC refresh only; no change to COT definitions or normalization.
    try{stage('cot',()=>command('dotnet',['run','--project','SeasonalityApp.csproj','-c','Release','--no-build','--','--update-cot-once']));}
    catch{h.cot.status='warning';h.warnings.push('COT refresh failed; existing snapshot freshness will be checked');}

@@ -74,7 +74,18 @@ using (var scope = app.Services.CreateScope())
     }
     if (args.Contains("--update-once", StringComparer.OrdinalIgnoreCase))
     {
-        await scope.ServiceProvider.GetRequiredService<SeasonalityService>().UpdateAsync();
+        var stocks = scope.ServiceProvider.GetRequiredService<SeasonalityService>();
+        await stocks.UpdateAsync();
+        var stockReportIndex = Array.IndexOf(args, "--stock-refresh-report");
+        if (stockReportIndex >= 0)
+        {
+            if (stockReportIndex + 1 >= args.Length) throw new ArgumentException("Stock refresh report path required");
+            var reportPath = Path.GetFullPath(args[stockReportIndex + 1]);
+            var auditRoot = Path.GetFullPath("artifacts") + Path.DirectorySeparatorChar;
+            if (!reportPath.StartsWith(auditRoot, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Stock audit must be under artifacts/");
+            Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
+            await File.WriteAllTextAsync(reportPath, System.Text.Json.JsonSerializer.Serialize(stocks.LastStockRefreshAudit));
+        }
         return;
     }
 }

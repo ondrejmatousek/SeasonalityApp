@@ -4,7 +4,7 @@ let h=fs.existsSync(file)?JSON.parse(fs.readFileSync(file)):health.create();
 // The prior day's committed report must not mask a build/restore failure today.
 if(h.sourceCommit!==(process.env.SOURCE_COMMIT||process.env.GITHUB_SHA)||h.status==='running')h=health.create();
 if(process.env.JOB_STATUS!=='success'||process.env.PUBLISH_OUTCOME!=='success'){
- const error='Morning workflow failed before publication/commit completed; last good analytics retained. See failed Actions step.';
+ const error='Morning workflow failed: '+(process.env.FAILURE_STAGE||'see failed Actions step')+'; last good analytics retained.';
  if(!h.errors.includes(error))h.errors.push(error);
  h.eligibleForPublication=false;h.published=false;
 }

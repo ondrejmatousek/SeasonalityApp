@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
-const {ingest,validateBar}=require('./market-daily-ingest.cjs');
+const {ingest,validateBar,auditCompletion}=require('./market-daily-ingest.cjs');
 const source=path.resolve('artifacts/tradingview-backfill-36-v1'),root=fs.mkdtempSync(path.join(os.tmpdir(),'seasonality-daily-ingest-'));
 const registry=JSON.parse(fs.readFileSync(path.join(source,'test-source-registry.json'),'utf8'));
 fs.copyFileSync(path.join(source,'test-source-registry.json'),path.join(root,'test-source-registry.json'));
@@ -35,5 +35,17 @@ fs.writeFileSync(input,JSON.stringify({schemaVersion:2,fetchedAt:'2026-10-13T10:
 assert.throws(()=>validateBar({...b,status:'error'},eur,now,now),/status/);
 // An unknown new cash/futures session must fail closed without explicit completion evidence.
 assert.throws(()=>validateBar({...bar('NDX'),completed:undefined,status:'ok',sessionEnd:undefined},entry('NDX'),now,now),/explicit evidence/);
+// Actual producer audit, tied to the exact collection and provider bar.
+const cash={...bar('NDX'),symbol:'NASDAQ100',date:'2026-10-12',timestamp:Date.parse('2026-10-12T13:30:00Z')/1000,status:'ok',sessionEnd:null};
+const observed=Date.parse('2026-10-13T05:31:41.620Z');
+const audit={schemaVersion:1,runs:[{checkedAt:new Date(observed).toISOString(),sources:[{id:'session',url:'https://indexes.nasdaq.com/docs/Methodology_NDX.pdf',finding:'Documented index session'},{id:'calendar',url:'https://www.nasdaq.com/market-activity/stock-market-holiday-schedule',finding:'Reviewed trading calendar'}],entries:[{...cash,method:'documented_session_and_bar_timestamp',reason:'Session/calendar checked and documented completion window has elapsed',timezone:'America/New_York',sourceIds:['session','calendar']}]}]};
+const evidence=auditCompletion(cash,observed,audit);
+validateBar({...cash,symbol:'NDX',sourceIdentity:entry('NDX').sourceIdentity},entry('NDX'),observed,now,null,evidence);
+assert.throws(()=>auditCompletion(cash,observed,null),/unavailable/);
+assert.throws(()=>auditCompletion({...cash,timestamp:cash.timestamp+1},observed,audit),/missing/);
+assert.throws(()=>auditCompletion(cash,observed+1000,audit),/timestamp mismatch/);
+assert.throws(()=>validateBar({...cash,symbol:'NDX',sourceIdentity:entry('NDX').sourceIdentity,completed:false},entry('NDX'),observed,now,null,evidence));
+const openAudit=structuredClone(audit);openAudit.runs[0].checkedAt='2026-10-12T18:00:00Z';
+assert.throws(()=>auditCompletion(cash,Date.parse(openAudit.runs[0].checkedAt),openAudit),/not elapsed/);
 for(const e of registry.entries)assert.deepEqual(fs.readFileSync(path.join(root,e.seasonalitySource)),fs.readFileSync(path.join(source,e.seasonalitySource)));
 console.log('PASS: 25 initial identities, strict schema/OHLC, NY17 DST, immutable history, append, idempotency, instrument conflict isolation, provider-splice rejection, conditional/research gating, SPX HTF restriction. Synthetic tests only. Evidence: '+root);
