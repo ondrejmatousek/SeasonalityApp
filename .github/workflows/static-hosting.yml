@@ -31,8 +31,9 @@ jobs:
         run: |
           test -s data/generated/site/data/manifest.json
           mkdir -p artifacts/public-site
-          cp -R wwwroot/. artifacts/public-site/
           cp -R data/generated/site/. artifacts/public-site/
+          # Latest UI assets must not be overwritten by the previous morning snapshot.
+          cp -R wwwroot/. artifacts/public-site/
           mkdir -p artifacts/public-site/artifacts/daily-health
           cp artifacts/daily-health/*.json artifacts/public-site/artifacts/daily-health/
       - name: Existing Azure static hosting publication

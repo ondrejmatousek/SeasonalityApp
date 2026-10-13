@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/css/responsive.css?v=c4WbFwVCdr-INqunO4RQdhoRo5KFdbn-tSLuPEx37V4" />
     <link rel="stylesheet" href="/css/cot.css?v=wyRR4KCzsGZfYTDrTWpLrSilIkcLvppCbwThvQUugXc" />
     <link rel="stylesheet" href="/css/market-help.css?v=sHU8Da0aRvzGPzckhrU34v2deATU0FHXEkzYWYzsOZg" />
-    <link rel="stylesheet" href="/css/htf.css?v=2jkpxb_1bPcIHALi-cL2hyns9JsGJ1tglorGclc9mVE" />
+    <link rel="stylesheet" href="/css/htf.css?v=KcG5gS7WKJzf0A-iO9PM7qdsw0U9pI-7HTFzPcb9wDw" />
     <link rel="stylesheet" href="/css/daily-health.css?v=eQz8iRtsfFwSS1KJGMwTpEfhYsG0dxiYKYP8j2g75oI" />
 </head>
 <body class="journal-shell app-section-shell">
@@ -63,7 +63,16 @@
             <p id="htf-status" role="status">Načtení při otevření záložky.</p>
             <section id="htf-detail" class="htf-card" hidden>
                 <h3 id="htf-chart-title"></h3>
-                <div class="htf-chart-wrap"><canvas id="htf-price-chart" aria-label="Cenový graf se zónou a sezonním intervalem" role="img"></canvas><div id="htf-tooltip" class="htf-tooltip" hidden></div></div>
+                <div class="htf-chart-toolbar" aria-label="Ovládání cenového grafu">
+                    <label>Svíčky <select id="htf-chart-resolution"><option>D1</option><option>W1</option></select></label>
+                    <button id="htf-chart-zoom-in" type="button" aria-label="Přiblížit graf">+</button>
+                    <button id="htf-chart-zoom-out" type="button" aria-label="Oddálit graf">−</button>
+                    <button id="htf-chart-reset" type="button">Reset pohledu</button>
+                    <button id="htf-chart-fit" type="button">Celá dostupná historie</button>
+                    <span>Kolečko: zoom · tažení: posun · pravá osa: cenové měřítko</span>
+                </div>
+                <div class="htf-chart-wrap"><div id="htf-price-chart" tabindex="0" aria-label="Interaktivní svíčkový graf. Kolečkem přibližuj, tažením posouvej. Klávesy plus, minus a nula ovládají pohled."></div><div id="htf-tooltip" class="htf-tooltip" hidden></div></div>
+                <small class="htf-chart-credit"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™ · © 2025 TradingView, Inc.</a> · denní snapshot, nikoli živá cena</small>
                 <p id="htf-chart-caption"></p>
                 <div id="htf-metrics" class="htf-metrics"></div>
             </section>
@@ -290,7 +299,9 @@
     <script src="/js/cot-analogs.js?v=submncZGCw6od0TibxNUA5ysf_TalntHczB4n72B_pw"></script>
     <script src="/js/cot.js?v=k8dOwbkEJ_LYSmxApKWY7F6w8FLiZaZw0fxEJq4KvzI"></script>
     <script src="/js/htf-zones.js?v=G1lf1RZsxXx5XLyvXnIsXVkH4wpeZsrgq5WaLvT8tpo"></script>
-    <script src="/js/htf-ui.js?v=2oAk8ZBKNbCVff840JM63h2QcEllhKOtm0uh67EpaY0"></script>
+    <script src="/lib/lightweight-charts/lightweight-charts.standalone.production.js?v=wJklgIZ8SRLMk4WzwnKDFbzBp2x_EIfcqQhDD8zfMdc"></script>
+    <script src="/js/htf-chart.js?v=yI51cqYb80ndZRFnzg15UPSqRStrvM74qjcXMiOj-yY"></script>
+    <script src="/js/htf-ui.js?v=kgfbuC2sAzvwWnM3Zd4H8kLr4ZL_mPGAYVABqHWi3ws"></script>
     <script src="/js/seasonality.js?v=dy2BO1sJCf4aO7mk2qHDykRYJF3sZscNFxLM3sXsRVk"></script>
     <script src="/js/market-export.js?v=fZFB3pYU4VrDoCU6RorXYe4Wk5UemxUNfBKkLnwHSnQ"></script>
     <script src="/js/screener.js?v=DU_oPFr2viWBi1hZM93idEUfPl1lzZViVG74DyZdMY8"></script>

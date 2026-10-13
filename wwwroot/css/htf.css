@@ -1,1 +1,16 @@
 #market-htf-view h2{font-size:1.4rem}#market-htf-view h2 small{font-size:.8rem;color:#eab768;margin-left:12px}#market-htf-view p{color:#a9b8c2;line-height:1.6}.htf-controls{display:flex;gap:14px;flex-wrap:wrap;margin:20px 0}.htf-controls label{display:flex;flex-direction:column;gap:6px}.htf-controls select,.htf-controls button,.htf-table button{background:#30383b;border:1px solid #4b555a;border-radius:7px;color:#d6e2e8;padding:10px}.htf-controls button{align-self:flex-end}.htf-card{background:#252a2d;border:1px solid #394044;border-radius:10px;padding:20px;margin:20px 0}.htf-chart-wrap{position:relative;height:clamp(300px,32vw,500px)}#htf-price-chart{width:100%;height:100%;display:block}.htf-tooltip{position:absolute;pointer-events:none;background:#172126;border:1px solid #6e8491;border-radius:6px;padding:10px;color:#e3eef4;white-space:pre-line;max-width:250px;font-size:13px;z-index:2}.htf-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}.htf-metrics div{border-left:2px solid #24dfcf;padding-left:12px}.htf-metrics small{display:block;color:#a9b8c2}.htf-table-wrap{overflow:auto}.htf-table{width:100%;min-width:1000px;border-collapse:collapse}.htf-table th,.htf-table td{text-align:left;padding:16px 12px;vertical-align:top;border-bottom:1px solid #344047}.htf-table small{display:block;margin-top:5px;color:#a9b8c2}.htf-table tr.is-selected{background:#183a39}.htf-table button{color:#24dfcf;white-space:nowrap}#htf-coverage{font-size:.9rem;color:#a9b8c2}#htf-status.is-error{color:#eab768}#market-htf-view[hidden]{display:none!important}@media(max-width:700px){.htf-card{padding:12px}.htf-controls label{width:100%}.htf-controls select{width:100%}.market-view-tabs{flex-wrap:wrap}}
+#market-htf-view{max-width:1440px;width:100%;margin-inline:auto;min-width:0}
+.seasonality-wrap:has(>#market-htf-view:not([hidden])){max-width:1440px;margin-inline:auto}
+.htf-card .htf-chart-wrap{height:clamp(380px,42vw,600px);background:#101416;border:1px solid #344047;border-radius:8px;overflow:hidden}
+#htf-price-chart{outline:none;touch-action:pan-y}
+#htf-price-chart:focus-visible{outline:2px solid #24dfcf;outline-offset:-2px}
+.htf-chart-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.htf-chart-toolbar label{display:flex;align-items:center;gap:8px}
+.htf-chart-toolbar button,.htf-chart-toolbar select{color:#d6e2e8;background:#20292e;border:1px solid #43515a;border-radius:6px;padding:7px 10px;font-size:13px;cursor:pointer}
+.htf-chart-toolbar button:hover{border-color:#24dfcf}
+.htf-chart-toolbar span,.htf-chart-credit{font-size:12px;color:#9babB5}
+.htf-chart-toolbar span{margin-left:auto}
+.htf-chart-credit{display:block;margin-top:8px}
+.htf-chart-credit a{color:#9babb5;text-decoration:none}
+.htf-tooltip{z-index:3}
+@media(max-width:700px){.htf-card .htf-chart-wrap{height:360px}.htf-chart-toolbar span{width:100%;margin-left:0}.htf-metrics{grid-template-columns:1fr}}
