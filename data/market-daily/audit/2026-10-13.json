@@ -1208,6 +1208,4315 @@
           }
         ]
       }
+    },
+    {
+      "runType": "manual-39-priority",
+      "checkedAt": "2026-10-13T13:56:51.324Z",
+      "runDate": "2026-10-13",
+      "timezone": "Europe/Prague",
+      "successful": 36,
+      "failed": 0,
+      "duplicates": 36,
+      "sourceDataFetchedAt": "2026-10-13T05:31:41.620Z",
+      "legacyDataWrite": "no-op: exact same verified OHLC/timestamp; original latest/archive unchanged",
+      "sources": [
+        {
+          "id": "oanda-hours",
+          "url": "https://www.oanda.com/uk-en/trading/hours-of-operation/",
+          "finding": "FX and USD gold/silver daily availability in New York; daily break and NZD exception."
+        },
+        {
+          "id": "oanda-daily-alignment",
+          "url": "https://developer.oanda.com/rest-live-v20/pricing-ep/",
+          "finding": "Provider D1-aligned candle default: dailyAlignment 17, America/New_York. The actual TradingView start timestamps corroborate this alignment; API settings alone are not treated as TradingView metadata."
+        },
+        {
+          "id": "oanda-calendar",
+          "url": "https://www.oanda.com/uk-en/trading/holiday-trading-hours/",
+          "finding": "Reviewed provider holiday notices. No exact TradingView D1 time_close or date-specific exact boundary was obtained, so sessionEnd remains null."
+        },
+        {
+          "id": "ndx-methodology",
+          "url": "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
+          "finding": "Calculation/distribution for NDX until 17:16 ET, including correction window. Completion can be checked after this window, without substituting distribution time for time_close."
+        },
+        {
+          "id": "nasdaq-calendar",
+          "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+          "finding": "2026 holidays/early closes and regular 09:30–16:00 ET cash session; October 12 is not a closure/early close."
+        },
+        {
+          "id": "sp-methodology",
+          "url": "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+          "finding": "SPX follows the U.S. equity trading calendar."
+        },
+        {
+          "id": "nyse-calendar",
+          "url": "https://www.nyse.com/trade/hours-calendars",
+          "finding": "2026 holidays/early closes and core cash equity session to 16:00 ET; no October 12 exception."
+        },
+        {
+          "id": "ice-spec",
+          "url": "https://www.ice.com/products/219/Brent-Crude-Futures",
+          "finding": "BRN regular session to 23:00 London; Monday opens Sunday 23:00 London."
+        },
+        {
+          "id": "ice-calendar",
+          "url": "https://www.ice.com/publicdocs/Trading_Schedule.pdf",
+          "finding": "2026 oil holiday schedule: no October 12 shortened-session exception."
+        },
+        {
+          "id": "cl-hours",
+          "url": "https://www.cmegroup.com/education/courses/event-contracts-underlying-markets/wti-overview",
+          "finding": "CL regular Globex daily session 17:00–16:00 America/Chicago."
+        },
+        {
+          "id": "ng-hours",
+          "url": "https://www.cmegroup.com/cn-s/markets/energy/natural-gas/natural-gas.contractSpecs.html",
+          "finding": "NG regular Globex daily session 17:00–16:00 America/Chicago."
+        },
+        {
+          "id": "hg-hours",
+          "url": "https://www.cmegroup.com/cn-s/markets/metals/base/copper.contractSpecs.html",
+          "finding": "HG regular Globex daily session 17:00–16:00 America/Chicago."
+        },
+        {
+          "id": "cme-calendar",
+          "url": "https://www.cmegroup.com/trading-hours.html",
+          "finding": "Calendar distinguishes Globex trading and settlement; reviewed Columbus Day links."
+        },
+        {
+          "id": "cme-columbus",
+          "url": "https://www.cmegroup.com/tools-information/holiday-calendar/files/2026/2026-columbus-day-clearing-advisory.pdf",
+          "finding": "October 12 is a processing holiday with normal end-of-day cycle. Used as calendar context only, never as a sessionEnd."
+        }
+      ],
+      "entries": [
+        {
+          "providerSymbol": "OANDA:EURUSD",
+          "symbol": "EURUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.12232,
+                "h": 1.12614,
+                "l": 1.11612,
+                "o": 1.12596,
+                "t": 1791147600,
+                "v": 162771
+              },
+              {
+                "c": 1.126,
+                "h": 1.12768,
+                "l": 1.12028,
+                "o": 1.1221,
+                "t": 1791234000,
+                "v": 127668
+              },
+              {
+                "c": 1.11959,
+                "h": 1.12632,
+                "l": 1.11646,
+                "o": 1.12576,
+                "t": 1791320400,
+                "v": 135152
+              },
+              {
+                "c": 1.12112,
+                "h": 1.12269,
+                "l": 1.1172,
+                "o": 1.11975,
+                "t": 1791406800,
+                "v": 135699
+              },
+              {
+                "c": 1.12015,
+                "h": 1.12428,
+                "l": 1.11876,
+                "o": 1.12144,
+                "t": 1791493200,
+                "v": 100004
+              },
+              {
+                "c": 1.11555,
+                "h": 1.12172,
+                "l": 1.11526,
+                "o": 1.11872,
+                "t": 1791752400,
+                "v": 79992
+              },
+              {
+                "c": 1.11908,
+                "h": 1.12047,
+                "l": 1.11538,
+                "o": 1.11542,
+                "t": 1791838800,
+                "v": 59878
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 114452,
+              "first_open": 1.12596,
+              "first_t": 1791147600,
+              "high": 1.12768,
+              "last_bar_notional_estimate": 67008.27224,
+              "last_bar_volume": 59878,
+              "last_close": 1.11908,
+              "last_t": 1791838800,
+              "low": 1.11526,
+              "net_change": -0.006879999999999997,
+              "net_change_pct": -0.6110341397562965,
+              "period_high": 1.12768,
+              "period_low": 1.11526,
+              "total_volume": 801164,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:EURUSD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:GBPUSD",
+          "symbol": "GBPUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.32236,
+                "h": 1.32503,
+                "l": 1.319,
+                "o": 1.32427,
+                "t": 1791147600,
+                "v": 245613
+              },
+              {
+                "c": 1.32752,
+                "h": 1.32857,
+                "l": 1.32014,
+                "o": 1.32201,
+                "t": 1791234000,
+                "v": 173804
+              },
+              {
+                "c": 1.32134,
+                "h": 1.32765,
+                "l": 1.31936,
+                "o": 1.32707,
+                "t": 1791320400,
+                "v": 180184
+              },
+              {
+                "c": 1.32298,
+                "h": 1.32488,
+                "l": 1.31845,
+                "o": 1.32131,
+                "t": 1791406800,
+                "v": 199654
+              },
+              {
+                "c": 1.3234,
+                "h": 1.32502,
+                "l": 1.32058,
+                "o": 1.32293,
+                "t": 1791493200,
+                "v": 163945
+              },
+              {
+                "c": 1.32082,
+                "h": 1.32616,
+                "l": 1.32017,
+                "o": 1.32311,
+                "t": 1791752400,
+                "v": 122558
+              },
+              {
+                "c": 1.32438,
+                "h": 1.3255,
+                "l": 1.32046,
+                "o": 1.32091,
+                "t": 1791838800,
+                "v": 94089
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 168549.57142857142,
+              "first_open": 1.32427,
+              "first_t": 1791147600,
+              "high": 1.32857,
+              "last_bar_notional_estimate": 124609.58982,
+              "last_bar_volume": 94089,
+              "last_close": 1.32438,
+              "last_t": 1791838800,
+              "low": 1.31845,
+              "net_change": 0.00010999999999983245,
+              "net_change_pct": 0.008306463183477119,
+              "period_high": 1.32857,
+              "period_low": 1.31845,
+              "total_volume": 1179847,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:GBPUSD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:USDJPY",
+          "symbol": "USDJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 157.921,
+                "h": 158.3,
+                "l": 157.438,
+                "o": 157.72,
+                "t": 1791147600,
+                "v": 388947
+              },
+              {
+                "c": 158.118,
+                "h": 158.248,
+                "l": 157.768,
+                "o": 157.972,
+                "t": 1791234000,
+                "v": 295349
+              },
+              {
+                "c": 158.092,
+                "h": 158.51,
+                "l": 157.853,
+                "o": 158.118,
+                "t": 1791320400,
+                "v": 264929
+              },
+              {
+                "c": 157.902,
+                "h": 158.371,
+                "l": 157.514,
+                "o": 158.071,
+                "t": 1791406800,
+                "v": 277383
+              },
+              {
+                "c": 158.309,
+                "h": 158.432,
+                "l": 157.76,
+                "o": 157.858,
+                "t": 1791493200,
+                "v": 202131
+              },
+              {
+                "c": 158.642,
+                "h": 158.754,
+                "l": 158.078,
+                "o": 158.26,
+                "t": 1791752400,
+                "v": 161430
+              },
+              {
+                "c": 158.39,
+                "h": 158.686,
+                "l": 157.832,
+                "o": 158.625,
+                "t": 1791838800,
+                "v": 185215
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 253626.2857142857,
+              "first_open": 157.72,
+              "first_t": 1791147600,
+              "high": 158.754,
+              "last_bar_notional_estimate": 29336203.849999998,
+              "last_bar_volume": 185215,
+              "last_close": 158.39,
+              "last_t": 1791838800,
+              "low": 157.438,
+              "net_change": 0.6699999999999875,
+              "net_change_pct": 0.4248034491503852,
+              "period_high": 158.754,
+              "period_low": 157.438,
+              "total_volume": 1775384,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:USDJPY"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:USDCHF",
+          "symbol": "USDCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.83058,
+                "h": 0.83244,
+                "l": 0.82775,
+                "o": 0.82869,
+                "t": 1791147600,
+                "v": 89578
+              },
+              {
+                "c": 0.83166,
+                "h": 0.83267,
+                "l": 0.8298,
+                "o": 0.83127,
+                "t": 1791234000,
+                "v": 62775
+              },
+              {
+                "c": 0.8334,
+                "h": 0.83418,
+                "l": 0.83129,
+                "o": 0.83167,
+                "t": 1791320400,
+                "v": 64776
+              },
+              {
+                "c": 0.83168,
+                "h": 0.83466,
+                "l": 0.83067,
+                "o": 0.83221,
+                "t": 1791406800,
+                "v": 67897
+              },
+              {
+                "c": 0.83024,
+                "h": 0.8319,
+                "l": 0.8296,
+                "o": 0.83144,
+                "t": 1791493200,
+                "v": 55086
+              },
+              {
+                "c": 0.83472,
+                "h": 0.83486,
+                "l": 0.82929,
+                "o": 0.8301,
+                "t": 1791752400,
+                "v": 39814
+              },
+              {
+                "c": 0.8328,
+                "h": 0.83474,
+                "l": 0.83132,
+                "o": 0.8343,
+                "t": 1791838800,
+                "v": 34100
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 59146.57142857143,
+              "first_open": 0.82869,
+              "first_t": 1791147600,
+              "high": 0.83486,
+              "last_bar_notional_estimate": 28398.48,
+              "last_bar_volume": 34100,
+              "last_close": 0.8328,
+              "last_t": 1791838800,
+              "low": 0.82775,
+              "net_change": 0.004109999999999947,
+              "net_change_pct": 0.49596350867030453,
+              "period_high": 0.83486,
+              "period_low": 0.82775,
+              "total_volume": 414026,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:USDCHF"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:AUDUSD",
+          "symbol": "AUDUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.6973,
+                "h": 0.69736,
+                "l": 0.69325,
+                "o": 0.69479,
+                "t": 1791147600,
+                "v": 64219
+              },
+              {
+                "c": 0.69838,
+                "h": 0.699,
+                "l": 0.69616,
+                "o": 0.69704,
+                "t": 1791234000,
+                "v": 49153
+              },
+              {
+                "c": 0.69619,
+                "h": 0.69846,
+                "l": 0.69428,
+                "o": 0.69836,
+                "t": 1791320400,
+                "v": 50662
+              },
+              {
+                "c": 0.69584,
+                "h": 0.69733,
+                "l": 0.69329,
+                "o": 0.69652,
+                "t": 1791406800,
+                "v": 61693
+              },
+              {
+                "c": 0.69842,
+                "h": 0.69888,
+                "l": 0.69566,
+                "o": 0.69579,
+                "t": 1791493200,
+                "v": 45701
+              },
+              {
+                "c": 0.6959,
+                "h": 0.69954,
+                "l": 0.69552,
+                "o": 0.69704,
+                "t": 1791752400,
+                "v": 32324
+              },
+              {
+                "c": 0.69782,
+                "h": 0.6983,
+                "l": 0.69498,
+                "o": 0.69584,
+                "t": 1791838800,
+                "v": 30966
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 47816.857142857145,
+              "first_open": 0.69479,
+              "first_t": 1791147600,
+              "high": 0.69954,
+              "last_bar_notional_estimate": 21608.69412,
+              "last_bar_volume": 30966,
+              "last_close": 0.69782,
+              "last_t": 1791838800,
+              "low": 0.69325,
+              "net_change": 0.003029999999999977,
+              "net_change_pct": 0.4361029951496102,
+              "period_high": 0.69954,
+              "period_low": 0.69325,
+              "total_volume": 334718,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:AUDUSD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:NZDUSD",
+          "symbol": "NZDUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.56002,
+                "h": 0.5621,
+                "l": 0.55803,
+                "o": 0.56146,
+                "t": 1791147600,
+                "v": 66160
+              },
+              {
+                "c": 0.56238,
+                "h": 0.56284,
+                "l": 0.55892,
+                "o": 0.55972,
+                "t": 1791234000,
+                "v": 51671
+              },
+              {
+                "c": 0.55993,
+                "h": 0.56264,
+                "l": 0.55856,
+                "o": 0.5621,
+                "t": 1791320400,
+                "v": 48161
+              },
+              {
+                "c": 0.5604,
+                "h": 0.56134,
+                "l": 0.55818,
+                "o": 0.56042,
+                "t": 1791406800,
+                "v": 69683
+              },
+              {
+                "c": 0.56122,
+                "h": 0.56266,
+                "l": 0.56014,
+                "o": 0.56036,
+                "t": 1791493200,
+                "v": 46435
+              },
+              {
+                "c": 0.5587,
+                "h": 0.56193,
+                "l": 0.55831,
+                "o": 0.56101,
+                "t": 1791752400,
+                "v": 37386
+              },
+              {
+                "c": 0.56112,
+                "h": 0.56172,
+                "l": 0.55798,
+                "o": 0.55874,
+                "t": 1791838800,
+                "v": 33103
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 50371.28571428572,
+              "first_open": 0.56146,
+              "first_t": 1791147600,
+              "high": 0.56284,
+              "last_bar_notional_estimate": 18574.75536,
+              "last_bar_volume": 33103,
+              "last_close": 0.56112,
+              "last_t": 1791838800,
+              "low": 0.55798,
+              "net_change": -0.00034000000000000696,
+              "net_change_pct": -0.06055640651159601,
+              "period_high": 0.56284,
+              "period_low": 0.55798,
+              "total_volume": 352599,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:NZDUSD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:USDCAD",
+          "symbol": "USDCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.42601,
+                "h": 1.42939,
+                "l": 1.42378,
+                "o": 1.42548,
+                "t": 1791147600,
+                "v": 98528
+              },
+              {
+                "c": 1.42084,
+                "h": 1.42854,
+                "l": 1.42066,
+                "o": 1.42554,
+                "t": 1791234000,
+                "v": 99219
+              },
+              {
+                "c": 1.42577,
+                "h": 1.4281,
+                "l": 1.42061,
+                "o": 1.4207,
+                "t": 1791320400,
+                "v": 89578
+              },
+              {
+                "c": 1.42248,
+                "h": 1.42778,
+                "l": 1.42172,
+                "o": 1.4254,
+                "t": 1791406800,
+                "v": 112368
+              },
+              {
+                "c": 1.42559,
+                "h": 1.42992,
+                "l": 1.42067,
+                "o": 1.42244,
+                "t": 1791493200,
+                "v": 114268
+              },
+              {
+                "c": 1.42824,
+                "h": 1.42875,
+                "l": 1.42402,
+                "o": 1.42754,
+                "t": 1791752400,
+                "v": 74552
+              },
+              {
+                "c": 1.4226,
+                "h": 1.42836,
+                "l": 1.42222,
+                "o": 1.42793,
+                "t": 1791838800,
+                "v": 61489
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 92857.42857142857,
+              "first_open": 1.42548,
+              "first_t": 1791147600,
+              "high": 1.42992,
+              "last_bar_notional_estimate": 87474.25140000001,
+              "last_bar_volume": 61489,
+              "last_close": 1.4226,
+              "last_t": 1791838800,
+              "low": 1.42061,
+              "net_change": -0.0028799999999999937,
+              "net_change_pct": -0.20203720851923518,
+              "period_high": 1.42992,
+              "period_low": 1.42061,
+              "total_volume": 650002,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:USDCAD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:EURGBP",
+          "symbol": "EURGBP",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.8488,
+                "h": 0.85058,
+                "l": 0.84579,
+                "o": 0.85034,
+                "t": 1791147600,
+                "v": 64599
+              },
+              {
+                "c": 0.84822,
+                "h": 0.84934,
+                "l": 0.84762,
+                "o": 0.84886,
+                "t": 1791234000,
+                "v": 52159
+              },
+              {
+                "c": 0.84733,
+                "h": 0.84877,
+                "l": 0.84476,
+                "o": 0.84832,
+                "t": 1791320400,
+                "v": 54722
+              },
+              {
+                "c": 0.84743,
+                "h": 0.84871,
+                "l": 0.84612,
+                "o": 0.84612,
+                "t": 1791406800,
+                "v": 57672
+              },
+              {
+                "c": 0.84637,
+                "h": 0.84851,
+                "l": 0.84582,
+                "o": 0.8477,
+                "t": 1791493200,
+                "v": 48674
+              },
+              {
+                "c": 0.8446,
+                "h": 0.84659,
+                "l": 0.84454,
+                "o": 0.84546,
+                "t": 1791752400,
+                "v": 35691
+              },
+              {
+                "c": 0.84498,
+                "h": 0.8458,
+                "l": 0.84434,
+                "o": 0.84442,
+                "t": 1791838800,
+                "v": 30977
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 49213.42857142857,
+              "first_open": 0.85034,
+              "first_t": 1791147600,
+              "high": 0.85058,
+              "last_bar_notional_estimate": 26174.94546,
+              "last_bar_volume": 30977,
+              "last_close": 0.84498,
+              "last_t": 1791838800,
+              "low": 0.84434,
+              "net_change": -0.005360000000000031,
+              "net_change_pct": -0.6303361008537799,
+              "period_high": 0.85058,
+              "period_low": 0.84434,
+              "total_volume": 344494,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:EURGBP"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:EURJPY",
+          "symbol": "EURJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 177.248,
+                "h": 177.827,
+                "l": 176.222,
+                "o": 177.658,
+                "t": 1791147600,
+                "v": 254528
+              },
+              {
+                "c": 178.044,
+                "h": 178.341,
+                "l": 177.033,
+                "o": 177.259,
+                "t": 1791234000,
+                "v": 218010
+              },
+              {
+                "c": 177,
+                "h": 178.307,
+                "l": 176.548,
+                "o": 178.005,
+                "t": 1791320400,
+                "v": 219354
+              },
+              {
+                "c": 177.024,
+                "h": 177.445,
+                "l": 176.526,
+                "o": 176.994,
+                "t": 1791406800,
+                "v": 210613
+              },
+              {
+                "c": 177.344,
+                "h": 177.872,
+                "l": 176.962,
+                "o": 177.014,
+                "t": 1791493200,
+                "v": 186700
+              },
+              {
+                "c": 176.969,
+                "h": 177.568,
+                "l": 176.935,
+                "o": 177.063,
+                "t": 1791752400,
+                "v": 146673
+              },
+              {
+                "c": 177.247,
+                "h": 177.385,
+                "l": 176.484,
+                "o": 176.904,
+                "t": 1791838800,
+                "v": 131686
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 195366.2857142857,
+              "first_open": 177.658,
+              "first_t": 1791147600,
+              "high": 178.341,
+              "last_bar_notional_estimate": 23340948.442,
+              "last_bar_volume": 131686,
+              "last_close": 177.247,
+              "last_t": 1791838800,
+              "low": 176.222,
+              "net_change": -0.41099999999997294,
+              "net_change_pct": -0.2313433675939012,
+              "period_high": 178.341,
+              "period_low": 176.222,
+              "total_volume": 1367564,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:EURJPY"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:EURCHF",
+          "symbol": "EURCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.93216,
+                "h": 0.93364,
+                "l": 0.92719,
+                "o": 0.93364,
+                "t": 1791147600,
+                "v": 62613
+              },
+              {
+                "c": 0.9365,
+                "h": 0.93662,
+                "l": 0.93202,
+                "o": 0.93277,
+                "t": 1791234000,
+                "v": 47752
+              },
+              {
+                "c": 0.93308,
+                "h": 0.93686,
+                "l": 0.92954,
+                "o": 0.93608,
+                "t": 1791320400,
+                "v": 53648
+              },
+              {
+                "c": 0.93244,
+                "h": 0.9343,
+                "l": 0.93135,
+                "o": 0.93183,
+                "t": 1791406800,
+                "v": 54712
+              },
+              {
+                "c": 0.9299,
+                "h": 0.93334,
+                "l": 0.9289,
+                "o": 0.93241,
+                "t": 1791493200,
+                "v": 40394
+              },
+              {
+                "c": 0.93114,
+                "h": 0.9325,
+                "l": 0.9289,
+                "o": 0.92904,
+                "t": 1791752400,
+                "v": 31338
+              },
+              {
+                "c": 0.93198,
+                "h": 0.93256,
+                "l": 0.93058,
+                "o": 0.93058,
+                "t": 1791838800,
+                "v": 25567
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 45146.28571428572,
+              "first_open": 0.93364,
+              "first_t": 1791147600,
+              "high": 0.93686,
+              "last_bar_notional_estimate": 23827.932660000002,
+              "last_bar_volume": 25567,
+              "last_close": 0.93198,
+              "last_t": 1791838800,
+              "low": 0.92719,
+              "net_change": -0.0016599999999999948,
+              "net_change_pct": -0.17779872327663712,
+              "period_high": 0.93686,
+              "period_low": 0.92719,
+              "total_volume": 316024,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:EURCHF"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:EURAUD",
+          "symbol": "EURAUD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.60961,
+                "h": 1.62119,
+                "l": 1.60695,
+                "o": 1.62056,
+                "t": 1791147600,
+                "v": 197277
+              },
+              {
+                "c": 1.61228,
+                "h": 1.61454,
+                "l": 1.60802,
+                "o": 1.60982,
+                "t": 1791234000,
+                "v": 167066
+              },
+              {
+                "c": 1.60823,
+                "h": 1.61324,
+                "l": 1.60474,
+                "o": 1.61202,
+                "t": 1791320400,
+                "v": 178295
+              },
+              {
+                "c": 1.61116,
+                "h": 1.6121,
+                "l": 1.60742,
+                "o": 1.60758,
+                "t": 1791406800,
+                "v": 185636
+              },
+              {
+                "c": 1.6038,
+                "h": 1.6121,
+                "l": 1.6028,
+                "o": 1.61176,
+                "t": 1791493200,
+                "v": 153613
+              },
+              {
+                "c": 1.60295,
+                "h": 1.6063,
+                "l": 1.6021,
+                "o": 1.6049,
+                "t": 1791752400,
+                "v": 113264
+              },
+              {
+                "c": 1.60368,
+                "h": 1.60678,
+                "l": 1.6024,
+                "o": 1.60296,
+                "t": 1791838800,
+                "v": 114200
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 158478.7142857143,
+              "first_open": 1.62056,
+              "first_t": 1791147600,
+              "high": 1.62119,
+              "last_bar_notional_estimate": 183140.256,
+              "last_bar_volume": 114200,
+              "last_close": 1.60368,
+              "last_t": 1791838800,
+              "low": 1.6021,
+              "net_change": -0.016880000000000006,
+              "net_change_pct": -1.0416152441131465,
+              "period_high": 1.62119,
+              "period_low": 1.6021,
+              "total_volume": 1109351,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:EURAUD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:EURCAD",
+          "symbol": "EURCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.60042,
+                "h": 1.60534,
+                "l": 1.59481,
+                "o": 1.60506,
+                "t": 1791147600,
+                "v": 157836
+              },
+              {
+                "c": 1.59976,
+                "h": 1.60676,
+                "l": 1.59903,
+                "o": 1.5996,
+                "t": 1791234000,
+                "v": 124165
+              },
+              {
+                "c": 1.59622,
+                "h": 1.6001,
+                "l": 1.59061,
+                "o": 1.59936,
+                "t": 1791320400,
+                "v": 135462
+              },
+              {
+                "c": 1.59448,
+                "h": 1.59806,
+                "l": 1.59356,
+                "o": 1.59541,
+                "t": 1791406800,
+                "v": 158524
+              },
+              {
+                "c": 1.59684,
+                "h": 1.602,
+                "l": 1.59389,
+                "o": 1.59526,
+                "t": 1791493200,
+                "v": 129084
+              },
+              {
+                "c": 1.5931,
+                "h": 1.59881,
+                "l": 1.59294,
+                "o": 1.59701,
+                "t": 1791752400,
+                "v": 94120
+              },
+              {
+                "c": 1.59187,
+                "h": 1.59626,
+                "l": 1.59186,
+                "o": 1.5927,
+                "t": 1791838800,
+                "v": 81076
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 125752.42857142857,
+              "first_open": 1.60506,
+              "first_t": 1791147600,
+              "high": 1.60676,
+              "last_bar_notional_estimate": 129062.45211999999,
+              "last_bar_volume": 81076,
+              "last_close": 1.59187,
+              "last_t": 1791838800,
+              "low": 1.59061,
+              "net_change": -0.013190000000000035,
+              "net_change_pct": -0.8217761329794546,
+              "period_high": 1.60676,
+              "period_low": 1.59061,
+              "total_volume": 880267,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:EURCAD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:EURNZD",
+          "symbol": "EURNZD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 2.00408,
+                "h": 2.00724,
+                "l": 1.99699,
+                "o": 2.00542,
+                "t": 1791147600,
+                "v": 66429
+              },
+              {
+                "c": 2.00219,
+                "h": 2.00733,
+                "l": 2.00082,
+                "o": 2.00476,
+                "t": 1791234000,
+                "v": 52106
+              },
+              {
+                "c": 1.99972,
+                "h": 2.00416,
+                "l": 1.99447,
+                "o": 2.0028,
+                "t": 1791320400,
+                "v": 62760
+              },
+              {
+                "c": 2.00055,
+                "h": 2.00256,
+                "l": 1.9974,
+                "o": 1.998,
+                "t": 1791406800,
+                "v": 71593
+              },
+              {
+                "c": 1.99571,
+                "h": 2.0021,
+                "l": 1.99464,
+                "o": 2.00128,
+                "t": 1791493200,
+                "v": 50752
+              },
+              {
+                "c": 1.99664,
+                "h": 1.99998,
+                "l": 1.99312,
+                "o": 1.99412,
+                "t": 1791752400,
+                "v": 46749
+              },
+              {
+                "c": 1.99436,
+                "h": 1.99994,
+                "l": 1.99258,
+                "o": 1.99632,
+                "t": 1791838800,
+                "v": 46162
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 56650.142857142855,
+              "first_open": 2.00542,
+              "first_t": 1791147600,
+              "high": 2.00733,
+              "last_bar_notional_estimate": 92063.64632,
+              "last_bar_volume": 46162,
+              "last_close": 1.99436,
+              "last_t": 1791838800,
+              "low": 1.99258,
+              "net_change": -0.01106000000000007,
+              "net_change_pct": -0.5515054203109608,
+              "period_high": 2.00733,
+              "period_low": 1.99258,
+              "total_volume": 396551,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:EURNZD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:GBPJPY",
+          "symbol": "GBPJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 208.834,
+                "h": 209.32,
+                "l": 208.236,
+                "o": 208.863,
+                "t": 1791147600,
+                "v": 293379
+              },
+              {
+                "c": 209.906,
+                "h": 210.053,
+                "l": 208.644,
+                "o": 208.839,
+                "t": 1791234000,
+                "v": 223449
+              },
+              {
+                "c": 208.893,
+                "h": 210.209,
+                "l": 208.678,
+                "o": 209.834,
+                "t": 1791320400,
+                "v": 236813
+              },
+              {
+                "c": 208.899,
+                "h": 209.4,
+                "l": 208.198,
+                "o": 209.124,
+                "t": 1791406800,
+                "v": 232302
+              },
+              {
+                "c": 209.528,
+                "h": 209.747,
+                "l": 208.738,
+                "o": 208.835,
+                "t": 1791493200,
+                "v": 206843
+              },
+              {
+                "c": 209.538,
+                "h": 209.986,
+                "l": 209.294,
+                "o": 209.395,
+                "t": 1791752400,
+                "v": 152657
+              },
+              {
+                "c": 209.77,
+                "h": 209.845,
+                "l": 208.892,
+                "o": 209.494,
+                "t": 1791838800,
+                "v": 147828
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 213324.42857142858,
+              "first_open": 208.863,
+              "first_t": 1791147600,
+              "high": 210.209,
+              "last_bar_notional_estimate": 31009879.560000002,
+              "last_bar_volume": 147828,
+              "last_close": 209.77,
+              "last_t": 1791838800,
+              "low": 208.198,
+              "net_change": 0.9070000000000107,
+              "net_change_pct": 0.43425594767862696,
+              "period_high": 210.209,
+              "period_low": 208.198,
+              "total_volume": 1493271,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:GBPJPY"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:GBPCHF",
+          "symbol": "GBPCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.09831,
+                "h": 1.09958,
+                "l": 1.0957,
+                "o": 1.09708,
+                "t": 1791147600,
+                "v": 62069
+              },
+              {
+                "c": 1.10412,
+                "h": 1.1045,
+                "l": 1.09834,
+                "o": 1.09895,
+                "t": 1791234000,
+                "v": 41687
+              },
+              {
+                "c": 1.10126,
+                "h": 1.10466,
+                "l": 1.09826,
+                "o": 1.1037,
+                "t": 1791320400,
+                "v": 52392
+              },
+              {
+                "c": 1.1003,
+                "h": 1.10268,
+                "l": 1.09882,
+                "o": 1.10116,
+                "t": 1791406800,
+                "v": 59806
+              },
+              {
+                "c": 1.09875,
+                "h": 1.1009,
+                "l": 1.09789,
+                "o": 1.09993,
+                "t": 1791493200,
+                "v": 53402
+              },
+              {
+                "c": 1.10254,
+                "h": 1.10321,
+                "l": 1.09756,
+                "o": 1.09869,
+                "t": 1791752400,
+                "v": 51932
+              },
+              {
+                "c": 1.10296,
+                "h": 1.10301,
+                "l": 1.10098,
+                "o": 1.10204,
+                "t": 1791838800,
+                "v": 31619
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 50415.28571428572,
+              "first_open": 1.09708,
+              "first_t": 1791147600,
+              "high": 1.10466,
+              "last_bar_notional_estimate": 34874.49224,
+              "last_bar_volume": 31619,
+              "last_close": 1.10296,
+              "last_t": 1791838800,
+              "low": 1.0957,
+              "net_change": 0.005879999999999885,
+              "net_change_pct": 0.535968206511821,
+              "period_high": 1.10466,
+              "period_low": 1.0957,
+              "total_volume": 352907,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:GBPCHF"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:GBPAUD",
+          "symbol": "GBPAUD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.89643,
+                "h": 1.90652,
+                "l": 1.89548,
+                "o": 1.90592,
+                "t": 1791147600,
+                "v": 183019
+              },
+              {
+                "c": 1.90086,
+                "h": 1.90321,
+                "l": 1.89474,
+                "o": 1.8966,
+                "t": 1791234000,
+                "v": 141824
+              },
+              {
+                "c": 1.89804,
+                "h": 1.90179,
+                "l": 1.89632,
+                "o": 1.90029,
+                "t": 1791320400,
+                "v": 156770
+              },
+              {
+                "c": 1.90122,
+                "h": 1.90303,
+                "l": 1.89634,
+                "o": 1.8979,
+                "t": 1791406800,
+                "v": 157381
+              },
+              {
+                "c": 1.89483,
+                "h": 1.90164,
+                "l": 1.8933,
+                "o": 1.90134,
+                "t": 1791493200,
+                "v": 166728
+              },
+              {
+                "c": 1.898,
+                "h": 1.89954,
+                "l": 1.89409,
+                "o": 1.89815,
+                "t": 1791752400,
+                "v": 106002
+              },
+              {
+                "c": 1.8978,
+                "h": 1.9009,
+                "l": 1.89717,
+                "o": 1.89832,
+                "t": 1791838800,
+                "v": 106755
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 145497,
+              "first_open": 1.90592,
+              "first_t": 1791147600,
+              "high": 1.90652,
+              "last_bar_notional_estimate": 202599.639,
+              "last_bar_volume": 106755,
+              "last_close": 1.8978,
+              "last_t": 1791838800,
+              "low": 1.8933,
+              "net_change": -0.008120000000000127,
+              "net_change_pct": -0.4260409670920147,
+              "period_high": 1.90652,
+              "period_low": 1.8933,
+              "total_volume": 1018479,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:GBPAUD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:GBPCAD",
+          "symbol": "GBPCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.88565,
+                "h": 1.88838,
+                "l": 1.88051,
+                "o": 1.88773,
+                "t": 1791147600,
+                "v": 30399
+              },
+              {
+                "c": 1.88614,
+                "h": 1.89264,
+                "l": 1.8841,
+                "o": 1.88457,
+                "t": 1791234000,
+                "v": 23220
+              },
+              {
+                "c": 1.88386,
+                "h": 1.88616,
+                "l": 1.87958,
+                "o": 1.88531,
+                "t": 1791320400,
+                "v": 21963
+              },
+              {
+                "c": 1.88165,
+                "h": 1.88445,
+                "l": 1.88016,
+                "o": 1.8837,
+                "t": 1791406800,
+                "v": 74434
+              },
+              {
+                "c": 1.88662,
+                "h": 1.8898,
+                "l": 1.88043,
+                "o": 1.8819,
+                "t": 1791493200,
+                "v": 29995
+              },
+              {
+                "c": 1.88633,
+                "h": 1.88941,
+                "l": 1.88548,
+                "o": 1.88879,
+                "t": 1791752400,
+                "v": 14469
+              },
+              {
+                "c": 1.88407,
+                "h": 1.88859,
+                "l": 1.88383,
+                "o": 1.88619,
+                "t": 1791838800,
+                "v": 13849
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 29761.285714285714,
+              "first_open": 1.88773,
+              "first_t": 1791147600,
+              "high": 1.89264,
+              "last_bar_notional_estimate": 26092.485429999997,
+              "last_bar_volume": 13849,
+              "last_close": 1.88407,
+              "last_t": 1791838800,
+              "low": 1.87958,
+              "net_change": -0.0036599999999999966,
+              "net_change_pct": -0.1938836592097385,
+              "period_high": 1.89264,
+              "period_low": 1.87958,
+              "total_volume": 208329,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:GBPCAD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:GBPNZD",
+          "symbol": "GBPNZD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 2.36125,
+                "h": 2.36657,
+                "l": 2.3561,
+                "o": 2.35852,
+                "t": 1791147600,
+                "v": 60641
+              },
+              {
+                "c": 2.36053,
+                "h": 2.36422,
+                "l": 2.35745,
+                "o": 2.36187,
+                "t": 1791234000,
+                "v": 38597
+              },
+              {
+                "c": 2.35982,
+                "h": 2.3648,
+                "l": 2.35826,
+                "o": 2.36105,
+                "t": 1791320400,
+                "v": 46696
+              },
+              {
+                "c": 2.36069,
+                "h": 2.3634,
+                "l": 2.35665,
+                "o": 2.35979,
+                "t": 1791406800,
+                "v": 60476
+              },
+              {
+                "c": 2.35774,
+                "h": 2.3622,
+                "l": 2.35442,
+                "o": 2.36092,
+                "t": 1791493200,
+                "v": 48035
+              },
+              {
+                "c": 2.36413,
+                "h": 2.36538,
+                "l": 2.35706,
+                "o": 2.35844,
+                "t": 1791752400,
+                "v": 38114
+              },
+              {
+                "c": 2.36016,
+                "h": 2.3668,
+                "l": 2.35929,
+                "o": 2.3641,
+                "t": 1791838800,
+                "v": 42779
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 47905.42857142857,
+              "first_open": 2.35852,
+              "first_t": 1791147600,
+              "high": 2.3668,
+              "last_bar_notional_estimate": 100965.28464,
+              "last_bar_volume": 42779,
+              "last_close": 2.36016,
+              "last_t": 1791838800,
+              "low": 2.35442,
+              "net_change": 0.0016400000000000858,
+              "net_change_pct": 0.06953513220155377,
+              "period_high": 2.3668,
+              "period_low": 2.35442,
+              "total_volume": 335338,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:GBPNZD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:AUDJPY",
+          "symbol": "AUDJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 110.118,
+                "h": 110.192,
+                "l": 109.43,
+                "o": 109.82,
+                "t": 1791147600,
+                "v": 168372
+              },
+              {
+                "c": 110.428,
+                "h": 110.507,
+                "l": 109.932,
+                "o": 110.113,
+                "t": 1791234000,
+                "v": 137713
+              },
+              {
+                "c": 110.055,
+                "h": 110.646,
+                "l": 109.868,
+                "o": 110.422,
+                "t": 1791320400,
+                "v": 157308
+              },
+              {
+                "c": 109.875,
+                "h": 110.232,
+                "l": 109.626,
+                "o": 110.1,
+                "t": 1791406800,
+                "v": 159894
+              },
+              {
+                "c": 110.58,
+                "h": 110.613,
+                "l": 109.808,
+                "o": 109.835,
+                "t": 1791493200,
+                "v": 141205
+              },
+              {
+                "c": 110.401,
+                "h": 110.632,
+                "l": 110.301,
+                "o": 110.316,
+                "t": 1791752400,
+                "v": 104913
+              },
+              {
+                "c": 110.525,
+                "h": 110.566,
+                "l": 110.03,
+                "o": 110.358,
+                "t": 1791838800,
+                "v": 104776
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 139168.7142857143,
+              "first_open": 109.82,
+              "first_t": 1791147600,
+              "high": 110.646,
+              "last_bar_notional_estimate": 11580367.4,
+              "last_bar_volume": 104776,
+              "last_close": 110.525,
+              "last_t": 1791838800,
+              "low": 109.43,
+              "net_change": 0.7050000000000125,
+              "net_change_pct": 0.6419595702058027,
+              "period_high": 110.646,
+              "period_low": 109.43,
+              "total_volume": 974181,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:AUDJPY"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:AUDNZD",
+          "symbol": "AUDNZD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 1.24512,
+                "h": 1.24652,
+                "l": 1.23724,
+                "o": 1.23885,
+                "t": 1791147600,
+                "v": 130499
+              },
+              {
+                "c": 1.24184,
+                "h": 1.24594,
+                "l": 1.24088,
+                "o": 1.24428,
+                "t": 1791234000,
+                "v": 125544
+              },
+              {
+                "c": 1.24334,
+                "h": 1.24432,
+                "l": 1.24082,
+                "o": 1.24238,
+                "t": 1791320400,
+                "v": 130437
+              },
+              {
+                "c": 1.24162,
+                "h": 1.24396,
+                "l": 1.24107,
+                "o": 1.24312,
+                "t": 1791406800,
+                "v": 149252
+              },
+              {
+                "c": 1.24424,
+                "h": 1.24482,
+                "l": 1.24086,
+                "o": 1.242,
+                "t": 1791493200,
+                "v": 115551
+              },
+              {
+                "c": 1.24546,
+                "h": 1.24618,
+                "l": 1.24176,
+                "o": 1.2425,
+                "t": 1791752400,
+                "v": 110291
+              },
+              {
+                "c": 1.24362,
+                "h": 1.24614,
+                "l": 1.24264,
+                "o": 1.24536,
+                "t": 1791838800,
+                "v": 89995
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 121652.71428571429,
+              "first_open": 1.23885,
+              "first_t": 1791147600,
+              "high": 1.24652,
+              "last_bar_notional_estimate": 111919.58189999999,
+              "last_bar_volume": 89995,
+              "last_close": 1.24362,
+              "last_t": 1791838800,
+              "low": 1.23724,
+              "net_change": 0.004769999999999941,
+              "net_change_pct": 0.3850345078096574,
+              "period_high": 1.24652,
+              "period_low": 1.23724,
+              "total_volume": 851569,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:AUDNZD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:AUDCAD",
+          "symbol": "AUDCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.9943,
+                "h": 0.99444,
+                "l": 0.99024,
+                "o": 0.99041,
+                "t": 1791147600,
+                "v": 19962
+              },
+              {
+                "c": 0.99223,
+                "h": 0.99584,
+                "l": 0.99223,
+                "o": 0.99366,
+                "t": 1791234000,
+                "v": 18160
+              },
+              {
+                "c": 0.99252,
+                "h": 0.99334,
+                "l": 0.98963,
+                "o": 0.99206,
+                "t": 1791320400,
+                "v": 15730
+              },
+              {
+                "c": 0.98962,
+                "h": 0.99316,
+                "l": 0.9891,
+                "o": 0.99251,
+                "t": 1791406800,
+                "v": 26977
+              },
+              {
+                "c": 0.99566,
+                "h": 0.99757,
+                "l": 0.98953,
+                "o": 0.98971,
+                "t": 1791493200,
+                "v": 23837
+              },
+              {
+                "c": 0.99384,
+                "h": 0.99696,
+                "l": 0.99328,
+                "o": 0.99506,
+                "t": 1791752400,
+                "v": 11472
+              },
+              {
+                "c": 0.99276,
+                "h": 0.99463,
+                "l": 0.99224,
+                "o": 0.99361,
+                "t": 1791838800,
+                "v": 12180
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 18331.14285714286,
+              "first_open": 0.99041,
+              "first_t": 1791147600,
+              "high": 0.99757,
+              "last_bar_notional_estimate": 12091.8168,
+              "last_bar_volume": 12180,
+              "last_close": 0.99276,
+              "last_t": 1791838800,
+              "low": 0.9891,
+              "net_change": 0.0023499999999999632,
+              "net_change_pct": 0.23727547177431196,
+              "period_high": 0.99757,
+              "period_low": 0.9891,
+              "total_volume": 128318,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:AUDCAD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:AUDCHF",
+          "symbol": "AUDCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.57914,
+                "h": 0.57962,
+                "l": 0.57552,
+                "o": 0.57656,
+                "t": 1791147600,
+                "v": 23575
+              },
+              {
+                "c": 0.58084,
+                "h": 0.58109,
+                "l": 0.57882,
+                "o": 0.57943,
+                "t": 1791234000,
+                "v": 20479
+              },
+              {
+                "c": 0.58021,
+                "h": 0.58164,
+                "l": 0.57797,
+                "o": 0.58081,
+                "t": 1791320400,
+                "v": 22402
+              },
+              {
+                "c": 0.57872,
+                "h": 0.58064,
+                "l": 0.57803,
+                "o": 0.57965,
+                "t": 1791406800,
+                "v": 24196
+              },
+              {
+                "c": 0.57986,
+                "h": 0.58054,
+                "l": 0.5784,
+                "o": 0.5785,
+                "t": 1791493200,
+                "v": 20151
+              },
+              {
+                "c": 0.58088,
+                "h": 0.58102,
+                "l": 0.57862,
+                "o": 0.57871,
+                "t": 1791752400,
+                "v": 16621
+              },
+              {
+                "c": 0.58113,
+                "h": 0.5812,
+                "l": 0.57935,
+                "o": 0.58054,
+                "t": 1791838800,
+                "v": 15634
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 20436.85714285714,
+              "first_open": 0.57656,
+              "first_t": 1791147600,
+              "high": 0.58164,
+              "last_bar_notional_estimate": 9085.38642,
+              "last_bar_volume": 15634,
+              "last_close": 0.58113,
+              "last_t": 1791838800,
+              "low": 0.57552,
+              "net_change": 0.004570000000000074,
+              "net_change_pct": 0.7926321631747042,
+              "period_high": 0.58164,
+              "period_low": 0.57552,
+              "total_volume": 143058,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:AUDCHF"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:NZDJPY",
+          "symbol": "NZDJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 88.442,
+                "h": 88.752,
+                "l": 88.158,
+                "o": 88.646,
+                "t": 1791147600,
+                "v": 58697
+              },
+              {
+                "c": 88.916,
+                "h": 89.002,
+                "l": 88.33,
+                "o": 88.441,
+                "t": 1791234000,
+                "v": 51611
+              },
+              {
+                "c": 88.489,
+                "h": 89.081,
+                "l": 88.374,
+                "o": 88.877,
+                "t": 1791320400,
+                "v": 63327
+              },
+              {
+                "c": 88.49,
+                "h": 88.724,
+                "l": 88.248,
+                "o": 88.586,
+                "t": 1791406800,
+                "v": 67775
+              },
+              {
+                "c": 88.87,
+                "h": 88.936,
+                "l": 88.409,
+                "o": 88.457,
+                "t": 1791493200,
+                "v": 49307
+              },
+              {
+                "c": 88.646,
+                "h": 88.885,
+                "l": 88.586,
+                "o": 88.79,
+                "t": 1791752400,
+                "v": 38713
+              },
+              {
+                "c": 88.876,
+                "h": 88.912,
+                "l": 88.393,
+                "o": 88.616,
+                "t": 1791838800,
+                "v": 42861
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 53184.42857142857,
+              "first_open": 88.646,
+              "first_t": 1791147600,
+              "high": 89.081,
+              "last_bar_notional_estimate": 3809314.236,
+              "last_bar_volume": 42861,
+              "last_close": 88.876,
+              "last_t": 1791838800,
+              "low": 88.158,
+              "net_change": 0.23000000000000398,
+              "net_change_pct": 0.2594589716400108,
+              "period_high": 89.081,
+              "period_low": 88.158,
+              "total_volume": 372291,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:NZDJPY"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:NZDCAD",
+          "symbol": "NZDCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.79862,
+                "h": 0.80108,
+                "l": 0.79558,
+                "o": 0.80033,
+                "t": 1791147600,
+                "v": 29732
+              },
+              {
+                "c": 0.79906,
+                "h": 0.8009,
+                "l": 0.79784,
+                "o": 0.79792,
+                "t": 1791234000,
+                "v": 23770
+              },
+              {
+                "c": 0.79819,
+                "h": 0.79942,
+                "l": 0.79644,
+                "o": 0.79856,
+                "t": 1791320400,
+                "v": 24397
+              },
+              {
+                "c": 0.79716,
+                "h": 0.79944,
+                "l": 0.79641,
+                "o": 0.79867,
+                "t": 1791406800,
+                "v": 39296
+              },
+              {
+                "c": 0.80018,
+                "h": 0.80207,
+                "l": 0.79666,
+                "o": 0.79707,
+                "t": 1791493200,
+                "v": 28259
+              },
+              {
+                "c": 0.79796,
+                "h": 0.80132,
+                "l": 0.79736,
+                "o": 0.80086,
+                "t": 1791752400,
+                "v": 17815
+              },
+              {
+                "c": 0.7983,
+                "h": 0.80036,
+                "l": 0.79686,
+                "o": 0.79785,
+                "t": 1791838800,
+                "v": 18976
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 26035,
+              "first_open": 0.80033,
+              "first_t": 1791147600,
+              "high": 0.80207,
+              "last_bar_notional_estimate": 15148.5408,
+              "last_bar_volume": 18976,
+              "last_close": 0.7983,
+              "last_t": 1791838800,
+              "low": 0.79558,
+              "net_change": -0.0020299999999999763,
+              "net_change_pct": -0.2536453712843422,
+              "period_high": 0.80207,
+              "period_low": 0.79558,
+              "total_volume": 182245,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:NZDCAD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:NZDCHF",
+          "symbol": "NZDCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.46515,
+                "h": 0.46582,
+                "l": 0.46362,
+                "o": 0.4654,
+                "t": 1791147600,
+                "v": 30436
+              },
+              {
+                "c": 0.46766,
+                "h": 0.46782,
+                "l": 0.46499,
+                "o": 0.46529,
+                "t": 1791234000,
+                "v": 26836
+              },
+              {
+                "c": 0.46651,
+                "h": 0.46816,
+                "l": 0.4652,
+                "o": 0.46749,
+                "t": 1791320400,
+                "v": 29542
+              },
+              {
+                "c": 0.46612,
+                "h": 0.46714,
+                "l": 0.46537,
+                "o": 0.46639,
+                "t": 1791406800,
+                "v": 32721
+              },
+              {
+                "c": 0.46604,
+                "h": 0.46701,
+                "l": 0.46548,
+                "o": 0.4659,
+                "t": 1791493200,
+                "v": 25818
+              },
+              {
+                "c": 0.46638,
+                "h": 0.46674,
+                "l": 0.46487,
+                "o": 0.46586,
+                "t": 1791752400,
+                "v": 21574
+              },
+              {
+                "c": 0.46728,
+                "h": 0.46738,
+                "l": 0.46538,
+                "o": 0.46618,
+                "t": 1791838800,
+                "v": 21399
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 26903.714285714286,
+              "first_open": 0.4654,
+              "first_t": 1791147600,
+              "high": 0.46816,
+              "last_bar_notional_estimate": 9999.324719999999,
+              "last_bar_volume": 21399,
+              "last_close": 0.46728,
+              "last_t": 1791838800,
+              "low": 0.46362,
+              "net_change": 0.0018799999999999928,
+              "net_change_pct": 0.40395358831112865,
+              "period_high": 0.46816,
+              "period_low": 0.46362,
+              "total_volume": 188326,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:NZDCHF"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:CADJPY",
+          "symbol": "CADJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 110.746,
+                "h": 111.07,
+                "l": 110.418,
+                "o": 110.643,
+                "t": 1791147600,
+                "v": 38777
+              },
+              {
+                "c": 111.284,
+                "h": 111.332,
+                "l": 110.638,
+                "o": 110.816,
+                "t": 1791234000,
+                "v": 30522
+              },
+              {
+                "c": 110.884,
+                "h": 111.52,
+                "l": 110.77,
+                "o": 111.296,
+                "t": 1791320400,
+                "v": 27275
+              },
+              {
+                "c": 111.028,
+                "h": 111.26,
+                "l": 110.516,
+                "o": 110.934,
+                "t": 1791406800,
+                "v": 34857
+              },
+              {
+                "c": 111.06,
+                "h": 111.373,
+                "l": 110.683,
+                "o": 110.957,
+                "t": 1791493200,
+                "v": 34179
+              },
+              {
+                "c": 111.082,
+                "h": 111.266,
+                "l": 110.814,
+                "o": 110.863,
+                "t": 1791752400,
+                "v": 13218
+              },
+              {
+                "c": 111.326,
+                "h": 111.352,
+                "l": 110.678,
+                "o": 111.07,
+                "t": 1791838800,
+                "v": 18991
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 28259.85714285714,
+              "first_open": 110.643,
+              "first_t": 1791147600,
+              "high": 111.52,
+              "last_bar_notional_estimate": 2114192.0659999996,
+              "last_bar_volume": 18991,
+              "last_close": 111.326,
+              "last_t": 1791838800,
+              "low": 110.418,
+              "net_change": 0.6829999999999927,
+              "net_change_pct": 0.6173006877976851,
+              "period_high": 111.52,
+              "period_low": 110.418,
+              "total_volume": 197819,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:CADJPY"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:CADCHF",
+          "symbol": "CADCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 0.58244,
+                "h": 0.58388,
+                "l": 0.58074,
+                "o": 0.58183,
+                "t": 1791147600,
+                "v": 15515
+              },
+              {
+                "c": 0.5854,
+                "h": 0.58543,
+                "l": 0.58207,
+                "o": 0.58313,
+                "t": 1791234000,
+                "v": 12663
+              },
+              {
+                "c": 0.58458,
+                "h": 0.58637,
+                "l": 0.58364,
+                "o": 0.5854,
+                "t": 1791320400,
+                "v": 12933
+              },
+              {
+                "c": 0.5848,
+                "h": 0.58568,
+                "l": 0.58383,
+                "o": 0.58388,
+                "t": 1791406800,
+                "v": 19942
+              },
+              {
+                "c": 0.5824,
+                "h": 0.58485,
+                "l": 0.5813,
+                "o": 0.58444,
+                "t": 1791493200,
+                "v": 15024
+              },
+              {
+                "c": 0.58447,
+                "h": 0.58468,
+                "l": 0.58133,
+                "o": 0.58164,
+                "t": 1791752400,
+                "v": 10685
+              },
+              {
+                "c": 0.58536,
+                "h": 0.58548,
+                "l": 0.58363,
+                "o": 0.58425,
+                "t": 1791838800,
+                "v": 10523
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 13897.857142857143,
+              "first_open": 0.58183,
+              "first_t": 1791147600,
+              "high": 0.58637,
+              "last_bar_notional_estimate": 6159.74328,
+              "last_bar_volume": 10523,
+              "last_close": 0.58536,
+              "last_t": 1791838800,
+              "low": 0.58074,
+              "net_change": 0.003530000000000033,
+              "net_change_pct": 0.606706426275722,
+              "period_high": 0.58637,
+              "period_low": 0.58074,
+              "total_volume": 97285,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:CADCHF"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:CHFJPY",
+          "symbol": "CHFJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 190.126,
+                "h": 190.601,
+                "l": 189.892,
+                "o": 190.475,
+                "t": 1791147600,
+                "v": 99852
+              },
+              {
+                "c": 190.124,
+                "h": 190.502,
+                "l": 189.83,
+                "o": 190.039,
+                "t": 1791234000,
+                "v": 84042
+              },
+              {
+                "c": 189.677,
+                "h": 190.382,
+                "l": 189.518,
+                "o": 190.12,
+                "t": 1791320400,
+                "v": 93512
+              },
+              {
+                "c": 189.86,
+                "h": 190.074,
+                "l": 189.255,
+                "o": 189.941,
+                "t": 1791406800,
+                "v": 82070
+              },
+              {
+                "c": 190.698,
+                "h": 190.854,
+                "l": 189.774,
+                "o": 189.861,
+                "t": 1791493200,
+                "v": 82970
+              },
+              {
+                "c": 190.058,
+                "h": 190.775,
+                "l": 190.033,
+                "o": 190.698,
+                "t": 1791752400,
+                "v": 56995
+              },
+              {
+                "c": 190.19,
+                "h": 190.428,
+                "l": 189.494,
+                "o": 190.096,
+                "t": 1791838800,
+                "v": 62317
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 80251.14285714286,
+              "first_open": 190.475,
+              "first_t": 1791147600,
+              "high": 190.854,
+              "last_bar_notional_estimate": 11852070.23,
+              "last_bar_volume": 62317,
+              "last_close": 190.19,
+              "last_t": 1791838800,
+              "low": 189.255,
+              "net_change": -0.2849999999999966,
+              "net_change_pct": -0.149625935162093,
+              "period_high": 190.854,
+              "period_low": 189.255,
+              "total_volume": 561758,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:CHFJPY"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:XAUUSD",
+          "symbol": "XAUUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 4140.525,
+                "h": 4170.44,
+                "l": 4123.355,
+                "o": 4141.605,
+                "t": 1791147600,
+                "v": 562147
+              },
+              {
+                "c": 4163.855,
+                "h": 4184.385,
+                "l": 4103.515,
+                "o": 4143.54,
+                "t": 1791234000,
+                "v": 518811
+              },
+              {
+                "c": 4111.33,
+                "h": 4170,
+                "l": 4066.535,
+                "o": 4166.64,
+                "t": 1791320400,
+                "v": 545610
+              },
+              {
+                "c": 4133.69,
+                "h": 4146.125,
+                "l": 4103.445,
+                "o": 4112.73,
+                "t": 1791406800,
+                "v": 641711
+              },
+              {
+                "c": 4194.645,
+                "h": 4207.485,
+                "l": 4131.815,
+                "o": 4132.25,
+                "t": 1791493200,
+                "v": 446384
+              },
+              {
+                "c": 4171.65,
+                "h": 4217.395,
+                "l": 4154.725,
+                "o": 4189.585,
+                "t": 1791752400,
+                "v": 435910
+              },
+              {
+                "c": 4174.31,
+                "h": 4200.625,
+                "l": 4150.785,
+                "o": 4174.4,
+                "t": 1791838800,
+                "v": 337261
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 498262,
+              "first_open": 4141.605,
+              "first_t": 1791147600,
+              "high": 4217.395,
+              "last_bar_notional_estimate": 1407831964.91,
+              "last_bar_volume": 337261,
+              "last_close": 4174.31,
+              "last_t": 1791838800,
+              "low": 4066.535,
+              "net_change": 32.70500000000084,
+              "net_change_pct": 0.7896697053437216,
+              "period_high": 4217.395,
+              "period_low": 4066.535,
+              "total_volume": 3487834,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:XAUUSD"
+          }
+        },
+        {
+          "providerSymbol": "OANDA:XAGUSD",
+          "symbol": "XAGUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 61.0665,
+                "h": 62.0385,
+                "l": 60.6135,
+                "o": 60.7485,
+                "t": 1791147600,
+                "v": 313243
+              },
+              {
+                "c": 61.3495,
+                "h": 61.8725,
+                "l": 60.2775,
+                "o": 61.096,
+                "t": 1791234000,
+                "v": 260619
+              },
+              {
+                "c": 59.793,
+                "h": 61.5,
+                "l": 58.991,
+                "o": 61.4255,
+                "t": 1791320400,
+                "v": 274551
+              },
+              {
+                "c": 59.187,
+                "h": 60.6005,
+                "l": 58.5045,
+                "o": 59.83065,
+                "t": 1791406800,
+                "v": 340547
+              },
+              {
+                "c": 60.82,
+                "h": 61.1865,
+                "l": 59.2585,
+                "o": 59.263,
+                "t": 1791493200,
+                "v": 245082
+              },
+              {
+                "c": 60.321,
+                "h": 61.455,
+                "l": 60.1365,
+                "o": 60.9285,
+                "t": 1791752400,
+                "v": 239338
+              },
+              {
+                "c": 59.8555,
+                "h": 60.7395,
+                "l": 59.581,
+                "o": 60.349,
+                "t": 1791838800,
+                "v": 189660
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T21:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 266148.5714285714,
+              "first_open": 60.7485,
+              "first_t": 1791147600,
+              "high": 62.0385,
+              "last_bar_notional_estimate": 11352194.129999999,
+              "last_bar_volume": 189660,
+              "last_close": 59.8555,
+              "last_t": 1791838800,
+              "low": 58.5045,
+              "net_change": -0.8930000000000007,
+              "net_change_pct": -1.4699951439130194,
+              "period_high": 62.0385,
+              "period_low": 58.5045,
+              "total_volume": 1863040,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "OANDA:XAGUSD"
+          }
+        },
+        {
+          "providerSymbol": "NASDAQ:NDX",
+          "symbol": "NASDAQ100",
+          "date": "2026-10-12",
+          "timestamp": 1791811800,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "ndx-methodology",
+            "nasdaq-calendar"
+          ],
+          "reason": "D1 timestamp maps to 09:30 New York on a regular U.S. trading date. Collection is after both cash close and the documented NDX dissemination/correction window. The feed's exact time_close is not asserted.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791898200,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 31076.4411,
+                "h": 31117.3582,
+                "l": 30798.4223,
+                "o": 30812.7609,
+                "t": 1791207000,
+                "v": 1131360987
+              },
+              {
+                "c": 31224.6854,
+                "h": 31361.3687,
+                "l": 31208.1969,
+                "o": 31255.3958,
+                "t": 1791293400,
+                "v": 1143530274
+              },
+              {
+                "c": 31160.0762,
+                "h": 31170.1189,
+                "l": 30904.4643,
+                "o": 30976.2474,
+                "t": 1791379800,
+                "v": 990496176
+              },
+              {
+                "c": 30725.8094,
+                "h": 31125.1309,
+                "l": 30556.3956,
+                "o": 30985.2316,
+                "t": 1791466200,
+                "v": 1286975208
+              },
+              {
+                "c": 30883.1478,
+                "h": 30946.7377,
+                "l": 30770.0552,
+                "o": 30900.0649,
+                "t": 1791552600,
+                "v": 992056893
+              },
+              {
+                "c": 30664.6967,
+                "h": 30813.9604,
+                "l": 30618.645,
+                "o": 30796.043,
+                "t": 1791811800,
+                "v": 888185229
+              },
+              {
+                "c": 30549.5183,
+                "h": 30549.5183,
+                "l": 30372.2985,
+                "o": 30404.1961,
+                "t": 1791898200,
+                "v": 99333682
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-02T13:30:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 933134064.1428572,
+              "first_open": 30812.7609,
+              "first_t": 1791207000,
+              "high": 31361.3687,
+              "last_bar_notional_estimate": 3034596136065.3804,
+              "last_bar_volume": 99333682,
+              "last_close": 30549.5183,
+              "last_t": 1791898200,
+              "low": 30372.2985,
+              "net_change": -263.2426000000014,
+              "net_change_pct": -0.8543298046362389,
+              "period_high": 31361.3687,
+              "period_low": 30372.2985,
+              "total_volume": 6531938449,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "NASDAQ:NDX"
+          }
+        },
+        {
+          "providerSymbol": "SP:SPX",
+          "symbol": "SP500",
+          "date": "2026-10-12",
+          "timestamp": 1791811800,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": "2026-10-12T20:00:00Z",
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "sp-methodology",
+            "nyse-calendar",
+            "nasdaq-calendar"
+          ],
+          "reason": "U.S. cash index regular session has ended; official calendar has no date exception.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791898200,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": null,
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 7773.95,
+                "h": 7794.35,
+                "l": 7727.59,
+                "o": 7730.86,
+                "t": 1791207000,
+                "v": 3473000943
+              },
+              {
+                "c": 7818.93,
+                "h": 7844.52,
+                "l": 7805.96,
+                "o": 7805.96,
+                "t": 1791293400,
+                "v": 2717394878
+              },
+              {
+                "c": 7801.77,
+                "h": 7807.02,
+                "l": 7763.34,
+                "o": 7792.98,
+                "t": 1791379800,
+                "v": 2648837293
+              },
+              {
+                "c": 7765.36,
+                "h": 7797.79,
+                "l": 7731.26,
+                "o": 7778.45,
+                "t": 1791466200,
+                "v": 3518934024
+              },
+              {
+                "c": 7811.54,
+                "h": 7820.57,
+                "l": 7779.34,
+                "o": 7786.36,
+                "t": 1791552600,
+                "v": 2645750862
+              },
+              {
+                "c": 7807.24,
+                "h": 7821.67,
+                "l": 7796.94,
+                "o": 7813.04,
+                "t": 1791811800,
+                "v": 2291949104
+              },
+              {
+                "c": 7812.01,
+                "h": 7814.15,
+                "l": 7795.27,
+                "o": 7795.27,
+                "t": 1791898200,
+                "v": 225889093
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-02T13:30:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 2503108028.142857,
+              "first_open": 7730.86,
+              "first_t": 1791207000,
+              "high": 7844.52,
+              "last_bar_notional_estimate": 1764647853406.93,
+              "last_bar_volume": 225889093,
+              "last_close": 7812.01,
+              "last_t": 1791898200,
+              "low": 7727.59,
+              "net_change": 81.15000000000055,
+              "net_change_pct": 1.0496891678286835,
+              "period_high": 7844.52,
+              "period_low": 7727.59,
+              "total_volume": 17521756197,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "SP:SPX"
+          }
+        },
+        {
+          "providerSymbol": "NYMEX:CL1!",
+          "symbol": "WTI",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/Chicago",
+          "utcOffset": "-05:00",
+          "sourceIds": [
+            "cl-hours",
+            "cme-calendar",
+            "cme-columbus"
+          ],
+          "reason": "Timestamp matches underlying Globex session opening 17:00 Chicago previous evening; regular daily session is over at collection time and a new active trading-date bar corroborates turnover. Columbus Day normal EOD processing is calendar context. Exact holiday/feed time_close not established, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791842400,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 89.43,
+                "h": 91.88,
+                "l": 88.74,
+                "o": 91.77,
+                "t": 1791151200,
+                "v": 274982
+              },
+              {
+                "c": 89.44,
+                "h": 90.05,
+                "l": 86.86,
+                "o": 89.27,
+                "t": 1791237600,
+                "v": 265937
+              },
+              {
+                "c": 88.28,
+                "h": 90.98,
+                "l": 87.96,
+                "o": 89.96,
+                "t": 1791324000,
+                "v": 295162
+              },
+              {
+                "c": 91.49,
+                "h": 93.2,
+                "l": 88.77,
+                "o": 89,
+                "t": 1791410400,
+                "v": 341641
+              },
+              {
+                "c": 91.85,
+                "h": 92.17,
+                "l": 90.01,
+                "o": 91.29,
+                "t": 1791496800,
+                "v": 230048
+              },
+              {
+                "c": 93.74,
+                "h": 94.36,
+                "l": 89.61,
+                "o": 91.83,
+                "t": 1791756000,
+                "v": 209765
+              },
+              {
+                "c": 92.92,
+                "h": 93.49,
+                "l": 91.7,
+                "o": 93.21,
+                "t": 1791842400,
+                "v": 90550
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T22:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 244012.14285714287,
+              "first_open": 91.77,
+              "first_t": 1791151200,
+              "high": 94.36,
+              "last_bar_notional_estimate": 8413906,
+              "last_bar_volume": 90550,
+              "last_close": 92.92,
+              "last_t": 1791842400,
+              "low": 86.86,
+              "net_change": 1.1500000000000057,
+              "net_change_pct": 1.2531328320802066,
+              "period_high": 94.36,
+              "period_low": 86.86,
+              "total_volume": 1708085,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "NYMEX:CL1!"
+          }
+        },
+        {
+          "providerSymbol": "ICEEUR:BRN1!",
+          "symbol": "BRENT",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": "2026-10-12T22:00:00Z",
+          "error": null,
+          "errorType": null,
+          "timezone": "Europe/London",
+          "utcOffset": "+01:00",
+          "sourceIds": [
+            "ice-spec",
+            "ice-calendar"
+          ],
+          "reason": "Brent underlying daily session and calendar are documented; London 23:00 BST = 22:00 UTC.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791849600,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": null,
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 100.32,
+                "h": 103.4,
+                "l": 99.76,
+                "o": 103.15,
+                "t": 1791151200,
+                "v": 344349
+              },
+              {
+                "c": 100.58,
+                "h": 101.32,
+                "l": 97.06,
+                "o": 100.23,
+                "t": 1791244800,
+                "v": 361754
+              },
+              {
+                "c": 100.2,
+                "h": 102.59,
+                "l": 99.61,
+                "o": 101.1,
+                "t": 1791331200,
+                "v": 325012
+              },
+              {
+                "c": 104.28,
+                "h": 105.92,
+                "l": 100.76,
+                "o": 101.03,
+                "t": 1791417600,
+                "v": 449981
+              },
+              {
+                "c": 104.72,
+                "h": 105.09,
+                "l": 102.33,
+                "o": 103.87,
+                "t": 1791504000,
+                "v": 318333
+              },
+              {
+                "c": 106.65,
+                "h": 107.33,
+                "l": 102.33,
+                "o": 104.95,
+                "t": 1791756000,
+                "v": 319050
+              },
+              {
+                "c": 105.22,
+                "h": 106.14,
+                "l": 104.35,
+                "o": 106.08,
+                "t": 1791849600,
+                "v": 149290
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-02T00:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 323967,
+              "first_open": 103.15,
+              "first_t": 1791151200,
+              "high": 107.33,
+              "last_bar_notional_estimate": 15708293.8,
+              "last_bar_volume": 149290,
+              "last_close": 105.22,
+              "last_t": 1791849600,
+              "low": 97.06,
+              "net_change": 2.069999999999993,
+              "net_change_pct": 2.006786233640323,
+              "period_high": 107.33,
+              "period_low": 97.06,
+              "total_volume": 2267769,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "ICEEUR:BRN1!"
+          }
+        },
+        {
+          "providerSymbol": "NYMEX:NG1!",
+          "symbol": "NATURALGAS",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/Chicago",
+          "utcOffset": "-05:00",
+          "sourceIds": [
+            "ng-hours",
+            "cme-calendar",
+            "cme-columbus"
+          ],
+          "reason": "Timestamp matches underlying Globex session opening 17:00 Chicago previous evening; regular daily session is over at collection time and a new active trading-date bar corroborates turnover. Columbus Day normal EOD processing is calendar context. Exact holiday/feed time_close not established, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791842400,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 3.066,
+                "h": 3.083,
+                "l": 2.997,
+                "o": 3.019,
+                "t": 1791151200,
+                "v": 159487
+              },
+              {
+                "c": 3.114,
+                "h": 3.13,
+                "l": 3.058,
+                "o": 3.078,
+                "t": 1791237600,
+                "v": 157738
+              },
+              {
+                "c": 3.203,
+                "h": 3.252,
+                "l": 3.11,
+                "o": 3.114,
+                "t": 1791324000,
+                "v": 265951
+              },
+              {
+                "c": 3.168,
+                "h": 3.298,
+                "l": 3.106,
+                "o": 3.288,
+                "t": 1791410400,
+                "v": 282250
+              },
+              {
+                "c": 3.22,
+                "h": 3.247,
+                "l": 3.112,
+                "o": 3.129,
+                "t": 1791496800,
+                "v": 211442
+              },
+              {
+                "c": 3.167,
+                "h": 3.204,
+                "l": 3.092,
+                "o": 3.17,
+                "t": 1791756000,
+                "v": 189797
+              },
+              {
+                "c": 3.22,
+                "h": 3.225,
+                "l": 3.108,
+                "o": 3.176,
+                "t": 1791842400,
+                "v": 73147
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T22:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 191401.7142857143,
+              "first_open": 3.019,
+              "first_t": 1791151200,
+              "high": 3.298,
+              "last_bar_notional_estimate": 235533.34000000003,
+              "last_bar_volume": 73147,
+              "last_close": 3.22,
+              "last_t": 1791842400,
+              "low": 2.997,
+              "net_change": 0.20100000000000007,
+              "net_change_pct": 6.657833719774761,
+              "period_high": 3.298,
+              "period_low": 2.997,
+              "total_volume": 1339812,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "NYMEX:NG1!"
+          }
+        },
+        {
+          "providerSymbol": "COMEX:HG1!",
+          "symbol": "COPPER",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/Chicago",
+          "utcOffset": "-05:00",
+          "sourceIds": [
+            "hg-hours",
+            "cme-calendar",
+            "cme-columbus"
+          ],
+          "reason": "Timestamp matches underlying Globex session opening 17:00 Chicago previous evening; regular daily session is over at collection time and a new active trading-date bar corroborates turnover. Columbus Day normal EOD processing is calendar context. Exact holiday/feed time_close not established, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791842400,
+              "reason": "Current trading-day session is still open at manual collection; excluded."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified.",
+          "checkedAt": "2026-10-13T13:56:51.324Z",
+          "comparison": "exact_duplicate",
+          "rawResponse": {
+            "bars": [
+              {
+                "c": 6.641,
+                "h": 6.6545,
+                "l": 6.559,
+                "o": 6.573,
+                "t": 1791151200,
+                "v": 30479
+              },
+              {
+                "c": 6.6495,
+                "h": 6.684,
+                "l": 6.6105,
+                "o": 6.63,
+                "t": 1791237600,
+                "v": 26572
+              },
+              {
+                "c": 6.6495,
+                "h": 6.681,
+                "l": 6.599,
+                "o": 6.66,
+                "t": 1791324000,
+                "v": 38273
+              },
+              {
+                "c": 6.5685,
+                "h": 6.763,
+                "l": 6.5475,
+                "o": 6.641,
+                "t": 1791410400,
+                "v": 47328
+              },
+              {
+                "c": 6.692,
+                "h": 6.72,
+                "l": 6.5115,
+                "o": 6.547,
+                "t": 1791496800,
+                "v": 42743
+              },
+              {
+                "c": 6.747,
+                "h": 6.783,
+                "l": 6.694,
+                "o": 6.712,
+                "t": 1791756000,
+                "v": 28011
+              },
+              {
+                "c": 6.754,
+                "h": 6.778,
+                "l": 6.703,
+                "o": 6.757,
+                "t": 1791842400,
+                "v": 14304
+              }
+            ],
+            "count": 7,
+            "format": "rows",
+            "has_more": true,
+            "hint": "Older bars exist in this window: call get_ohlcv again with date_to=next_date_to (and the same date_from / interval) to get the previous page. A single response holds at most 5000 bars as rows or 8000 as columns (larger results are rejected by the MCP gateway); for long histories use format=\"columns\" and page with date_to, or summary=true for aggregates only.",
+            "interval": "1D",
+            "next_date_to": "2026-10-01T22:00:00Z",
+            "notice": "Market data notice: bars are served under the user's TradingView plan and exchange subscriptions (realtime where the user has the exchange data, otherwise delayed); the last bar is still forming and may change; regular session only; prices are split-adjusted only. For the most recent quote use get_symbol_data (or get_symbol_data_batch) with the \"close\", \"change\" and \"update_mode\" columns.",
+            "success": true,
+            "summary": {
+              "avg_volume": 32530,
+              "first_open": 6.573,
+              "first_t": 1791151200,
+              "high": 6.783,
+              "last_bar_notional_estimate": 96609.216,
+              "last_bar_volume": 14304,
+              "last_close": 6.754,
+              "last_t": 1791842400,
+              "low": 6.5115,
+              "net_change": 0.18099999999999916,
+              "net_change_pct": 2.753689335158971,
+              "period_high": 6.783,
+              "period_low": 6.5115,
+              "total_volume": 227710,
+              "volume_unit_note": "avg_volume / total_volume / last_bar_volume are in BASE units (shares for equities, base tokens for crypto). Do NOT prepend $ to these. last_bar_notional_estimate is approximately the dollar volume of the LAST bar (close × volume), valid only for USD-equivalent quote currencies (USDT/USDC/USD/USX equities)."
+            },
+            "symbol": "COMEX:HG1!"
+          }
+        }
+      ],
+      "ingestionCompatibility": {
+        "supportsLegacy36": true,
+        "supportsAdditional3": false,
+        "evidence": [
+          {
+            "file": "Tools/market-daily-ingest.cjs",
+            "finding": "Requires exactly36 identities; additional symbols rejected as not in backfill registry."
+          },
+          {
+            "file": "Tools/prepare-market-sources.cjs",
+            "finding": "Commodity supplement is historical-only, not connected to daily ingestion."
+          }
+        ]
+      }
     }
   ]
 }
