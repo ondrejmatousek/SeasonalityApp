@@ -23,7 +23,7 @@
         const key=asset.key+'|'+zone.id+'|'+c.startDate;
         if(chartKey?.split('::')[0]!==key)by('htf-chart-resolution').value=zone.timeframe;
         const profiles=snapshot.assets.filter(a=>a.mapping.priceKey===asset.mapping.priceKey&&a.mapping.executionKind==='futures-profile').map(a=>a.key);
-        by('htf-chart-caption').textContent=`Cenová reference ${asset.mapping.priceKey} · ${price.provider} ${price.symbol} · ${price.timezone}. ${profiles.length?'Profily '+profiles.join('/')+': úrovně zóny jsou ceny indexu, ne futures. ':''}Tyrkysový svislý výřez je sezonní období, barevné vodorovné pásmo je zóna. Vpravo za poslední svíčkou není předpověď.`;
+        by('htf-chart-caption').textContent=`Cenová reference ${asset.mapping.priceKey} · ${price.provider} ${price.symbol} · ${price.timezone}. ${profiles.length?'Profily '+profiles.join('/')+': úrovně zóny jsou ceny indexu, ne futures. ':''}Svislý výřez je sezonní období: zelený pro růst, červený pro pokles. Vodorovné pásmo je HTF zóna. Vpravo za poslední svíčkou není předpověď.`;
         const metrics=by('htf-metrics');metrics.replaceChildren();for(const [title,value,note]of [
             ['Cena vs zóna',priceLabels[match.priceState],`Poslední dokončený close ${num(price.latestClose)} z ${date(price.latestDate)}.`],
             ['Sezonalita',pct(s.rate),`${s.count} dokončených období / posledních 20 let; medián ${pct(s.median)}. Výběr intervalu z maximální dokončené historie.`],

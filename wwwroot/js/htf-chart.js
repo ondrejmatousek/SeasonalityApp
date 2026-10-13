@@ -7,6 +7,9 @@
         const bars=resolution==='W1'?price.weekly:price.bars;
         const precision=price.latestClose<10?5:price.latestClose<1000?3:2;
         const number=v=>new Intl.NumberFormat('cs-CZ',{minimumFractionDigits:precision,maximumFractionDigits:precision}).format(v);
+        const seasonal=candidate.direction==='up'
+            ? {fill:'#22c55e22',line:'#22c55ebb',text:'#86efac',label:'Sezonní růst'}
+            : {fill:'#ef444422',line:'#ef4444bb',text:'#fca5a5',label:'Sezonní pokles'};
         const chart=L.createChart(container,{
             autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#aebbc3',fontSize:12,attributionLogo:true},
             grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},
@@ -41,7 +44,7 @@
             const start=x(candidate.startDate),end=x(candidate.endDate),base=x(zone.baseDate),upper=series.priceToCoordinate(zone.upper),lower=series.priceToCoordinate(zone.lower);
             container.dataset.seasonalStart=String(start);container.dataset.seasonalEnd=String(end);
             ctx.save();ctx.beginPath();ctx.rect(0,0,width,height);ctx.clip();
-            if(start!==null&&end!==null){ctx.fillStyle='#24dfcf22';ctx.fillRect(start,0,end-start,height);ctx.strokeStyle='#69b8b0bb';ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle='#80cac2';ctx.font='11px sans-serif';ctx.fillText('Sezonní interval',Math.max(6,start+6),height-12);}
+            if(start!==null&&end!==null){ctx.fillStyle=seasonal.fill;ctx.fillRect(start,0,end-start,height);ctx.strokeStyle=seasonal.line;ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=seasonal.text;ctx.font='11px sans-serif';ctx.fillText(seasonal.label,Math.max(6,start+6),height-12);}
             if(upper!==null&&lower!==null){const left=Math.max(0,base??0);ctx.fillStyle=zone.type==='demand'?'#26a69a30':'#ef535025';ctx.strokeStyle=zone.type==='demand'?'#26a69a99':'#ef535099';ctx.fillRect(left,upper,width-left,lower-upper);ctx.strokeRect(left,upper,width-left,lower-upper);ctx.fillStyle='#aebbc3';ctx.font='11px sans-serif';ctx.fillText(`${zone.timeframe} ${zone.type}`,left+6,upper-6);}
             ctx.restore();
         });}};
