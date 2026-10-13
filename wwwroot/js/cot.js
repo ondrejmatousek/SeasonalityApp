@@ -126,12 +126,14 @@
 
     function render() {
         if (!payload) return;
-        byId('cot-market-note').textContent = payload.note || '';
+        byId('cot-market-note').textContent = payload.markets.some(m=>m.isDollarIndex)&&asset.assetClass==='forex'
+            ? 'COT popisuje futures na jednotlivé měny, nikoli celý spotový pár. USD je v relativním COT neutrální reference u=0. DXY je pouze samostatný doplňkový kontext, nikoli COT samotného USD. Long kotované měny působí vůči páru opačně.'
+            : payload.note || '';
         byId('cot-market-note').hidden = !payload.note;
         const switcher = byId('cot-market-switch');
         switcher.replaceChildren();
         payload.markets.forEach(item => {
-            const button = element('button', `${item.isDollarIndex ? 'DXY / USD' : item.key} · ${item.name}`);
+            const button = element('button', `${item.isDollarIndex ? 'DXY · doplňkový kontext' : item.key} · ${item.name}`);
             button.type = 'button';
             button.setAttribute('aria-pressed', String(item.key === currency));
             button.classList.toggle('is-active', item.key === currency);
@@ -246,9 +248,36 @@
     function renderSummary(latest) {
         const summary = byId('cot-summary');
         summary.replaceChildren();
+        const pair=asset.assetClass==='forex'&&/^[A-Z]{6}$/.test(asset.key)?[asset.key.slice(0,3),asset.key.slice(3)]:null;
+        summary.classList.toggle('cot-pair-overview',Boolean(pair));
+        const heading=summary.closest('details').querySelector('summary');
+        heading.textContent=pair?`Společný přehled ${pair.join(' / ')} · aktuální Long / Short`:'Přehled aktuálních pozic · long / short';
+        if(!pair){renderPositionCards(latest,summary,currency,false);return;}
+        const reportDates=[];
+        for(const [index,key]of pair.entries()){
+            const item=payload.markets.find(m=>key==='USD'?m.isDollarIndex:m.key===key&&!m.isDollarIndex);
+            const section=element('section',null,'cot-pair-panel');section.dataset.currency=key;section.dataset.side=index===0?'base':'quote';
+            section.append(element('h3',key==='USD'?'USD · neutrální reference u=0':`COT ${key}${item?' · '+item.name:''}`));
+            section.append(element('p',index===0?'Základní měna páru · long jsou nákupní pozice v této měně.':'Kotovaná měna páru · long má opačnou směrovou orientaci vůči páru.','cot-pair-side'));
+            if(key==='USD')section.append(element('p','USD nemá vlastní report v tomto modelu. Níže je DXY pouze jako doplňkový kontext; nevstupuje místo USD do relativního COT.','cot-pair-reference'));
+            if(!item?.reports.length){section.append(element('p',key==='USD'?'DXY kontext není k dispozici.':'COT této měny není k dispozici. Druhou měnu nenahrazujeme jiným reportem.'));summary.append(section);continue;}
+            const report=item.reports.at(-1);reportDates.push(report.date);
+            section.append(element('p',`${item.isDollarIndex?'DXY · US Dollar Index · samostatný kontext · ':''}Pozice k ${dateLabel(report.date)} · CFTC ${item.contractCode}`,'cot-pair-meta'));
+            const grid=element('div',null,'cot-pair-grid');renderPositionCards(report,grid,`${key}-${item.key}`,true);section.append(grid);
+            section.append(element('footer','Zelená: long · růžová: short · šedá: spread. Procenta jsou z long + short + spread dané skupiny, nikoli celého trhu.'));
+            summary.append(section);
+        }
+        const note=element('p',reportDates.length===2&&reportDates[0]!==reportDates[1]
+            ? 'Pozor: měny mají různá data reportů. Jde o dva samostatné přehledy, nikoli synchronní potvrzení páru.'
+            : 'Obě měny vidíš současně. Pro porovnání používej podíly a kontext; počty kontraktů různých měn nejsou přímo srovnatelné.','cot-pair-notice');
+        summary.append(note);
+    }
+
+    function renderPositionCards(latest,summary,marketId,paired) {
         groups.forEach(group => {
             const position = latest[group.key];
             const card = element('article', null, 'cot-summary-card');
+            card.dataset.group=group.key;
             card.append(element('h3', group.name));
             const values = element('div', null, 'cot-summary-values');
             const donut = element('div', null, 'cot-donut');
@@ -258,7 +287,7 @@
             donut.setAttribute('role','group');
             donut.setAttribute('aria-label',`${group.name}: ${segments.map(s=>`${s.name} ${percent(s.value)}, ${number(s.value)} kontraktů`).join('; ')}. Podíl z long + short + spread této skupiny.`);
             const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 60 60');
-            const bubble=element('div',null,'cot-donut-tooltip');bubble.hidden=true;bubble.id=`cot-position-tooltip-${group.key}`;bubble.setAttribute('role','tooltip');
+            const bubble=element('div',null,'cot-donut-tooltip');bubble.hidden=true;bubble.id=`cot-position-tooltip-${String(marketId).replace(/[^A-Za-z0-9_-]/g,'')}-${group.key}`;bubble.setAttribute('role','tooltip');
             const hide=()=>{bubble.hidden=true;};
             const show=(s,event)=>{
                 root.querySelectorAll('.cot-donut-tooltip').forEach(t=>{if(t!==bubble)t.hidden=true;});
@@ -288,12 +317,13 @@
             values.append(donut, net);
             card.append(values);
             const dl = element('dl');
-            [['Long', number(position.long)], ['Short', number(position.short)],
+            [['Long', number(position.long)+(paired?' · '+percent(position.long):'')], ['Short', number(position.short)+(paired?' · '+percent(position.short):'')],
                 ['COT index', position.index == null ? '—' : `${number(position.index)} / 100`]].forEach(([label, value]) => {
                 dl.append(element('dt', label), element('dd', value));
             });
-            if (group.key === 'nonCommercial') dl.append(element('dt', 'Spread'), element('dd', number(position.spread)));
-            card.append(dl, element('footer', 'Zelená: long · růžová: short · šedá: spread. Podíly uvedených pozic skupiny, nikoli celého trhu.'));
+            if (group.key === 'nonCommercial') dl.append(element('dt', 'Spread'), element('dd', number(position.spread)+(paired?' · '+percent(position.spread):'')));
+            card.append(dl);
+            if(!paired)card.append(element('footer', 'Zelená: long · růžová: short · šedá: spread. Podíly uvedených pozic skupiny, nikoli celého trhu.'));
             summary.append(card);
         });
     }

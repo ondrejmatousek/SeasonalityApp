@@ -263,6 +263,25 @@
 .cot-summary-card dt { color:#8794a4; font-weight:400; }
 .cot-summary-card dd { text-align:right; margin:0; color:#dce3e9; }
 .cot-summary-card footer { color:#8794a4; font-size:.65rem; line-height:1.5; margin-top:.7rem; }
+.cot-summary.cot-pair-overview { grid-template-columns:repeat(2,minmax(0,1fr));gap:18px; }
+.cot-pair-panel { min-width:0;background:#15191c;border:1px solid #ffffff18;border-radius:10px;padding:18px; }
+.cot-pair-panel>h3 { margin:0 0 6px;font-size:1.05rem;color:#e3eef4; }
+.cot-pair-panel>p { color:#9ba8b7;font-size:12px;line-height:1.5;margin:6px 0; }
+.cot-pair-panel .cot-pair-reference { color:#eab768; }
+.cot-pair-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px; }
+.cot-pair-grid .cot-summary-card { background:transparent;border-color:#ffffff0c;padding:12px; }
+.cot-pair-grid [data-group="commercial"] { grid-row:1;grid-column:1/-1;width:min(100%,280px);justify-self:center; }
+.cot-pair-grid [data-group="nonCommercial"] { grid-row:2;grid-column:1; }
+.cot-pair-grid [data-group="nonReportable"] { grid-row:2;grid-column:2; }
+.cot-pair-grid .cot-summary-card h3 { text-align:center;font-size:13px;min-height:20px; }
+.cot-pair-grid .cot-summary-values { flex-direction:column;gap:10px;text-align:center; }
+.cot-pair-grid .cot-donut { width:84px;height:84px; }
+.cot-pair-grid .cot-summary-card strong { font-size:1rem; }
+.cot-pair-grid .cot-summary-card dl { font-size:11px;gap:5px; }
+.cot-pair-panel>footer { font-size:11px;color:#8794a4;line-height:1.5;margin-top:14px; }
+.cot-pair-notice { grid-column:1/-1;color:#9ba8b7;font-size:12px;margin:0; }
+@media(max-width:1050px){.cot-summary.cot-pair-overview{grid-template-columns:1fr;}.cot-pair-panel{padding:14px;}}
+@media(max-width:420px){.cot-pair-grid{gap:6px}.cot-pair-grid .cot-summary-card{padding:8px}.cot-pair-grid .cot-summary-card dl{grid-template-columns:1fr}.cot-pair-grid .cot-summary-card dd{text-align:left}}
 .cot-chart-stack { display:grid; gap:16px; }
 .cot-chart-card { background:#15191c; border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:20px 24px 16px; min-width:0; }
 .cot-chart-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.6rem; margin-bottom:.75rem; }
