@@ -1,11 +1,20 @@
 // Materializes a single audited market routing bundle. No SQL or provider requests.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const {ingest,loadSeries}=require('./market-daily-ingest.cjs');
+const {ingest,loadSeries,supplementalEntries}=require('./market-daily-ingest.cjs');
 const read=f=>JSON.parse(fs.readFileSync(f,'utf8')),sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const appKey=k=>k==='XAGUSD'?'SILVER':k;
-function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json'}={}) {
+function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json',extension='data/market-daily/commodity-extension/latest.json'}={}) {
  root=path.resolve(root);const registry=read(path.join(root,'test-source-registry.json'));
  const ingestion=ingest({root,input,includeReview:true});
+ if(fs.existsSync(extension)){
+  try{
+   const payload=read(extension),at=Date.parse(payload.fetchedAt||payload.generatedAt);
+   if(!Number.isFinite(at)||at>Date.now()||Date.now()-at>24*3600000)throw Error('Commodity extension stale or invalid fetchedAt');
+   const r=ingest({root,input:extension,includeReview:true,researchOnly:true});
+   for(const k of ['inserted','skipped','failed','notEnabled'])ingestion[k]+=r[k];
+   ingestion.instruments.push(...r.instruments.map(a=>({...a,input:extension})));ingestion.extension={input:extension,inputSha256:r.inputSha256,fetchedAt:r.fetchedAt};
+  }catch(err){ingestion.extension={input:extension,error:err.message};}
+ }
  const dir=path.join(root,'analytics-sources-v1');fs.mkdirSync(dir,{recursive:true});
  const entries=[];
  for(const e of registry.entries){
@@ -30,7 +39,7 @@ function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market
    const {bars:_,htfBars:__,prices:___,...meta}=source;entries.push({...meta,file,count:bars.length,lastDate:bars.at(-1)?.date});
   }catch(err){entries.push({assetKey:appKey(e.logicalSymbol),logicalSymbol:e.logicalSymbol,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,id:e.canonicalTestId,status:'unavailable',error:err.message,count:0});}
  }
- // Supplemental histories stay separate from the immutable 36-source seed/daily ingestion.
+ // Immutable supplemental histories share the append-only overlay, never the original seed.
  const supplement='data/commodity-research/source-registry.json';
  if(fs.existsSync(supplement)){
   const extra=read(supplement);if(extra.schemaVersion!==1||extra.version!=='commodity-research-v1')throw Error('Unknown research commodity registry');
@@ -39,7 +48,14 @@ function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market
    const f=path.resolve(path.dirname(supplement),item.file);if(!f.startsWith(path.resolve(path.dirname(supplement))+path.sep))throw Error('Unsafe commodity source');
    const bytes=fs.readFileSync(f);if(sha(bytes)!==item.sha256)throw Error('Research source hash mismatch '+item.assetKey);
    const source=JSON.parse(bytes);for(const k of ['id','assetKey','provider','providerSymbol'])if(source[k]!==item[k])throw Error('Research source identity mismatch');
-   const file=`${item.assetKey}.${sha(bytes).slice(0,20)}.json`;if(!fs.existsSync(path.join(dir,file)))fs.writeFileSync(path.join(dir,file),bytes,{flag:'wx'});
+   const e=supplementalEntries().find(e=>e.logicalSymbol===item.assetKey),stored=loadSeries(root,e,path.join(root,'daily-ingestion'));
+   const results=ingestion.instruments.filter(r=>r.symbol===item.assetKey),failed=results.some(r=>r.failed);
+   source.bars=stored.rows;source.prices=stored.rows.filter(b=>b.date>=source.seasonalityFrom).map(b=>[b.date,b.close]);
+   source.dailySource=results.length?(results.at(-1).input||input):'Awaiting first validated daily JSON';
+   source.dailyStatus=failed?'daily-error':results.length?'daily-connected':'awaiting-daily';
+   source.overlaySource=`daily-ingestion/${item.assetKey}.json`;
+   source.reason='Research only / unsupported for validated ranking. Continuous roll gaps may affect seasonality; no contract-aware reconstruction.';
+   const body=JSON.stringify(source),file=`${item.assetKey}.${sha(body).slice(0,20)}.json`;if(!fs.existsSync(path.join(dir,file)))fs.writeFileSync(path.join(dir,file),body,{flag:'wx'});
    const {bars:_,htfBars:__,prices:___,rejected:____,...meta}=source;entries.push({...meta,file,count:source.prices.length,lastDate:source.prices.at(-1)?.[0]});
   }
  }

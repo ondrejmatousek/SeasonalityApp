@@ -25,29 +25,40 @@ function auditCompletion(b, observed, audit) {
   check(runs.length===1, 'completion audit collection timestamp mismatch');
   const run=runs[0], entries=run.entries.filter(x=>x.providerSymbol===b.providerSymbol && x.timestamp===b.timestamp);
   check(entries.length===1, 'completion audit bar missing/ambiguous');
-  const a=entries[0];
+  const raw=entries[0];
+  // Work's extension audit has selectedDate/completionMethod/sourceEvidence.
+  // The *_with_existing_validated_history method must NEVER authorize a new bar.
+  const a=raw.completionMethod ? {...raw,date:raw.selectedDate,method:raw.completionMethod,reason:raw.completionEvidence} : raw;
   check(a.symbol===b.symbol && a.date===b.date && a.completed===true && a.status==='ok' && !a.error && !a.errorType,
     'completion audit identity/date/status mismatch');
   check(a.method==='documented_session_and_bar_timestamp' && typeof a.reason==='string' && a.reason.length>20,
     'completion audit method/reason missing');
-  check(Array.isArray(a.sourceIds) && a.sourceIds.length>=2 && a.sourceIds.every(id=>run.sources?.some(s=>s.id===id && /^https:\/\//.test(s.url) && s.finding)),
+  const sources=raw.completionMethod ? (raw.sourceEvidence||[]).filter(s=>/^https:\/\//.test(s.url||'') && typeof s.finding==='string' && s.finding.length>0) : (a.sourceIds||[]).map(id=>run.sources?.find(s=>s.id===id));
+  check(sources.length>=2 && sources.every(s=>s && /^https:\/\//.test(s.url) && s.finding) && new Set(sources.map(s=>s.url)).size>=2,
     'completion audit documented session/calendar sources missing');
+  if(raw.completionMethod){
+    check(raw.provider===b.provider && (!b.id||raw.canonicalIdentity===b.id),'completion audit provider/canonical identity mismatch');
+    check(raw.rawResponse?.success===true && raw.rawResponse.symbol===b.providerSymbol && raw.rawResponse.interval==='1D','completion audit raw provider evidence missing');
+    const matches=raw.rawResponse.bars?.filter(x=>x.t===b.timestamp)||[];
+    check(matches.length===1 && ['open','high','low','close'].every(k=>matches[0][{open:'o',high:'h',low:'l',close:'c'}[k]]===b[k]),'completion audit raw OHLC mismatch');
+  }
   // Conservative acceptance window, NOT a fabricated provider time_close.
   const policy=b.providerSymbol==='NASDAQ:NDX'||b.providerSymbol==='SP:SPX'
     ? {zone:'America/New_York',time:'18:00:00'}
     : b.providerSymbol==='ICEEUR:BRN1!' ? {zone:'Europe/London',time:'23:00:00'}
-    : ['NYMEX:CL1!','NYMEX:NG1!','COMEX:HG1!'].includes(b.providerSymbol)
+    : ['NYMEX:CL1!','NYMEX:NG1!','COMEX:HG1!','CBOT:ZW1!','CBOT:ZS1!','CME:LE1!'].includes(b.providerSymbol)
       ? {zone:'America/Chicago',time:'17:00:00'} : null;
   check(policy && a.timezone===policy.zone, 'completion audit session not supported');
   const local=new Intl.DateTimeFormat('sv-SE',{timeZone:policy.zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date(observed));
   check(/^\d{4}-\d{2}-\d{2}$/.test(b.date||'') && local>=b.date+' '+policy.time, 'documented session completion window has not elapsed');
-  return {method:a.method,reason:a.reason,checkedAt:run.checkedAt,timezone:a.timezone,sources:a.sourceIds.map(id=>run.sources.find(s=>s.id===id))};
+  return {method:a.method,reason:a.reason,checkedAt:run.checkedAt,timezone:a.timezone,sources};
 }
 function validateBar(b, e, observed, now, knownCompletion=null, documentedCompletion=null) {
   check(b && typeof b==='object', 'invalid bar');
   if(b.status!==undefined)check(b.status==='ok','provider bar status not ok');
   check(b.symbol===e.logicalSymbol, 'unknown/logical symbol mismatch');
   for(const k of ['provider','providerSymbol','sourceIdentity']) check(b[k]===e[k], k+' mismatch / provider splice prohibited');
+  for(const k of ['id','canonicalIdentity'])if(b[k]!==undefined)check(b[k]===e.canonicalTestId,'canonical identity mismatch');
   check(b.timeframe==='1D', 'timeframe must be 1D');
   check(Number.isSafeInteger(b.timestamp) && Number.isFinite(new Date(b.timestamp*1000).getTime()), 'timestamp must be Unix seconds');
   check(b.timestamp*1000<=observed && b.timestamp*1000<=now, 'future bar timestamp');
@@ -86,29 +97,47 @@ function validateBar(b, e, observed, now, knownCompletion=null, documentedComple
   }
   if(b.date!==undefined) {
     check(typeof b.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(b.date) && isoDate(Date.parse(b.date))===b.date, 'invalid date label');
-    if(e.assetClass==='forex'||e.assetClass==='metal'||e.assetClass==='index')check(b.date===date, 'date label inconsistent with timestamp/session');
+    if(e.assetClass==='forex'||e.assetClass==='metal'||e.assetClass==='index'||e.historicalRoot)check(b.date===date, 'date label inconsistent with timestamp/session');
   }
   return {timestamp:b.timestamp,providerTimestamp:new Date(b.timestamp*1000).toISOString(),providerUtcDate:isoDate(b.timestamp*1000),date,
     open:b.open,high:b.high,low:b.low,close:b.close,dateLabel:label,
     completionEvidence:completion,...(documentedCompletion?{documentedCompletion}:{}),...(end!==null?{sessionEnd:new Date(end).toISOString()}:{} )};
 }
 function equal(a,b) { return ['open','high','low','close'].every(k=>a[k]===b[k]); }
+function historyFile(root,e) { return safeFile(e.historicalRoot||root,e.seasonalitySource); }
+function supplementalEntries(directory='data/commodity-research') {
+  if(!fs.existsSync(path.join(directory,'source-registry.json')))return [];
+  const registry=read(path.join(directory,'source-registry.json'));
+  check(registry.schemaVersion===1 && registry.version==='commodity-research-v1' && registry.entries.length===3,'unsupported commodity registry');
+  const expected={WHEAT:['CBOT','CBOT:ZW1!'],LIVECATTLE:['CME','CME:LE1!'],SOYBEANS:['CBOT','CBOT:ZS1!']};
+  const seen=new Set();
+  return registry.entries.map(item=>{
+    check(expected[item.assetKey] && !seen.has(item.assetKey),'unknown/duplicate commodity identity');seen.add(item.assetKey);
+    const bytes=fs.readFileSync(safeFile(directory,item.file));check(sha(bytes)===item.sha256,'commodity historical checksum mismatch');
+    const s=JSON.parse(bytes);
+    check(item.provider===expected[item.assetKey][0] && item.providerSymbol===expected[item.assetKey][1] && item.id===`commodity:${item.assetKey}:${item.providerSymbol}:tv-research:v1`,'commodity provider identity mismatch');
+    for(const k of ['id','assetKey','provider','providerSymbol'])check(item[k]===s[k],'commodity source identity mismatch');
+    check(s.sourceIdentity===item.provider+'_TRADINGVIEW_RESEARCH' && s.timeframe==='1D' && s.status==='research-only' && s.htfEnabled===false,'commodity research restrictions missing');
+    return {...s,canonicalTestId:s.id,seasonalitySource:item.file,historicalRoot:path.resolve(directory),historicalSha256:item.sha256,productionActive:false,bars:undefined,prices:undefined,htfBars:undefined};
+  });
+}
 function loadSeries(root,e,overlay) {
-  const historical=read(safeFile(root,e.seasonalitySource));
-  check(historical.id===e.canonicalTestId && historical.logicalSymbol===e.logicalSymbol && historical.activationAllowed===false, 'historical identity/activation mismatch');
+  const bytes=fs.readFileSync(historyFile(root,e)),historical=JSON.parse(bytes);
+  if(e.historicalSha256)check(sha(bytes)===e.historicalSha256,'commodity historical checksum mismatch');
+  check(historical.id===e.canonicalTestId && historical.logicalSymbol===e.logicalSymbol && (e.historicalRoot ? historical.status==='research-only' && historical.htfEnabled===false : historical.activationAllowed===false), 'historical identity/activation mismatch');
   for(const k of ['provider','providerSymbol','sourceIdentity'])check(historical[k]===e[k], 'historical '+k+' mismatch');
   const file=path.join(overlay,e.logicalSymbol+'.json');
   const daily=fs.existsSync(file)?read(file):null;
   if(daily) {
     check(daily.id===historical.id && daily.productionActive===false && daily.timeframe==='1D', 'daily identity/activation mismatch');
     for(const k of ['provider','providerSymbol','sourceIdentity'])check(daily[k]===e[k], 'daily '+k+' mismatch');
-    check(daily.historicalSha256===sha(fs.readFileSync(safeFile(root,e.seasonalitySource))), 'historical evidence changed since overlay creation');
+    check(daily.historicalSha256===sha(bytes), 'historical evidence changed since overlay creation');
   }
   const rows=[...historical.bars,...(daily?.bars||[])].sort((a,b)=>a.timestamp-b.timestamp);
   for(let i=1;i<rows.length;i++)check(rows[i].timestamp>rows[i-1].timestamp && rows[i].date!==rows[i-1].date, 'stored duplicate timestamp/date');
   return {historical,daily,file,rows};
 }
-function ingest({input='data/market-daily/latest.json',root='artifacts/tradingview-backfill-36-v1',includeReview=false,now=Date.now()}={}) {
+function ingest({input='data/market-daily/latest.json',root='artifacts/tradingview-backfill-36-v1',includeReview=false,now=Date.now(),supplement='data/commodity-research',researchOnly=false}={}) {
   root=path.resolve(root);
   const bytes=fs.readFileSync(input), payload=JSON.parse(bytes);
   check(payload.schemaVersion===1, 'unsupported schemaVersion');
@@ -126,6 +155,7 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
   check(registry.version==='tv-backfill-36-test-v1' && registry.productionRoutingChanged===false, 'unsupported/active registry');
   const entries=new Map(registry.entries.map(e=>[e.logicalSymbol,e]));
   check(entries.size===36, 'expected 36 unique identities');
+  for(const e of supplementalEntries(supplement)){check(!entries.has(e.logicalSymbol),'duplicate supplemental symbol');entries.set(e.logicalSymbol,e);}
   for(const e of entries.values())check(/^[A-Z0-9]+$/.test(e.logicalSymbol) && !e.productionActive, 'unsafe/active registry entry');
   const overlay=path.join(root,'daily-ingestion'), lock=path.join(overlay,'.lock');
   fs.mkdirSync(overlay,{recursive:true});
@@ -147,6 +177,7 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
       const r={symbol,received:inputBars.length,inserted:0,skipped:0,failed:0};report.instruments.push(r);
       try {
         const e=entries.get(symbol);check(e, 'symbol not in backfill registry');
+        if(researchOnly)check(e.historicalRoot,'extension accepts only the three supplemental research instruments');
         // Validate even disabled instruments; accepting them requires an explicit test-only switch.
         const stored=loadSeries(root,e,overlay), byTime=new Map(stored.rows.map(b=>[b.timestamp,b])), byDate=new Map(stored.rows.map(b=>[b.date,b.timestamp]));
         const normalized=inputBars.map(b=> {
@@ -156,7 +187,8 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
           const mapped={...b,symbol,provider,sourceIdentity:b.sourceIdentity===undefined?e.sourceIdentity:b.sourceIdentity};
           const documented=!b.sessionEnd && !byTime.has(b.timestamp) && !['forex','metal'].includes(e.assetClass)
             ? auditCompletion(b,observed,audit):null;
-          return validateBar(mapped,e,observed,now,byTime.get(b.timestamp),documented);
+          const known=byTime.get(b.timestamp);
+          return validateBar(mapped,e,observed,now,known && e.historicalRoot ? {...known,completionEvidence:known.completionEvidence||'Immutable accepted TradingView historical backfill; completed at capture'} : known,documented);
         });
         const seen=new Set();for(const b of normalized){check(!seen.has(b.timestamp),'duplicate timestamp in incoming instrument');seen.add(b.timestamp);}
         const enabled=e.status==='canonical-test-candidate';
@@ -175,7 +207,7 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
         if(additions.length) {
           const bars=[...(stored.daily?.bars||[]),...additions].sort((a,b)=>a.timestamp-b.timestamp);
           atomic(stored.file,{schemaVersion:1,id:e.canonicalTestId,logicalSymbol:symbol,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,timeframe:'1D',
-            productionActive:false,scope:'test/research only',historicalSource:e.seasonalitySource,historicalSha256:sha(fs.readFileSync(safeFile(root,e.seasonalitySource))),
+            productionActive:false,scope:'test/research only',historicalSource:e.seasonalitySource,historicalSha256:sha(fs.readFileSync(historyFile(root,e))),
             htfPolicy:symbol==='SPX'?'Do not consume historical close-only data; HTF range not activated':'No HTF rebuild/activation',bars});
           r.inserted=additions.length;
         }
@@ -192,7 +224,7 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
     return report;
   } finally { fs.rmdirSync(lock); }
 }
-module.exports={ingest,validateBar,loadSeries,auditCompletion};
+module.exports={ingest,validateBar,loadSeries,auditCompletion,supplementalEntries,historyFile};
 if(require.main===module) {
   try { const args=process.argv.slice(2),value=(key,fallback)=>args.find(x=>x.startsWith(key+'='))?.slice(key.length+1)||fallback;
     const report=ingest({input:value('--input','data/market-daily/latest.json'),root:value('--root','artifacts/tradingview-backfill-36-v1'),includeReview:args.includes('--include-review')});

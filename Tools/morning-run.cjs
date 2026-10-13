@@ -14,7 +14,8 @@ function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market
    failedSymbols:r.instruments.filter(a=>a.failed).map(a=>a.symbol),inputSha256:r.inputSha256};
   const gates=health.ingestionGate(r,JSON.parse(fs.readFileSync(path.join(root,'test-source-registry.json'))));
   h.warnings.push(...gates.warnings);h.errors.push(...gates.errors);if(gates.errors.length){h.market.status='failed';throw Error('Critical market ingestion failed');}
-  if(gates.warnings.length)h.market.status='warning';
+  if(r.extension?.error)h.warnings.push('Commodity extension: '+r.extension.error);
+  if(gates.warnings.length||r.extension?.error)h.market.status='warning';
   if(!safe){
    stage('stocks',()=>command('dotnet',['run','--project','SeasonalityApp.csproj','-c','Release','--no-build','--','--update-once','--stock-refresh-report','artifacts/stock-refresh/latest.json']));
    const audit=JSON.parse(fs.readFileSync('artifacts/stock-refresh/latest.json'));h.stocks={...h.stocks,refresh:audit};

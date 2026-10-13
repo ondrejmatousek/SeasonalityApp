@@ -7,7 +7,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const targ
  for(const [key,symbol]of [['WHEAT','CBOT:ZW1!'],['LIVECATTLE','CME:LE1!'],['SOYBEANS','CBOT:ZS1!']]){
   await page.locator('#seasonality-asset-search').fill(key);await page.locator(`button.seasonality-asset-suggestion[data-asset-key="${key}"]`).click();
   await page.waitForFunction(expected=>document.querySelector('#seasonality-source-note')?.textContent.includes(expected)&&!document.querySelector('.seasonality-page').classList.contains('is-loading'),symbol);
-  assert.equal(await page.locator('#seasonality-source-note').isVisible(),true);assert.match(await page.locator('#seasonality-source-note').textContent(),/Research only.*denní aktualizace zatím není zapojená/s);
+  assert.equal(await page.locator('#seasonality-source-note').isVisible(),true);assert.match(await page.locator('#seasonality-source-note').textContent(),/Research only.*(?:denní aktualizace zatím není zapojená|Denní ingestion je připravená|Denní aktualizace z TradingView JSON je zapojená|Denní aktualizace selhala)/s);
   const result=await page.evaluate(k=>window.StaticMarketData.prices(k),key),rows=result.prices;assert.ok(rows.length>10000);assert.ok(rows.every(b=>Number.isFinite(b.close)));
   await page.locator('#seasonality-years').selectOption('all');await page.waitForTimeout(100);
   assert.ok(await page.locator('#seasonality-canvas').evaluate(c=>c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(v=>v!==0)),'Commodity seasonal curve is drawn');

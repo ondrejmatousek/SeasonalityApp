@@ -420,7 +420,10 @@
         if(!sourceNote){sourceNote=document.createElement('p');sourceNote.id='seasonality-source-note';sourceNote.className='seasonality-source-note';document.getElementById('seasonality-sync-status').after(sourceNote);}
         const source=window.StaticMarketData?.priceSource?.(activeAsset?.key);
         sourceNote.hidden=source?.sourceIdentity?.endsWith('_TRADINGVIEW_RESEARCH')!==true;
-        if(!sourceNote.hidden)sourceNote.textContent=`TradingView · ${source.providerSymbol} · continuous futures · Research only. Poslední bar ${source.lastDate||'—'}. Jednorázová historie; denní aktualizace zatím není zapojená. Rollování kontraktů může ovlivnit sezonní výnosy. Nejde o ověřený core ranking.`;
+        if(!sourceNote.hidden){
+            const daily=source.dailyStatus==='daily-connected'?'Denní aktualizace z TradingView JSON je zapojená.':source.dailyStatus==='daily-error'?'Denní aktualizace selhala; ponechána poslední platná historie.':source.dailyStatus==='awaiting-daily'?'Denní ingestion je připravená; čeká na první validovaný JSON.':'Jednorázová historie; denní aktualizace zatím není zapojená.';
+            sourceNote.textContent=`TradingView · ${source.providerSymbol} · continuous futures · Research only. Poslední bar ${source.lastDate||'—'}. ${daily} Rollování kontraktů může ovlivnit sezonní výnosy. Nejde o ověřený core ranking.`;
+        }
         if (!points.length) {
             ctx.fillStyle = '#8794a4';
             ctx.font = '14px sans-serif';
