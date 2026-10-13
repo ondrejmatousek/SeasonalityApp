@@ -1,0 +1,1213 @@
+{
+  "schemaVersion": 1,
+  "runDate": "2026-10-13",
+  "timezone": "Europe/Prague",
+  "runs": [
+    {
+      "runType": "manual",
+      "checkedAt": "2026-10-13T05:31:41.620Z",
+      "runDate": "2026-10-13",
+      "timezone": "Europe/Prague",
+      "targetBranch": "master",
+      "targetArchive": "data/market-daily/2026-10-13.json",
+      "successful": 36,
+      "failed": 0,
+      "originalPricesAndIdentitiesUnchanged": true,
+      "verificationPolicy": "completed is independent of availability of exact sessionEnd; sources support session/date-based inference; no synthetic bars or price changes.",
+      "sources": [
+        {
+          "id": "oanda-hours",
+          "url": "https://www.oanda.com/uk-en/trading/hours-of-operation/",
+          "finding": "FX and USD gold/silver daily availability in New York; daily break and NZD exception."
+        },
+        {
+          "id": "oanda-daily-alignment",
+          "url": "https://developer.oanda.com/rest-live-v20/pricing-ep/",
+          "finding": "Provider D1-aligned candle default: dailyAlignment 17, America/New_York. The actual TradingView start timestamps corroborate this alignment; API settings alone are not treated as TradingView metadata."
+        },
+        {
+          "id": "oanda-calendar",
+          "url": "https://www.oanda.com/uk-en/trading/holiday-trading-hours/",
+          "finding": "Reviewed provider holiday notices. No exact TradingView D1 time_close or date-specific exact boundary was obtained, so sessionEnd remains null."
+        },
+        {
+          "id": "ndx-methodology",
+          "url": "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
+          "finding": "Calculation/distribution for NDX until 17:16 ET, including correction window. Completion can be checked after this window, without substituting distribution time for time_close."
+        },
+        {
+          "id": "nasdaq-calendar",
+          "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+          "finding": "2026 holidays/early closes and regular 09:30–16:00 ET cash session; October 12 is not a closure/early close."
+        },
+        {
+          "id": "sp-methodology",
+          "url": "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+          "finding": "SPX follows the U.S. equity trading calendar."
+        },
+        {
+          "id": "nyse-calendar",
+          "url": "https://www.nyse.com/trade/hours-calendars",
+          "finding": "2026 holidays/early closes and core cash equity session to 16:00 ET; no October 12 exception."
+        },
+        {
+          "id": "ice-spec",
+          "url": "https://www.ice.com/products/219/Brent-Crude-Futures",
+          "finding": "BRN regular session to 23:00 London; Monday opens Sunday 23:00 London."
+        },
+        {
+          "id": "ice-calendar",
+          "url": "https://www.ice.com/publicdocs/Trading_Schedule.pdf",
+          "finding": "2026 oil holiday schedule: no October 12 shortened-session exception."
+        },
+        {
+          "id": "cl-hours",
+          "url": "https://www.cmegroup.com/education/courses/event-contracts-underlying-markets/wti-overview",
+          "finding": "CL regular Globex daily session 17:00–16:00 America/Chicago."
+        },
+        {
+          "id": "ng-hours",
+          "url": "https://www.cmegroup.com/cn-s/markets/energy/natural-gas/natural-gas.contractSpecs.html",
+          "finding": "NG regular Globex daily session 17:00–16:00 America/Chicago."
+        },
+        {
+          "id": "hg-hours",
+          "url": "https://www.cmegroup.com/cn-s/markets/metals/base/copper.contractSpecs.html",
+          "finding": "HG regular Globex daily session 17:00–16:00 America/Chicago."
+        },
+        {
+          "id": "cme-calendar",
+          "url": "https://www.cmegroup.com/trading-hours.html",
+          "finding": "Calendar distinguishes Globex trading and settlement; reviewed Columbus Day links."
+        },
+        {
+          "id": "cme-columbus",
+          "url": "https://www.cmegroup.com/tools-information/holiday-calendar/files/2026/2026-columbus-day-clearing-advisory.pdf",
+          "finding": "October 12 is a processing holiday with normal end-of-day cycle. Used as calendar context only, never as a sessionEnd."
+        }
+      ],
+      "entries": [
+        {
+          "providerSymbol": "OANDA:EURUSD",
+          "symbol": "EURUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:GBPUSD",
+          "symbol": "GBPUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:USDJPY",
+          "symbol": "USDJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:USDCHF",
+          "symbol": "USDCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:AUDUSD",
+          "symbol": "AUDUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:NZDUSD",
+          "symbol": "NZDUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:USDCAD",
+          "symbol": "USDCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:EURGBP",
+          "symbol": "EURGBP",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:EURJPY",
+          "symbol": "EURJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:EURCHF",
+          "symbol": "EURCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:EURAUD",
+          "symbol": "EURAUD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:EURCAD",
+          "symbol": "EURCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:EURNZD",
+          "symbol": "EURNZD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:GBPJPY",
+          "symbol": "GBPJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:GBPCHF",
+          "symbol": "GBPCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:GBPAUD",
+          "symbol": "GBPAUD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:GBPCAD",
+          "symbol": "GBPCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:GBPNZD",
+          "symbol": "GBPNZD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:AUDJPY",
+          "symbol": "AUDJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:AUDNZD",
+          "symbol": "AUDNZD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:AUDCAD",
+          "symbol": "AUDCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:AUDCHF",
+          "symbol": "AUDCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:NZDJPY",
+          "symbol": "NZDJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:NZDCAD",
+          "symbol": "NZDCAD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:NZDCHF",
+          "symbol": "NZDCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:CADJPY",
+          "symbol": "CADJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:CADCHF",
+          "symbol": "CADCHF",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:CHFJPY",
+          "symbol": "CHFJPY",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:XAUUSD",
+          "symbol": "XAUUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "OANDA:XAGUSD",
+          "symbol": "XAGUSD",
+          "date": "2026-10-12",
+          "timestamp": 1791752400,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "oanda-hours",
+            "oanda-daily-alignment",
+            "oanda-calendar"
+          ],
+          "reason": "Completion inferred from provider daily alignment and per-symbol D1 timestamps matching NY17, provider daily closing/break window and elapsed trading date; later active-session bar corroborates it. Exact TradingView time_close is unavailable, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791838800,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "NASDAQ:NDX",
+          "symbol": "NASDAQ100",
+          "date": "2026-10-12",
+          "timestamp": 1791811800,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "ndx-methodology",
+            "nasdaq-calendar"
+          ],
+          "reason": "D1 timestamp maps to 09:30 New York on a regular U.S. trading date. Collection is after both cash close and the documented NDX dissemination/correction window. The feed's exact time_close is not asserted.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "SP:SPX",
+          "symbol": "SP500",
+          "date": "2026-10-12",
+          "timestamp": 1791811800,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": "2026-10-12T20:00:00Z",
+          "error": null,
+          "errorType": null,
+          "timezone": "America/New_York",
+          "utcOffset": "-04:00",
+          "sourceIds": [
+            "sp-methodology",
+            "nyse-calendar",
+            "nasdaq-calendar"
+          ],
+          "reason": "U.S. cash index regular session has ended; official calendar has no date exception.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": null
+        },
+        {
+          "providerSymbol": "NYMEX:CL1!",
+          "symbol": "WTI",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/Chicago",
+          "utcOffset": "-05:00",
+          "sourceIds": [
+            "cl-hours",
+            "cme-calendar",
+            "cme-columbus"
+          ],
+          "reason": "Timestamp matches underlying Globex session opening 17:00 Chicago previous evening; regular daily session is over at collection time and a new active trading-date bar corroborates turnover. Columbus Day normal EOD processing is calendar context. Exact holiday/feed time_close not established, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791842400,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "ICEEUR:BRN1!",
+          "symbol": "BRENT",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": "2026-10-12T22:00:00Z",
+          "error": null,
+          "errorType": null,
+          "timezone": "Europe/London",
+          "utcOffset": "+01:00",
+          "sourceIds": [
+            "ice-spec",
+            "ice-calendar"
+          ],
+          "reason": "Brent underlying daily session and calendar are documented; London 23:00 BST = 22:00 UTC.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791849600,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": null
+        },
+        {
+          "providerSymbol": "NYMEX:NG1!",
+          "symbol": "NATURALGAS",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/Chicago",
+          "utcOffset": "-05:00",
+          "sourceIds": [
+            "ng-hours",
+            "cme-calendar",
+            "cme-columbus"
+          ],
+          "reason": "Timestamp matches underlying Globex session opening 17:00 Chicago previous evening; regular daily session is over at collection time and a new active trading-date bar corroborates turnover. Columbus Day normal EOD processing is calendar context. Exact holiday/feed time_close not established, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791842400,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        },
+        {
+          "providerSymbol": "COMEX:HG1!",
+          "symbol": "COPPER",
+          "date": "2026-10-12",
+          "timestamp": 1791756000,
+          "status": "ok",
+          "completed": true,
+          "sessionEnd": null,
+          "error": null,
+          "errorType": null,
+          "timezone": "America/Chicago",
+          "utcOffset": "-05:00",
+          "sourceIds": [
+            "hg-hours",
+            "cme-calendar",
+            "cme-columbus"
+          ],
+          "reason": "Timestamp matches underlying Globex session opening 17:00 Chicago previous evening; regular daily session is over at collection time and a new active trading-date bar corroborates turnover. Columbus Day normal EOD processing is calendar context. Exact holiday/feed time_close not established, so sessionEnd is null.",
+          "method": "documented_session_and_bar_timestamp",
+          "inference": true,
+          "rejectedCandidates": [
+            {
+              "timestamp": 1791842400,
+              "date": "2026-10-13",
+              "errorType": "actual_open_session",
+              "reason": "Documented session/completion window has not ended at collection time."
+            }
+          ],
+          "mcpCloseMetadataAvailable": false,
+          "sessionEndNullReason": "Exact time_close is not verified; completion is separately verified."
+        }
+      ],
+      "writeVerification": {
+        "status": "ok",
+        "branch": "master",
+        "verifiedAt": "2026-10-13T05:32:23.530Z",
+        "archiveCommit": "2e51c18b0bf76f85c0bacf81baf070b48b9d4d10",
+        "latestCommit": "acc0ef4319067a55d14a82eda2c00bceb32765c0",
+        "archiveLatestIdentical": true,
+        "files": [
+          {
+            "path": "data/market-daily/2026-10-13.json",
+            "verified": true,
+            "sha": "54bc0aa6f6efef9e5febca044323bde974995ac5"
+          },
+          {
+            "path": "data/market-daily/latest.json",
+            "verified": true,
+            "sha": "54bc0aa6f6efef9e5febca044323bde974995ac5"
+          }
+        ]
+      }
+    }
+  ]
+}
