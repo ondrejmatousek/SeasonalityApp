@@ -416,6 +416,11 @@
         document.querySelector('#seasonality-subtitle').textContent = missingPrices
             ? 'Pro toto aktivum nejsou v Azure SQL uloženy ceny.'
             : `${byYear.size} z ${selected.size} vybraných let${interval?' · pouze dokončená období':''} · index 100 = začátek roku`;
+        let sourceNote=document.getElementById('seasonality-source-note');
+        if(!sourceNote){sourceNote=document.createElement('p');sourceNote.id='seasonality-source-note';sourceNote.className='seasonality-source-note';document.getElementById('seasonality-sync-status').after(sourceNote);}
+        const source=window.StaticMarketData?.priceSource?.(activeAsset?.key);
+        sourceNote.hidden=source?.sourceIdentity?.endsWith('_TRADINGVIEW_RESEARCH')!==true;
+        if(!sourceNote.hidden)sourceNote.textContent=`TradingView · ${source.providerSymbol} · continuous futures · Research only. Poslední bar ${source.lastDate||'—'}. Jednorázová historie; denní aktualizace zatím není zapojená. Rollování kontraktů může ovlivnit sezonní výnosy. Nejde o ověřený core ranking.`;
         if (!points.length) {
             ctx.fillStyle = '#8794a4';
             ctx.font = '14px sans-serif';

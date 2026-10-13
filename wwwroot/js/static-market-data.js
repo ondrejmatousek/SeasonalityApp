@@ -32,6 +32,7 @@
     }
     return {
         exportedAt: manifest.exportedAt,
+        priceSource(key) { return assetFor(key)?.priceSource || null; },
         async htf() {
             if (!manifest.htfConfluence) throw new Error('HTF snapshot zatím není k dispozici');
             const payload = await read(manifest.htfConfluence.path);

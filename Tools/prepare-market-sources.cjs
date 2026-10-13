@@ -30,6 +30,19 @@ function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market
    const {bars:_,htfBars:__,prices:___,...meta}=source;entries.push({...meta,file,count:bars.length,lastDate:bars.at(-1)?.date});
   }catch(err){entries.push({assetKey:appKey(e.logicalSymbol),logicalSymbol:e.logicalSymbol,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,id:e.canonicalTestId,status:'unavailable',error:err.message,count:0});}
  }
+ // Supplemental histories stay separate from the immutable 36-source seed/daily ingestion.
+ const supplement='data/commodity-research/source-registry.json';
+ if(fs.existsSync(supplement)){
+  const extra=read(supplement);if(extra.schemaVersion!==1||extra.version!=='commodity-research-v1')throw Error('Unknown research commodity registry');
+  for(const item of extra.entries){
+   if(entries.some(e=>e.assetKey===item.assetKey))throw Error('Duplicate market source '+item.assetKey);
+   const f=path.resolve(path.dirname(supplement),item.file);if(!f.startsWith(path.resolve(path.dirname(supplement))+path.sep))throw Error('Unsafe commodity source');
+   const bytes=fs.readFileSync(f);if(sha(bytes)!==item.sha256)throw Error('Research source hash mismatch '+item.assetKey);
+   const source=JSON.parse(bytes);for(const k of ['id','assetKey','provider','providerSymbol'])if(source[k]!==item[k])throw Error('Research source identity mismatch');
+   const file=`${item.assetKey}.${sha(bytes).slice(0,20)}.json`;if(!fs.existsSync(path.join(dir,file)))fs.writeFileSync(path.join(dir,file),bytes,{flag:'wx'});
+   const {bars:_,htfBars:__,prices:___,rejected:____,...meta}=source;entries.push({...meta,file,count:source.prices.length,lastDate:source.prices.at(-1)?.[0]});
+  }
+ }
  const bundle={schemaVersion:1,version:'asset-class-price-routing-v1',builtAt:new Date().toISOString(),ingestion,entries};
  const temp=path.join(dir,'manifest.'+crypto.randomUUID()+'.tmp');fs.writeFileSync(temp,JSON.stringify(bundle,null,2));fs.renameSync(temp,path.join(dir,'manifest.json'));
  return {bundlePath:path.join(dir,'manifest.json'),...bundle};

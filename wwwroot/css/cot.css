@@ -311,6 +311,7 @@
 .cot-analogs details { margin-top:12px; font-size:.8rem; }
 .cot-analogs .cot-analog-caution { color:#e9ba79; }
 .cot-analysis a { color:#24dfcf; }
+.seasonality-source-note { font-size:12px;line-height:1.5;color:#eab768;border-left:2px solid #eab768;padding:6px 10px;margin:8px 0; }
 .cot-analysis table { border-collapse:collapse; font-size:.75rem; width:100%; }
 .cot-analysis th,.cot-analysis td { text-align:right; padding:.55rem; white-space:nowrap; border-bottom:1px solid #ffffff12; }
 .cot-analysis th:first-child,.cot-analysis td:first-child { text-align:left; }

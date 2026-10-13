@@ -3,7 +3,7 @@ const dir=path.resolve(process.argv[2]),feedDir=path.resolve(process.argv[3]),re
 const manifest=read(path.join(dir,'data/manifest.json')),opps=read(path.join(dir,manifest.opportunities.path.slice(1))),asOf=opps.asOf,prices={},assets=[];
 const bundlePath=process.argv[4]?path.resolve(process.argv[4]):null;
 const bundle=bundlePath?read(bundlePath):null;
-for(const a of opps.assets.filter(a=>a.mapping.scope==='core'||a.mapping.priceSource?.id)){
+for(const a of opps.assets.filter(a=>a.mapping.scope==='core'||a.mapping.priceSource?.id&&a.mapping.priceSource.htfEnabled!==false)){
     const key=a.mapping.priceKey;if(!prices[key]){
         try{
             const source=a.mapping.priceSource;

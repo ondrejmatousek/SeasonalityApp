@@ -63,6 +63,8 @@ function checkOutputs(dir,h,now=new Date()){
   if(!p||p.status!=='ready'){h.htf.status='failed';h.errors.push('Core HTF failed '+a.key+': '+(p?.error||'missing output'));}
  }
  for(const [key,p]of Object.entries(htf.prices))if(p.status!=='ready'&&!op.assets.some(a=>a.key===key&&a.mapping.scope==='core'))h.warnings.push('Research HTF '+key+': '+p.error);
+ const historicalOnly=m.assets.filter(a=>a.priceSource?.dailyStatus==='historical-only').map(a=>a.key);
+ if(historicalOnly.length)h.warnings.push('Research history only; daily refresh not configured: '+historicalOnly.join(', '));
  h.seasonalityCandidates=op.assets.reduce((n,a)=>n+a.candidates.length,0);h.screenerRows=h.seasonalityCandidates;
  h.htfZones=Object.values(htf.prices).reduce((n,p)=>n+p.zones.length,0);
  const dates=Object.values(m.contracts).map(c=>c.lastDate).filter(Boolean).sort();

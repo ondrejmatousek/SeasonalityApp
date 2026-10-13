@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "version": "commodity-research-v1",
+  "entries": [
+    {
+      "assetKey": "WHEAT",
+      "file": "validated/WHEAT.json",
+      "sha256": "f65685fcbeec2e45375cededefe7c7fbc685904689f5cc1c6e46b24ff0d3891b",
+      "provider": "CBOT",
+      "providerSymbol": "CBOT:ZW1!",
+      "id": "commodity:WHEAT:CBOT:ZW1!:tv-research:v1",
+      "status": "research-only"
+    },
+    {
+      "assetKey": "LIVECATTLE",
+      "file": "validated/LIVECATTLE.json",
+      "sha256": "f8d3bb7a081a031f308f4a3111ff9ea465f745e66d4a04ac82912262dcde860d",
+      "provider": "CME",
+      "providerSymbol": "CME:LE1!",
+      "id": "commodity:LIVECATTLE:CME:LE1!:tv-research:v1",
+      "status": "research-only"
+    },
+    {
+      "assetKey": "SOYBEANS",
+      "file": "validated/SOYBEANS.json",
+      "sha256": "b242ebaf503611db92950f635e800becebbecaa40da67d0164ff86024861cc93",
+      "provider": "CBOT",
+      "providerSymbol": "CBOT:ZS1!",
+      "id": "commodity:SOYBEANS:CBOT:ZS1!:tv-research:v1",
+      "status": "research-only"
+    }
+  ]
+}

@@ -48,6 +48,7 @@ jobs:
           dotnet build SeasonalityApp.slnx --configuration Release
           dotnet run --project Tools/CotChecks/CotChecks.csproj --configuration Release
           node Tools/morning-health-checks.cjs
+          node Tools/commodity-research-checks.cjs
           node Tools/market-daily-ingest-checks.cjs
           node Tools/core-market-checks.cjs
           node Tools/opportunity-ranking-checks.cjs
