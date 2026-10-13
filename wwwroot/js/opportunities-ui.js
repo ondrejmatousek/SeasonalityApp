@@ -283,6 +283,10 @@
         for(const d of [c.startDay,c.endDay]){add('line',{x1:x(d),x2:x(d),y1:top,y2:bottom,stroke:'#c5e5e2','stroke-dasharray':'4 4'});add('circle',{cx:x(d),cy:y(values[d]),r:4,fill:'#24dfcf',stroke:'#0b0f11','stroke-width':2});}
         const months=['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
         months.forEach((m,i)=>{const d=(Date.UTC(2001,i,1)-Date.UTC(2001,0,1))/86400000;add('text',{x:x(d),y:325,fill:'#9ba8b7','font-size':12},m);});
+        const today=window.MarketChartUi.todayPosition(),todayX=x(today.day),labelX=Math.max(plot.left,Math.min(todayX-21,plot.right-42));
+        add('line',{'data-chart-today':today.date,x1:todayX,x2:todayX,y1:top,y2:bottom,stroke:'#f59e0b','stroke-width':1,'stroke-dasharray':'6 3 1 3','pointer-events':'none'});
+        add('rect',{x:labelX,y:top-21,width:42,height:17,fill:'#332415','pointer-events':'none'});
+        add('text',{x:labelX+21,y:top-9,'text-anchor':'middle',fill:'#fbbf24','font-size':10,'font-weight':'bold','pointer-events':'none'},'DNES');
         const guide=add('line',{'data-chart-hover':'guide',x1:0,x2:0,y1:top,y2:bottom,stroke:'#ffffff80','stroke-dasharray':'4 4',visibility:'hidden','pointer-events':'none'});
         const marker=add('circle',{'data-chart-hover':'marker',cx:0,cy:0,r:5,fill:'#24dfcf',stroke:'#15191c','stroke-width':2,visibility:'hidden','pointer-events':'none'});
         const preview=add('rect',{'data-chart-interval':'preview',x:0,y:top,width:0,height:bottom-top,fill:'#24dfcf',opacity:'.18',visibility:'hidden','pointer-events':'none'});

@@ -503,6 +503,8 @@
 
         // Reuse the plotted values and geometry; moving the pointer must not
         // recompute seasonality or repaint the full chart and statistics.
+        const today=window.MarketChartUi.drawTodayMarker(ctx,{xFor,top:pad,bottom,left:plot.left,right:plot.right});
+        canvas.dataset.todayDate=today.date;canvas.dataset.todayDay=today.day;
         hoverPlot = { points, width, top: pad, bottom, left: plot.left, right: plot.right, xFor, yFor };
         updateStats(points, interval ? selectedIntervalStats : yearStats, interval ? selectedIntervalStats.length : selected.size);
     }
