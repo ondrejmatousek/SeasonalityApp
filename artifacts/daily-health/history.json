@@ -3,17 +3,17 @@
   "runs": [
     {
       "schemaVersion": 1,
-      "status": "ok",
+      "status": "warning",
       "runDate": "2026-10-13",
-      "runStartedAt": "2026-10-13T05:43:43.409Z",
-      "runFinishedAt": "2026-10-13T05:56:51.808Z",
-      "sourceCommit": "d44c79434e6115aa478f909a9f515eff1c7d87b1",
+      "runStartedAt": "2026-10-13T11:25:24.619Z",
+      "runFinishedAt": "2026-10-13T11:39:22.802Z",
+      "sourceCommit": "e017df93252aa29afb81ef283a900f358ed0649b",
       "marketDailyFetchedAt": "2026-10-13T05:31:41.620Z",
       "market": {
         "status": "ok",
         "received": 36,
-        "inserted": 36,
-        "duplicates": 0,
+        "inserted": 0,
+        "duplicates": 36,
         "failed": 0,
         "failedSymbols": [],
         "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c"
@@ -21,8 +21,8 @@
       "stocks": {
         "status": "ok",
         "refresh": {
-          "startedAt": "2026-10-13T05:44:42.9399712+00:00",
-          "finishedAt": "2026-10-13T05:54:24.9034625+00:00",
+          "startedAt": "2026-10-13T11:26:13.8737404+00:00",
+          "finishedAt": "2026-10-13T11:36:37.9423085+00:00",
           "attempted": 457,
           "yahooSucceeded": [
             "DBC",
@@ -488,7 +488,7 @@
           "fallbackSucceeded": [],
           "failedSymbols": []
         },
-        "snapshotAt": "2026-10-13T05:55:47.704Z",
+        "snapshotAt": "2026-10-13T11:37:57.336Z",
         "lastBarDate": "2026-10-12"
       },
       "cot": {
@@ -508,9 +508,9 @@
       "staticExport": {
         "status": "ok"
       },
-      "seasonalityCandidates": 113,
+      "seasonalityCandidates": 118,
       "htfZones": 116,
-      "screenerRows": 113,
+      "screenerRows": 118,
       "instrumentChecks": [
         {
           "symbol": "AAPL",
@@ -578,13 +578,15 @@
           "status": "research/review"
         }
       ],
-      "warnings": [],
+      "warnings": [
+        "Research history only; daily refresh not configured: WHEAT, SOYBEANS, LIVECATTLE"
+      ],
       "errors": [],
       "published": true,
       "mode": "live",
       "eligibleForPublication": true,
-      "durationSeconds": 788,
-      "staleAfter": "2026-10-14T17:56:51.808Z",
+      "durationSeconds": 838,
+      "staleAfter": "2026-10-14T23:39:22.802Z",
       "publication": "Generated files prepared for commit; hosting remains separate"
     },
     {
