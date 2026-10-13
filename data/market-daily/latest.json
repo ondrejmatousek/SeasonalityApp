@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "timeframe": "1D",
-  "fetchedAt": "2026-10-13T01:01:12.952Z",
+  "fetchedAt": "2026-10-13T05:31:41.620Z",
   "bars": [
     {
+      "assetClass": "fx",
       "symbol": "EURUSD",
       "providerSymbol": "OANDA:EURUSD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.11872,
@@ -15,16 +15,15 @@
       "low": 1.11526,
       "close": 1.11555,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:EURUSD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "GBPUSD",
       "providerSymbol": "OANDA:GBPUSD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.32311,
@@ -32,16 +31,15 @@
       "low": 1.32017,
       "close": 1.32082,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:GBPUSD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "USDJPY",
       "providerSymbol": "OANDA:USDJPY",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 158.26,
@@ -49,16 +47,15 @@
       "low": 158.078,
       "close": 158.642,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:USDJPY v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "USDCHF",
       "providerSymbol": "OANDA:USDCHF",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.8301,
@@ -66,16 +63,15 @@
       "low": 0.82929,
       "close": 0.83472,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:USDCHF v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "AUDUSD",
       "providerSymbol": "OANDA:AUDUSD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.69704,
@@ -83,16 +79,15 @@
       "low": 0.69552,
       "close": 0.6959,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:AUDUSD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "NZDUSD",
       "providerSymbol": "OANDA:NZDUSD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.56101,
@@ -100,16 +95,15 @@
       "low": 0.55831,
       "close": 0.5587,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:NZDUSD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "USDCAD",
       "providerSymbol": "OANDA:USDCAD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.42754,
@@ -117,16 +111,15 @@
       "low": 1.42402,
       "close": 1.42824,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:USDCAD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "EURGBP",
       "providerSymbol": "OANDA:EURGBP",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.84546,
@@ -134,16 +127,15 @@
       "low": 0.84454,
       "close": 0.8446,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:EURGBP v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "EURJPY",
       "providerSymbol": "OANDA:EURJPY",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 177.063,
@@ -151,16 +143,15 @@
       "low": 176.935,
       "close": 176.969,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:EURJPY v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "EURCHF",
       "providerSymbol": "OANDA:EURCHF",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.92904,
@@ -168,16 +159,15 @@
       "low": 0.9289,
       "close": 0.93114,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:EURCHF v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "EURAUD",
       "providerSymbol": "OANDA:EURAUD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.6049,
@@ -185,16 +175,15 @@
       "low": 1.6021,
       "close": 1.60295,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:EURAUD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "EURCAD",
       "providerSymbol": "OANDA:EURCAD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.59701,
@@ -202,16 +191,15 @@
       "low": 1.59294,
       "close": 1.5931,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:EURCAD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "EURNZD",
       "providerSymbol": "OANDA:EURNZD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.99412,
@@ -219,16 +207,15 @@
       "low": 1.99312,
       "close": 1.99664,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:EURNZD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "GBPJPY",
       "providerSymbol": "OANDA:GBPJPY",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 209.395,
@@ -236,16 +223,15 @@
       "low": 209.294,
       "close": 209.538,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:GBPJPY v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "GBPCHF",
       "providerSymbol": "OANDA:GBPCHF",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.09869,
@@ -253,16 +239,15 @@
       "low": 1.09756,
       "close": 1.10254,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:GBPCHF v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "GBPAUD",
       "providerSymbol": "OANDA:GBPAUD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.89815,
@@ -270,16 +255,15 @@
       "low": 1.89409,
       "close": 1.898,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:GBPAUD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "GBPCAD",
       "providerSymbol": "OANDA:GBPCAD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.88879,
@@ -287,16 +271,15 @@
       "low": 1.88548,
       "close": 1.88633,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:GBPCAD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "GBPNZD",
       "providerSymbol": "OANDA:GBPNZD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 2.35844,
@@ -304,16 +287,15 @@
       "low": 2.35706,
       "close": 2.36413,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:GBPNZD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "AUDJPY",
       "providerSymbol": "OANDA:AUDJPY",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 110.316,
@@ -321,16 +303,15 @@
       "low": 110.301,
       "close": 110.401,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:AUDJPY v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "AUDNZD",
       "providerSymbol": "OANDA:AUDNZD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 1.2425,
@@ -338,16 +319,15 @@
       "low": 1.24176,
       "close": 1.24546,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:AUDNZD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "AUDCAD",
       "providerSymbol": "OANDA:AUDCAD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.99506,
@@ -355,16 +335,15 @@
       "low": 0.99328,
       "close": 0.99384,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:AUDCAD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "AUDCHF",
       "providerSymbol": "OANDA:AUDCHF",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.57871,
@@ -372,16 +351,15 @@
       "low": 0.57862,
       "close": 0.58088,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:AUDCHF v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "NZDJPY",
       "providerSymbol": "OANDA:NZDJPY",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 88.79,
@@ -389,16 +367,15 @@
       "low": 88.586,
       "close": 88.646,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:NZDJPY v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "NZDCAD",
       "providerSymbol": "OANDA:NZDCAD",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.80086,
@@ -406,16 +383,15 @@
       "low": 0.79736,
       "close": 0.79796,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:NZDCAD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "NZDCHF",
       "providerSymbol": "OANDA:NZDCHF",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.46586,
@@ -423,16 +399,15 @@
       "low": 0.46487,
       "close": 0.46638,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:NZDCHF v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "CADJPY",
       "providerSymbol": "OANDA:CADJPY",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 110.863,
@@ -440,16 +415,15 @@
       "low": 110.814,
       "close": 111.082,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:CADJPY v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "CADCHF",
       "providerSymbol": "OANDA:CADCHF",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 0.58164,
@@ -457,16 +431,15 @@
       "low": 0.58133,
       "close": 0.58447,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:CADCHF v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "fx",
       "symbol": "CHFJPY",
       "providerSymbol": "OANDA:CHFJPY",
       "provider": "OANDA",
-      "assetClass": "fx",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 190.698,
@@ -474,16 +447,15 @@
       "low": 190.033,
       "close": 190.058,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:CHFJPY v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "metals",
       "symbol": "XAUUSD",
       "providerSymbol": "OANDA:XAUUSD",
       "provider": "OANDA",
-      "assetClass": "metals",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 4189.585,
@@ -491,16 +463,15 @@
       "low": 4154.725,
       "close": 4171.65,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:XAUUSD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "metals",
       "symbol": "XAGUSD",
       "providerSymbol": "OANDA:XAGUSD",
       "provider": "OANDA",
-      "assetClass": "metals",
       "date": "2026-10-12",
       "timestamp": 1791752400,
       "open": 60.9285,
@@ -508,15 +479,14 @@
       "low": 60.1365,
       "close": 60.321,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec D1 baru ani identifikátor session. OANDA dokládá konec obchodování 16:59 NY, ale nikoli přesnou hranici agregace OANDA:XAGUSD v TradingView (16:59 vs 17:00) a konkrétní výjimky tohoto feedu k 2026-10-12. Čas není odhadnut."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "index",
       "symbol": "NASDAQ100",
       "providerSymbol": "NASDAQ:NDX",
-      "assetClass": "index",
       "provider": "NASDAQ",
       "date": "2026-10-12",
       "timestamp": 1791811800,
@@ -525,15 +495,14 @@
       "low": 30618.645,
       "close": 30664.6967,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP uvádí regular-session OHLC bez time_close/session metadat. Akciová session končí 16:00 ET, ale NDX opravuje close do 17:15 a distribuuje do 17:16 ET. Chybí potvrzení, která hranice uzavírá právě TradingView NASDAQ:NDX 1D bar; žádná z těchto hranic není použita jako odhad."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "index",
       "symbol": "SP500",
       "providerSymbol": "SP:SPX",
-      "assetClass": "index",
       "provider": "SP",
       "date": "2026-10-12",
       "timestamp": 1791811800,
@@ -547,9 +516,9 @@
       "sessionEnd": "2026-10-12T20:00:00Z"
     },
     {
+      "assetClass": "futures",
       "symbol": "WTI",
       "providerSymbol": "NYMEX:CL1!",
-      "assetClass": "futures",
       "provider": "NYMEX",
       "date": "2026-10-12",
       "timestamp": 1791756000,
@@ -558,15 +527,14 @@
       "low": 89.61,
       "close": 93.74,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec baru. Oficiální kalendářový odkaz pro 2026-10-12 dokládá settlement, nikoli konkrétní Globex session-end a její výjimky pro NYMEX:CL1!. Settlement nebyl použit jako čas uzavření."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "futures",
       "symbol": "BRENT",
       "providerSymbol": "ICEEUR:BRN1!",
-      "assetClass": "futures",
       "provider": "ICEEUR",
       "date": "2026-10-12",
       "timestamp": 1791756000,
@@ -580,9 +548,9 @@
       "sessionEnd": "2026-10-12T22:00:00Z"
     },
     {
+      "assetClass": "futures",
       "symbol": "NATURALGAS",
       "providerSymbol": "NYMEX:NG1!",
-      "assetClass": "futures",
       "provider": "NYMEX",
       "date": "2026-10-12",
       "timestamp": 1791756000,
@@ -591,15 +559,14 @@
       "low": 3.092,
       "close": 3.167,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec baru. Oficiální kalendářový odkaz pro 2026-10-12 dokládá settlement, nikoli konkrétní Globex session-end a její výjimky pro NYMEX:NG1!. Settlement nebyl použit jako čas uzavření."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     },
     {
+      "assetClass": "futures",
       "symbol": "COPPER",
       "providerSymbol": "COMEX:HG1!",
-      "assetClass": "futures",
       "provider": "COMEX",
       "date": "2026-10-12",
       "timestamp": 1791756000,
@@ -608,10 +575,9 @@
       "low": 6.694,
       "close": 6.747,
       "timeframe": "1D",
-      "status": "error",
-      "completed": false,
-      "sessionEnd": null,
-      "errorMessage": "MCP nevrací konec baru. Oficiální kalendářový odkaz pro 2026-10-12 dokládá settlement, nikoli konkrétní Globex session-end a její výjimky pro COMEX:HG1!. Settlement nebyl použit jako čas uzavření."
+      "status": "ok",
+      "completed": true,
+      "sessionEnd": null
     }
   ]
 }
