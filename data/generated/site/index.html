@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css?v=z8OR40MowJ8GgK6P89Y-hiJK5-cclzFHzLhFQLL92bg" />
     <link rel="stylesheet" href="/css/site.css?v=yXr3cpwMN0iv3lsgzOpSPg5J3p5W-F-pZpiO50pDZww" />
     <link rel="stylesheet" href="/css/responsive.css?v=c4WbFwVCdr-INqunO4RQdhoRo5KFdbn-tSLuPEx37V4" />
-    <link rel="stylesheet" href="/css/cot.css?v=fiE6p8WxEim2_i5TSuw7Z3fuyEThUJp3OQYvYwP-_l8" />
+    <link rel="stylesheet" href="/css/cot.css?v=eDFUgVpkaEKqB-ibK53sMN9WnvgngvnR4Tq45fz51wk" />
     <link rel="stylesheet" href="/css/market-help.css?v=sHU8Da0aRvzGPzckhrU34v2deATU0FHXEkzYWYzsOZg" />
     <link rel="stylesheet" href="/css/htf.css?v=KcG5gS7WKJzf0A-iO9PM7qdsw0U9pI-7HTFzPcb9wDw" />
     <link rel="stylesheet" href="/css/daily-health.css?v=eQz8iRtsfFwSS1KJGMwTpEfhYsG0dxiYKYP8j2g75oI" />
@@ -170,8 +170,8 @@
             <div id="cot-status" class="cot-status" role="status" aria-live="polite"></div>
             <button id="cot-retry" type="button" class="cot-retry" hidden>Zkusit znovu</button>
             <div id="cot-content" hidden>
-                <section class="cot-analogs" aria-label="Historické situace podle COT">
-                    <h3>Co následovalo při podobném COT?</h3>
+                <details class="cot-analogs" aria-label="Historické situace podle COT">
+                    <summary>Co následovalo při podobném COT?</summary>
                     <p>Vyber skupinu a podobnost. Porovnáme následné výnosy právě vybraného instrumentu, nikoli předpověď jeho ceny. Vstup je nejdříve po doloženém availableAt. Neznámé publikace se nepoužijí. Pozorování ve zdroji je konzervativní horní mez, nikoli přesné datum publikace.</p>
                     <div class="cot-controls">
                         <label>Skupina<select id="cot-analog-group"><option value="commercial">Komerční obchodníci</option><option value="nonCommercial">Velcí spekulanti</option><option value="nonReportable">Malí obchodníci</option></select></label>
@@ -181,7 +181,7 @@
                     <p id="cot-analog-status" role="status" aria-live="polite"></p>
                     <div id="cot-analog-results"></div>
                     <details class="cot-analog-method"><summary>Jak výsledky číst a jaká mají omezení?</summary><p>Medián je prostřední výnos. Pásmo 25–75 % obsahuje prostředních 50 % případů; není to pravděpodobnost budoucího výnosu. Minimum a maximum ukazují historické extrémy. Kladné případy jsou podíl výnosů nad nulou, ne úspěšnost obchodní strategie.</p><p>Používáme celou dostupnou historii cen a COT, ne pouze období grafů. Index každého reportu pochází jen z tehdejšího lookbacku vybraného nahoře. Bereme chronologicky první podobný report a další případ až po dokončení jeho 8týdenního okna. Všechny horizonty používají stejné dokončené případy.</p><p>Používáme pouze doložené availableAt. Neznámé datum historické dostupnosti report vyřadí; pozorování ve veřejném zdroji nepředstírá přesné datum publikace. Nejde o ověřený point-in-time backtest. Cílová cena je první close od 14 / 28 / 56 dní po vstupu, nejvýše o 4 dny později. Mezery delší než 7 dní a neúplná období vynecháváme.</p><p>Výnos je vždy změna ceny zvoleného instrumentu, ne zisk futures kontraktu nebo short obchodu. U měnových párů a proxy reportů nelze jednotlivý COT zaměnit za celý instrument. Náklady, skluz a dividendy podle cenového zdroje nejsou samostatně modelované. Výběr tolerance a extrémů může zvýhodnit náhodný výsledek. Malý počet případů není důkaz spolehlivosti.</p><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/ReleaseSchedule/index.htm" target="_blank" rel="noopener noreferrer">Kalendář zveřejnění CFTC ↗</a></details>
-                </section>
+                </details>
                 <details class="cot-position-overview" open><summary>Přehled aktuálních pozic · long / short</summary><div id="cot-summary" class="cot-summary"></div></details>
                 <div class="cot-chart-stack">
                     <article class="cot-chart-card">
