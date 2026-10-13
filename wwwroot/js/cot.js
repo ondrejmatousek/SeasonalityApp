@@ -253,11 +253,35 @@
             const values = element('div', null, 'cot-summary-values');
             const donut = element('div', null, 'cot-donut');
             const total = position.long + position.short + position.spread;
-            donut.style.setProperty('--long', `${total ? 100 * position.long / total : 0}%`);
-            donut.style.setProperty('--short', `${total ? 100 * (position.long + position.short) / total : 0}%`);
-            if (!total) donut.style.background = '#566575';
-            donut.setAttribute('role', 'img');
-            donut.setAttribute('aria-label', `Long ${number(position.long)}, short ${number(position.short)}, spread ${number(position.spread)}`);
+            const percent=value=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:1}).format(total?100*value/total:0)+' %';
+            const segments=[{name:'Long',value:position.long,color:'#24dfcf'},{name:'Short',value:position.short,color:'#f28aa8'},{name:'Spread',value:position.spread,color:'#566575'}];
+            donut.setAttribute('role','group');
+            donut.setAttribute('aria-label',`${group.name}: ${segments.map(s=>`${s.name} ${percent(s.value)}, ${number(s.value)} kontraktů`).join('; ')}. Podíl z long + short + spread této skupiny.`);
+            const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 60 60');
+            const bubble=element('div',null,'cot-donut-tooltip');bubble.hidden=true;bubble.id=`cot-position-tooltip-${group.key}`;bubble.setAttribute('role','tooltip');
+            const hide=()=>{bubble.hidden=true;};
+            const show=(s,event)=>{
+                root.querySelectorAll('.cot-donut-tooltip').forEach(t=>{if(t!==bubble)t.hidden=true;});
+                bubble.replaceChildren();const heading=element('div',null,'cot-donut-tooltip-heading'),dot=element('span',null,'cot-donut-dot');dot.style.background=s.color;
+                heading.append(dot,element('b',`${s.name} ${percent(s.value)}`));
+                bubble.append(heading,element('div',`${number(s.value)} kontraktů`),element('small','Podíl z long + short + spread této skupiny.'));
+                bubble.hidden=false;const box=card.getBoundingClientRect(),ring=donut.getBoundingClientRect();
+                const px=event?.clientX??ring.right,py=event?.clientY??ring.top;
+                const pos=window.MarketChartUi.tooltipPosition(px-box.left,py-box.top,bubble.offsetWidth,bubble.offsetHeight,box.width,box.height);
+                bubble.style.left=pos.left+'px';bubble.style.top=pos.top+'px';
+            };
+            let offset=0;
+            for(const s of segments){
+                if(!total||!s.value)continue;
+                const share=100*s.value/total,circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+                for(const [key,value]of Object.entries({cx:30,cy:30,r:24,fill:'none',stroke:s.color,'stroke-width':12,pathLength:100,'stroke-dasharray':`${share} ${100-share}`,'stroke-dashoffset':-offset,transform:'rotate(-90 30 30)',tabindex:0,role:'button','aria-label':`${s.name} ${percent(s.value)}; ${number(s.value)} kontraktů`,'aria-describedby':bubble.id,'data-position':s.name}))circle.setAttribute(key,String(value));
+                circle.onpointerenter=circle.onpointermove=e=>show(s,e);circle.onpointerleave=hide;
+                circle.onfocus=()=>show(s);circle.onblur=hide;circle.onpointerdown=e=>show(s,e);
+                circle.onkeydown=e=>{if(e.key==='Escape')hide();if(e.key==='Enter'||e.key===' '){e.preventDefault();show(s);}};
+                svg.append(circle);offset+=share;
+            }
+            if(!total){donut.setAttribute('aria-label',`${group.name}: žádné uvedené pozice`);donut.classList.add('is-empty');}
+            donut.append(svg);card.append(bubble);
             const net = element('div');
             net.append(element('strong', signed(position.net)), element('p', 'čisté pozice (kontrakty)'),
                 element('p', `Δ týdně ${signed(position.change)}`));
@@ -273,6 +297,8 @@
             summary.append(card);
         });
     }
+
+    root.addEventListener('pointerdown',e=>{if(!e.target.closest('.cot-donut'))root.querySelectorAll('.cot-donut-tooltip').forEach(t=>t.hidden=true);});
 
     function chart(canvas, indexChart = false, group = null) {
         const width = Math.max(280, canvas.getBoundingClientRect().width);

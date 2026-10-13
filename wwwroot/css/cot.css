@@ -244,11 +244,19 @@
 .cot-position-overview>summary { padding:8px 0; font-size:.75rem; }
 .cot-position-overview[open] .cot-summary { margin:8px 0 0; }
 .cot-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
-.cot-summary-card { padding:14px; background:#15191c; border:1px solid rgba(255,255,255,.1); border-radius:8px; min-width:0; }
+.cot-summary-card { padding:14px; background:#15191c; border:1px solid rgba(255,255,255,.1); border-radius:8px; min-width:0; position:relative; }
 .cot-summary-card h3 { font-size:.9rem; color:#dce3e9; margin:0 0 .9rem; }
 .cot-summary-values { display:flex; align-items:center; gap:1rem; }
-.cot-donut { width:60px; height:60px; flex-shrink:0; border-radius:50%; position:relative; background:conic-gradient(#24dfcf 0 var(--long),#f28aa8 var(--long) var(--short),#566575 var(--short) 100%); }
-.cot-donut:after { content:''; position:absolute; inset:11px; border-radius:50%; background:#15191c; }
+.cot-donut { width:60px; height:60px; flex-shrink:0; border-radius:50%; position:relative; }
+.cot-donut svg { width:100%; height:100%; display:block; overflow:visible; }
+.cot-donut circle { pointer-events:stroke; cursor:pointer; }
+.cot-donut circle:hover,.cot-donut circle:focus-visible { filter:brightness(1.2); stroke-width:14; outline:none; }
+.cot-donut.is-empty { border:12px solid #566575; }
+.cot-donut-tooltip { position:absolute; z-index:10; pointer-events:none; padding:10px 12px; border:1px solid #4b555e; border-radius:10px; background:#20272b; box-shadow:0 6px 20px #0005; color:#e3eef4; font-size:13px; max-width:min(230px,calc(100% - 16px)); }
+.cot-donut-tooltip[hidden] { display:none; }
+.cot-donut-tooltip-heading { display:flex; align-items:center; gap:7px; margin-bottom:4px; }
+.cot-donut-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.cot-donut-tooltip small { display:block; font-size:10px; color:#a9b8c2; margin-top:5px; }
 .cot-summary-card strong { display:block; font-size:1.3rem; color:#dce3e9; }
 .cot-summary-card p { font-size:.75rem; color:#9ba8b7; margin:.25rem 0; }
 .cot-summary-card dl { display:grid; grid-template-columns:1fr auto; gap:.35rem; margin:1rem 0 0; font-size:.75rem; }
