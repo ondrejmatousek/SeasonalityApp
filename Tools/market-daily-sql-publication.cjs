@@ -44,7 +44,7 @@ function build(contextFile){
  const h=require('./morning-run.cjs').execute({root:e.root,input:e.input,dailySource:'Azure SQL market_daily.Inbox / '+e.c.receiptId});
  check(h.status!=='failed'&&h.eligibleForPublication,'SQL analytics failed; last good publication retained');
  const manifest='artifacts/morning-site/data/manifest.json',m=read(manifest);
- m.marketDailySql=e.c;fs.writeFileSync(manifest,JSON.stringify(m,null,2));
+ m.marketDailySql=e.c;require('./apply-market-sources.cjs').saveManifest('artifacts/morning-site',m);
  h.marketDailySql=e.c;require('./daily-health.cjs').write('artifacts/daily-health',h);
  evidence(contextFile); // No rewritten raw input/state/audit while calculating.
  return {generationId:e.c.generationId,receiptId:e.c.receiptId};

@@ -20,6 +20,11 @@ try{
  fs.writeFileSync(path.join(source,'state.json'),state);
  const c={schemaVersion:1,generationId:1,receiptId:hash(Buffer.from(hash(daily)+hash(audit),'hex')),payloadSha256:hash(daily),auditSha256:hash(audit),stateSha256:hash(state),baselineFingerprint:baseline,runDate:p.runDate};
  const context=path.join(source,'context.json');fs.writeFileSync(context,JSON.stringify(c));
+ const htmlFixture=path.join(dir,'manifest-parity');fs.mkdirSync(path.join(htmlFixture,'data'),{recursive:true});
+ fs.writeFileSync(path.join(htmlFixture,'index.html'),'<script id="static-market-manifest" type="application/json">{}</script>');
+ require('./apply-market-sources.cjs').saveManifest(htmlFixture,{schemaVersion:1,marketDailySql:c});
+ const embedded=fs.readFileSync(path.join(htmlFixture,'index.html'),'utf8').match(/<script id="static-market-manifest" type="application\/json">([\s\S]*?)<\/script>/)[1];
+ assert.deepEqual(JSON.parse(embedded),JSON.parse(fs.readFileSync(path.join(htmlFixture,'data/manifest.json'))),'SQL provenance must be identical in HTML and external manifest');
  assert.equal(evidence(context,{now}).c.receiptId,c.receiptId);
  assert.throws(()=>evidence(context,{now:Date.parse(p.fetchedAt)+25*3600000}));
  assert.equal(guardGeneration(c,null),true);assert.equal(guardGeneration(c,c),false);
