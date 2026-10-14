@@ -31,5 +31,7 @@ session validation are NOT implemented. Refinement only selects a contained same
 D1 zone whose base lies in the W1 base and is confirmed no later than W1 confirmation.
 D1->H4 is unknown without data. Parent boundaries are not rewritten.
 
+Core and research/review candidates are separated by an explicit scope selector;
+default is core, research never enters its list. Neither list is validated performance.
 This is a read-only browser analysis over existing immutable static snapshots. It
 does not add feeds, write SQL, alter scoring, assert validated performance, or execute trades.

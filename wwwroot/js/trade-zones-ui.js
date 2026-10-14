@@ -15,7 +15,7 @@
   }all.sort((a,b)=>b.zone.qualityPoints-a.zone.qualityPoints||a.zone.distanceAtr-b.zone.distanceAtr||b.zone.confirmedAt.localeCompare(a.zone.confirmedAt)||a.key.localeCompare(b.key));render();
  }
  function render(){
-  const search=by('tz-search').value.trim().toUpperCase();list=all.filter(r=>(!search||(r.key+' '+(r.asset?.name||'')).toUpperCase().includes(search))&&(by('tz-tf').value==='all'||r.zone.timeframe===by('tz-tf').value)&&(by('tz-kind').value==='all'||r.zone.kind===by('tz-kind').value)&&(by('tz-side').value==='all'||r.zone.type===by('tz-side').value)&&(by('tz-bos').value==='all'||r.zone.bos.state==='yes'));
+  const search=by('tz-search').value.trim().toUpperCase();list=all.filter(r=>((r.asset?.mapping?.scope==='core')===(by('tz-scope').value==='core'))&&(!search||(r.key+' '+(r.asset?.name||'')).toUpperCase().includes(search))&&(by('tz-tf').value==='all'||r.zone.timeframe===by('tz-tf').value)&&(by('tz-kind').value==='all'||r.zone.kind===by('tz-kind').value)&&(by('tz-side').value==='all'||r.zone.type===by('tz-side').value)&&(by('tz-bos').value==='all'||r.zone.bos.state==='yes'));
   const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date()),stale=Date.parse(today)-Date.parse(snapshot.asOf)>86400000;
   by('tz-status').textContent=`Snapshot ${snapshot.asOf} · ${list.length} kandidátů zón · řazení: doložené body kvality, vzdálenost ceny, stáří. ${stale?'STARŠÍ DATA — nehodnoť jako aktuální setup. ':''}${opps?.asOf!==snapshot.asOf?'Sezonní/COT kontext nedostupný nebo má jiné datum. ':''}Session a makro neověřeny. Nejde o nezávislé obchody ani pravděpodobnosti.`;by('tz-status').classList.toggle('is-error',stale);
   const body=by('tz-results');body.replaceChildren();
@@ -44,8 +44,8 @@
   for(const tr of by('tz-results').querySelectorAll('tr'))tr.classList.toggle('is-selected',tr.dataset.symbol===r.key&&tr.dataset.zoneId===z.id);draw();
  }
  function draw(){if(!selected||panel.hidden)return;chart?.destroy();const child=by('tz-refinement').value==='parent'?null:selected.children[Number(by('tz-refinement').value)];chart=window.HtfPriceChart.create(by('tz-chart'),by('tz-tip'),{price:selected.price,zone:child||selected.zone,candidate:null,resolution:by('tz-resolution').value});}
- async function load(){if(loading)return;loading=true;by('tz-status').textContent='Načítám původní snapshot; nové zóny počítám odděleně…';try{snapshot=await window.StaticMarketData.htf();opps=null;try{opps=await window.StaticMarketData.opportunities();}catch{}calculate();}catch(e){by('tz-status').textContent='Obchodní zóny nedostupné: '+e.message;by('tz-detail').hidden=true;by('tz-results').replaceChildren();chart?.destroy();chart=null;}finally{loading=false;}}
- for(const id of ['tz-tf','tz-kind','tz-side','tz-bos'])by(id).onchange=()=>snapshot&&render();by('tz-search').oninput=()=>snapshot&&render();
+ async function load(){if(loading)return;loading=true;by('tz-status').textContent='Načítám původní snapshot; nové zóny počítám odděleně…';try{snapshot=await window.StaticMarketData.htf();opps=null;try{opps=await window.StaticMarketData.opportunities();}catch{}calculate();}catch(e){snapshot=null;all=[];selected=null;by('tz-status').textContent='Obchodní zóny nedostupné: '+e.message;by('tz-detail').hidden=true;by('tz-results').replaceChildren();chart?.destroy();chart=null;}finally{loading=false;}}
+ for(const id of ['tz-tf','tz-kind','tz-side','tz-bos','tz-scope'])by(id).onchange=()=>snapshot&&render();by('tz-search').oninput=()=>snapshot&&render();
  for(const id of ['tz-impulse','tz-bounds','tz-volume-window','tz-volume-ratio'])by(id).onchange=()=>snapshot&&calculate();
  by('tz-resolution').onchange=draw;by('tz-refinement').onchange=()=>{if(by('tz-refinement').value!=='parent')by('tz-resolution').value='D1';draw();};by('tz-reset').onclick=()=>chart?.reset();by('tz-reload').onclick=load;
  root.addEventListener('zones-visible',()=>snapshot?render():load());
