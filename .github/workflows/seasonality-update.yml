@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    outputs:
+      run: ${{ steps.queue_gate.outputs.run }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,21 +38,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Skip SQL wake-up before collection or after today's committed publication
+        id: queue_gate
+        run: |
+          node Tools/market-daily-sql-schedule-checks.cjs
+          node Tools/market-daily-sql-schedule.cjs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SQL_MODE: ${{ vars.MARKET_DAILY_SQL_MODE }}
       - uses: actions/setup-dotnet@v4
+        if: steps.queue_gate.outputs.run == 'true'
         with:
           dotnet-version: '10.0.x'
       - name: Build explicit worker and check admission engine
+        if: steps.queue_gate.outputs.run == 'true'
         run: |
           node Tools/market-history-seed.cjs
           dotnet build SeasonalityApp.slnx --configuration Release
           node Tools/market-daily-sql-worker-checks.cjs
           node Tools/market-daily-preflight-checks.cjs
       - name: Fetch read-only ETF HTF evidence for analytics rehearsal
-        if: inputs.sql_inbox_shadow
+        if: steps.queue_gate.outputs.run == 'true' && inputs.sql_inbox_shadow
         shell: pwsh
         run: ./Tools/fetch-htf-ohlc.ps1 -OutputDir artifacts/sql-inbox-htf
       - name: Process ONE receipt into SQL shadow history and verify private analytics
-        if: inputs.sql_inbox_shadow
+        if: steps.queue_gate.outputs.run == 'true' && inputs.sql_inbox_shadow
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-once
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
@@ -60,7 +72,7 @@ jobs:
           MarketDailyInboxWorker__AnalyticsSnapshot: ${{ github.workspace }}/data/generated/site
           MarketDailyInboxWorker__HtfFeed: ${{ github.workspace }}/artifacts/sql-inbox-htf
       - name: Drain up to five SQL receipts with lease/CAS validation, no publication
-        if: '!inputs.sql_inbox_shadow'
+        if: steps.queue_gate.outputs.run == 'true' && !inputs.sql_inbox_shadow
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-queue
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
@@ -69,7 +81,7 @@ jobs:
           MarketDailyInboxWorker__BootstrapState: ${{ github.workspace }}/data/market-state
   sql-publication:
     needs: sql-inbox-shadow
-    if: success() && !inputs.sql_inbox_shadow && ((github.event_name == 'workflow_dispatch' && inputs.sql_publish) || (github.event_name == 'schedule' && vars.MARKET_DAILY_SQL_MODE == 'publish'))
+    if: success() && needs.sql-inbox-shadow.outputs.run == 'true' && !inputs.sql_inbox_shadow && ((github.event_name == 'workflow_dispatch' && inputs.sql_publish) || (github.event_name == 'schedule' && vars.MARKET_DAILY_SQL_MODE == 'publish'))
     runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:

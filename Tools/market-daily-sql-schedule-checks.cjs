@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),{gate}=require('./market-daily-sql-schedule.cjs');
+const now=new Date('2026-10-14T02:00:00Z'),published={runDate:'2026-10-14',generationId:1,stateSha256:'a'.repeat(64)};
+assert.equal(gate({event:'schedule',mode:'publish',now,published}).run,false);
+assert.equal(gate({event:'workflow_dispatch',mode:'publish',now,published}).run,true);
+assert.equal(gate({event:'schedule',mode:'publish',now,published:{...published,runDate:'2026-10-13'}}).run,true);
+assert.equal(gate({event:'schedule',mode:'shadow',now}).run,true);
+assert.equal(gate({event:'schedule',mode:'off',now}).run,false);
+assert.equal(gate({event:'schedule',now:new Date('2026-12-14T01:30:00Z')}).run,false);
+assert.equal(gate({event:'schedule',now:new Date('2026-12-14T02:30:00Z')}).run,true);
+assert.equal(gate({event:'push',now}).run,false);
+console.log('PASS: Prague/DST SQL scheduling, no GitHub intake, manual correction and no SQL wake-up after committed daily publication.');

@@ -9,6 +9,11 @@ removed. Original archived evidence stays intact; it is not an active feed.
 The scheduler retains its existing UTC slots (`7,22,37,52 1-8 * * *`). These poll the
 SQL inbox around the Czech morning; GitHub timing is best-effort, not an immediate
 webhook after an MCP write. Same concurrency group prevents overlapping runs.
+Before 03:00 Prague the schedule does not open SQL. In publish mode a committed
+generation for today's Prague date skips subsequent automatic SQL connections,
+avoiding unnecessary serverless wake-ups. Manual publication checks bypass this
+cheap gate for a same-day correction. A failed hosting deployment is retried through
+the separate hosting workflow; the Git manifest pointer denotes prepared output.
 An unset `MARKET_DAILY_SQL_MODE` repository variable defaults to shadow queue-only.
 `shadow` processes accepted history without publishing; `publish` additionally
 builds/publishes new generations; `off` disables automatic processing. Explicit
