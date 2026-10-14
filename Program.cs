@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 MarketDailyProbe.Register(builder.Services);
+var marketMcpReady = MarketDailyMcp.Register(builder.Services, builder.Configuration);
 // Explicit isolated probe host: no SQL registration, schema initialization or market jobs.
 if (args.Contains("--market-daily-probe-only", StringComparer.OrdinalIgnoreCase))
 {
@@ -17,6 +18,7 @@ if (args.Contains("--market-daily-probe-only", StringComparer.OrdinalIgnoreCase)
     probe.UseRouting();
     probe.UseRateLimiter();
     MarketDailyProbe.Map(probe);
+    MarketDailyMcp.Map(probe, marketMcpReady);
     await probe.RunAsync();
     return;
 }
@@ -107,5 +109,6 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseRateLimiter();
 MarketDailyProbe.Map(app);
+MarketDailyMcp.Map(app, marketMcpReady);
 app.MapControllerRoute("default", "{controller=Seasonality}/{action=Index}/{id?}");
 app.Run();
