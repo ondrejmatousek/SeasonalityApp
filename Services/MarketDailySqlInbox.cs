@@ -12,6 +12,21 @@ namespace SeasonalityApp.Services;
 public sealed class MarketDailySqlInbox(string connectionString)
 {
     private static readonly UTF8Encoding Utf8 = new(false, true);
+    // Retry only connection establishment, NEVER a SQL transaction or a publication callback.
+    // Request cancellation still bounds the MCP receiver; background CLIs have the longer resume budget.
+    private static async Task OpenResilientAsync(SqlConnection c,CancellationToken ct)
+    {
+        for(var attempt=0;;attempt++)
+        {
+            try{await c.OpenAsync(ct);return;}
+            catch(SqlException e)when(!ct.IsCancellationRequested&&attempt<2&&new[]{-2,40613,40197,40501,10928,10929,49918,49919,49920}.Contains(e.Number))
+            {
+                await c.CloseAsync();
+                Console.WriteLine("SQL_OPEN_TRANSIENT_RETRY "+(attempt+1));
+                await Task.Delay(TimeSpan.FromSeconds(5*(1<<attempt)),ct);
+            }
+        }
+    }
     public sealed class Submission
     {
         public byte[] DailyUtf8 { get; }
@@ -84,7 +99,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
             !InstantEquals(p.RootElement.GetProperty("fetchedAt"), submission.FetchedAt))
             throw new InvalidDataException("Invalid inbox submission.");
         await using var connection = new SqlConnection(connectionString);
-        await connection.OpenAsync(ct);
+        await OpenResilientAsync(connection,ct);
         await using var tx = (SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
         await using (var guard = new SqlCommand("""
             DECLARE @result int;
@@ -133,7 +148,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
     {
         if (duration < TimeSpan.FromSeconds(30) || duration > TimeSpan.FromMinutes(30))
             throw new ArgumentOutOfRangeException(nameof(duration));
-        await using var connection = new SqlConnection(connectionString); await connection.OpenAsync(ct);
+        await using var connection = new SqlConnection(connectionString); await OpenResilientAsync(connection,ct);
         await using var command = new SqlCommand("""
             ;WITH candidate AS (
                 SELECT TOP (1) * FROM market_daily.Inbox WITH (UPDLOCK, READPAST, READCOMMITTEDLOCK)
@@ -164,7 +179,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
 
     public async Task<ShadowHistory?> ReadShadowHistoryAsync(CancellationToken ct = default)
     {
-        await using var c = new SqlConnection(connectionString); await c.OpenAsync(ct);
+        await using var c = new SqlConnection(connectionString); await OpenResilientAsync(c,ct);
         await using var command = new SqlCommand("SELECT TOP (1) GenerationId,BaselineFingerprint,StateUtf8,StateSha256 FROM market_daily.ShadowHistory ORDER BY GenerationId DESC", c);
         await using var r = await command.ExecuteReaderAsync(ct);
         if (!await r.ReadAsync(ct)) return null;
@@ -178,7 +193,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
 
     public async Task<PublicationSnapshot?> ReadPublicationSnapshotAsync(CancellationToken ct=default)
     {
-        await using var c=new SqlConnection(connectionString);await c.OpenAsync(ct);
+        await using var c=new SqlConnection(connectionString);await OpenResilientAsync(c,ct);
         return await ReadPublicationSnapshotAsync(c,ct);
     }
 
@@ -208,7 +223,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
     // This is an explicit Actions CLI capability, never an MCP tool or web startup action.
     public async Task WithPublicationFenceAsync(PublicationSnapshot expected,Func<Task> publish,CancellationToken ct=default)
     {
-        await using var c=new SqlConnection(connectionString);await c.OpenAsync(ct);
+        await using var c=new SqlConnection(connectionString);await OpenResilientAsync(c,ct);
         await using var acquire=new SqlCommand("""
             DECLARE @result int;
             EXEC @result=sys.sp_getapplock @Resource=N'MarketDailyInbox:ShadowCommit',
@@ -238,7 +253,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
         if(Text(json.RootElement,"mode")!="shadow-history-only" || json.RootElement.GetProperty("accepted").GetBoolean() ||
             Text(json.RootElement,"payloadSha256")!=Hash(lease.DailyUtf8) || Text(json.RootElement,"auditSha256")!=Hash(lease.AuditUtf8))
             throw new InvalidDataException("Failure report binding mismatch.");
-        await using var c=new SqlConnection(connectionString);await c.OpenAsync(ct);
+        await using var c=new SqlConnection(connectionString);await OpenResilientAsync(c,ct);
         await using var command=new SqlCommand("""
             UPDATE market_daily.Inbox SET Status='Blocked',LeaseId=NULL,LeaseUntil=NULL,
                 LastErrorCode='ADMISSION_REJECTED',ValidationReportUtf8=@report
@@ -275,7 +290,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
         var files=s.RootElement.GetProperty("files").EnumerateObject().ToArray();
         if(files.Length!=39 || files.Any(f=>!System.Text.RegularExpressions.Regex.IsMatch(f.Name,@"\A[A-Z]+\.json\z") ||
             f.Value.ValueKind!=JsonValueKind.String))throw new InvalidDataException("Invalid shadow source files.");
-        await using var c = new SqlConnection(connectionString); await c.OpenAsync(ct);
+        await using var c = new SqlConnection(connectionString); await OpenResilientAsync(c,ct);
         await using var tx = (SqlTransaction)await c.BeginTransactionAsync(ct);
         await using var command = new SqlCommand("""
             DECLARE @lock int;
@@ -312,7 +327,7 @@ public sealed class MarketDailySqlInbox(string connectionString)
     {
         if (!System.Text.RegularExpressions.Regex.IsMatch(errorCode, @"\A[A-Z0-9_]{1,64}\z"))
             throw new ArgumentException("Use a bounded error code, never payloads, credentials or exception details.");
-        await using var connection = new SqlConnection(connectionString); await connection.OpenAsync(ct);
+        await using var connection = new SqlConnection(connectionString); await OpenResilientAsync(connection,ct);
         await using var command = new SqlCommand("""
             UPDATE market_daily.Inbox SET Status=@status, LeaseId=NULL, LeaseUntil=NULL, LastErrorCode=@error
             WHERE ReceiptId=@id AND Status='Processing' AND LeaseId=@lease AND LeaseUntil>SYSDATETIMEOFFSET();
