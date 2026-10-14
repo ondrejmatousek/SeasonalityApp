@@ -10,10 +10,17 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  await page.locator('#tz-kind').selectOption('origin');for(const r of await page.locator('#tz-results tr').allTextContents())assert.match(r,/Původ impulzu/);
  await page.locator('#tz-bos').selectOption('yes');for(const r of await page.locator('#tz-results tr').allTextContents())assert.match(r,/BOS close potvrzen/);
  await page.locator('#tz-bos').selectOption('all');await page.locator('#tz-search').fill('GBPAUD');assert.ok(await page.locator('#tz-results button').count()>0);
+ await page.waitForFunction(()=>Number.isFinite(Number(document.getElementById('tz-chart').dataset.seasonalStart))&&document.getElementById('tz-chart').dataset.seasonalStart!=='null');
+ assert.match(await page.locator('#tz-caption').textContent(),/Svislé sezonní okno/);
+ await page.locator('#tz-resolution').selectOption('W1');await page.waitForFunction(()=>Number.isFinite(Number(document.getElementById('tz-chart').dataset.seasonalEnd))&&document.getElementById('tz-chart').dataset.seasonalEnd!=='null');await page.locator('#tz-resolution').selectOption('D1');
  await page.locator('#tz-search').fill('');await page.locator('#tz-volume-window').selectOption('3');await page.locator('#tz-bounds').selectOption('body-wick');assert.ok(await page.locator('#tz-results button').count()>0);
  await page.locator('#tz-search').fill('NO_SUCH_SYMBOL');assert.match(await page.locator('#tz-results').textContent(),/Žádná platná zóna/);assert.equal(await page.locator('#tz-detail').isVisible(),false);
  await page.locator('#tz-search').fill('');await page.screenshot({path:path.join(root,'trade-zones-desktop.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile overflow');await page.screenshot({path:path.join(root,'trade-zones-mobile.png'),fullPage:true});
+ await page.evaluate(()=>{window.StaticMarketData.opportunities=async()=>{throw Error('Test unavailable context');};});
+ await page.locator('#tz-reload').click();await page.waitForFunction(()=>document.getElementById('tz-caption').textContent.includes('Sezonní okno není dostupné'));
+ assert.ok(await page.locator('#tz-results button').count()>0,'Missing seasonality never hides zones');
+ await page.waitForFunction(()=>document.getElementById('tz-chart').dataset.seasonalStart==='null');
  await page.getByRole('tab',{name:'HTF shoda',exact:true}).click();await page.waitForFunction(()=>document.getElementById('htf-status').textContent.includes('Vyhodnoceno'));assert.equal(await page.locator('#market-zones-view').isVisible(),false);assert.equal(await page.locator('#market-htf-view').isVisible(),true);
  await page.getByRole('tab',{name:'Seasonality',exact:true}).click();assert.equal(await page.locator('#market-seasonality-view').isVisible(),true);assert.deepEqual(errors,[]);
  console.log('PASS: actual zone-first tab, live snapshot rendering/chart, origin/BOS/asset/volume/bounds filters, empty states, desktop/mobile and unchanged HTF/Seasonality tab navigation.');

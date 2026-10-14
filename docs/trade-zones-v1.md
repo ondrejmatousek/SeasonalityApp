@@ -24,6 +24,9 @@ do not renormalize missing fields into 100%. Macro is unintegrated. Context come
 from the same-date existing opportunities snapshot and never gates zone existence.
 Nearest active/upcoming interval within 30 days is selected without maximizing its
 score. Historical rates describe seasonal periods, not trades entered in zones.
+The chart shades that same contextual interval using the existing HTF renderer:
+green for seasonal up, red for seasonal down, including counter-zone direction.
+No context means no seasonal window. Refinement preserves the parent's context.
 
 Close-invalidated zones are omitted. Visits and age displayed. W1 excludes incomplete
 weeks. Existing truncated OHLC limits coverage; full historical scanning and intraday
