@@ -11,6 +11,8 @@ on:
     paths:
       - 'Views/**'
       - 'wwwroot/**'
+      - 'StaticSite/**'
+      - 'Services/StaticSiteExporter.cs'
       - 'data/generated/site/**'
       - 'artifacts/daily-health/**'
       - '.github/workflows/static-hosting.yml'
@@ -57,6 +59,7 @@ jobs:
           mkdir -p artifacts/public-site/artifacts/daily-health
           cp artifacts/daily-health/*.json artifacts/public-site/artifacts/daily-health/
           # Render current Razor navigation and the Data view without SQL or analytics.
+          node Tools/data-runs-checks.cjs
           dotnet build SeasonalityApp.slnx --configuration Release
           dotnet bin/Release/net10.0/SeasonalityApp.dll --render-static-shell --output artifacts/public-site
           cp StaticSite/staticwebapp.config.json artifacts/public-site/staticwebapp.config.json
