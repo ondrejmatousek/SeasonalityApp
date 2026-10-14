@@ -65,6 +65,7 @@ jobs:
           node Tools/htf-retirement-checks.cjs
           dotnet build SeasonalityApp.slnx --configuration Release
           dotnet bin/Release/net10.0/SeasonalityApp.dll --render-static-shell --output artifacts/public-site
+          node Tools/zone-prices-checks.cjs artifacts/public-site
           cp StaticSite/staticwebapp.config.json artifacts/public-site/staticwebapp.config.json
       - name: Overlay this morning's report including failed runs (keep last good analytics)
         if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
