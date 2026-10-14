@@ -14,5 +14,6 @@ const fresh={...old,runFinishedAt:'2026-10-14T04:00:00Z',status:'failed'};
 assert.equal(ui.mergeRuns(fresh,{runs:[old]}).length,1);assert.equal(ui.mergeRuns(fresh,{runs:[old]})[0].status,'failed');
 const layout=fs.readFileSync('Views/Shared/_Layout.cshtml','utf8');assert.ok(layout.includes('href="/runs/"'));assert.ok(!layout.includes('daily-health-toggle'));
 assert.ok(fs.readFileSync('Services/StaticSiteExporter.cs','utf8').includes('/Views/Data/Index.cshtml'));
-const routes=JSON.parse(fs.readFileSync('StaticSite/staticwebapp.config.json')).routes;assert.ok(routes.some(r=>r.route==='/runs/'&&r.rewrite==='/runs/index.html'));
+const routes=JSON.parse(fs.readFileSync('StaticSite/staticwebapp.config.json')).routes;assert.ok(routes.some(r=>r.route==='/runs*'&&r.rewrite==='/runs/index.html'));
+assert.equal(new Set(routes.map(r=>r.route.replace(/\/$/,''))).size,routes.length,'Azure normalizes trailing slash routes');
 console.log('PASS: Data view navigation, daily selection, preserved failures, stale reports and exact live SQL provenance; no invented Work/deploy success.');
