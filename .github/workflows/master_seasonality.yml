@@ -44,6 +44,9 @@ jobs:
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
+      - name: Isolated HTTP probe regression (no SQL or external requests)
+        run: node Tools/market-daily-probe-checks.cjs
+
       - name: dotnet publish
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 

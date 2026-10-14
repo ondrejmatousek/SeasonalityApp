@@ -3,10 +3,23 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using TradingJournal.Data;
 using TradingJournal.Services;
 using SeasonalityApp.Controllers;
+using SeasonalityApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+MarketDailyProbe.Register(builder.Services);
+// Explicit isolated probe host: no SQL registration, schema initialization or market jobs.
+if (args.Contains("--market-daily-probe-only", StringComparer.OrdinalIgnoreCase))
+{
+    builder.Configuration["MarketDailyProbe:AllowLocalHttp"] = "true";
+    var probe = builder.Build();
+    probe.UseRouting();
+    probe.UseRateLimiter();
+    MarketDailyProbe.Map(probe);
+    await probe.RunAsync();
+    return;
+}
 var connection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
 var exporting = args.Contains("--export-static", StringComparer.OrdinalIgnoreCase);
@@ -92,5 +105,7 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Home/Error");
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRateLimiter();
+MarketDailyProbe.Map(app);
 app.MapControllerRoute("default", "{controller=Seasonality}/{action=Index}/{id?}");
 app.Run();
