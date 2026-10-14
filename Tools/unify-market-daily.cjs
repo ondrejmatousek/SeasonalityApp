@@ -28,11 +28,14 @@ function migrate(directory='data/market-daily'){
  const merged=merge(base,extra,read(mainAudit),read(extraAudit));
  const evidence=path.join(directory,'migration-evidence',date);fs.mkdirSync(evidence,{recursive:true});
  const originals={};for(const [key,f] of Object.entries({original36:input,research3:extension,originalAudit:mainAudit,researchAudit:extraAudit})){
-  const dest=path.join(evidence,key+'.json');if(fs.existsSync(dest))assert.equal(hash(dest),hash(f),'Existing evidence differs');else fs.copyFileSync(f,dest);originals[key]={file:dest,sha256:hash(f)};
+  const dest=path.join(evidence,key+'.json'),bytes=Buffer.from(fs.readFileSync(f,'utf8').replace(/\r\n/g,'\n'));
+  const sha256=crypto.createHash('sha256').update(bytes).digest('hex');
+  if(fs.existsSync(dest))assert.equal(hash(dest),sha256,'Existing evidence differs');else fs.writeFileSync(dest,bytes);
+  originals[key]={file:dest.split(path.sep).join('/'),sha256};
  }
  const body=JSON.stringify(merged.payload,null,2)+'\n';fs.writeFileSync(path.join(directory,date+'.json'),body);fs.writeFileSync(input,body);
  fs.writeFileSync(mainAudit,JSON.stringify(merged.audit,null,2)+'\n');
- fs.writeFileSync(path.join(evidence,'manifest.json'),JSON.stringify({schemaVersion:1,originals,notice:'Provider OHLC/timestamps unchanged; only collection envelopes/audits merged'},null,2));
+ fs.writeFileSync(path.join(evidence,'manifest.json'),JSON.stringify({schemaVersion:1,originals,notice:'Git-portable LF JSON evidence; provider OHLC/timestamps unchanged; only collection envelopes/audits merged'},null,2));
  return {date,bars:39};
 }
 module.exports={merge,migrate};

@@ -1,0 +1,2 @@
+# Keep migration evidence checksums stable across Windows/Linux checkouts.
+data/market-daily/migration-evidence/** -text

@@ -1,7 +1,8 @@
-const assert=require('node:assert/strict'),fs=require('node:fs');
+const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require('node:crypto');
 const {merge}=require('./unify-market-daily.cjs');
 const directory='data/market-daily/migration-evidence/2026-10-14',read=n=>JSON.parse(fs.readFileSync(directory+'/'+n+'.json'));
 const base=read('original36'),extra=read('research3'),a=read('originalAudit'),b=read('researchAudit');
+const evidence=read('manifest');for(const e of Object.values(evidence.originals))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(e.file)).digest('hex'),e.sha256,'Portable evidence checksum');
 const result=merge(base,extra,a,b);assert.equal(result.payload.bars.length,39);
 assert.deepEqual(result.payload.bars,[...base.bars,...extra.bars],'No provider values/identity/timestamp repairs');
 assert.equal(result.audit.runs.find(r=>r.checkedAt===base.fetchedAt).entries.length,39);

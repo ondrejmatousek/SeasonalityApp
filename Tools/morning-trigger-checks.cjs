@@ -8,9 +8,10 @@ assert.equal(gate({...options,event:'schedule',now:new Date('2026-10-14T00:59:00
 assert.equal(gate({...options,event:'push',now:new Date('2026-10-14T01:04:00Z')}).run,true,'Run immediately after Work collection, not at 06:00');
 assert.equal(gate({...options,event:'workflow_dispatch',now:new Date('2026-10-14T02:00:00Z')}).run,true);
 const inputSha256=crypto.createHash('sha256').update(fs.readFileSync(input)).digest('hex');
-fs.writeFileSync(health,JSON.stringify({runDate:'2026-10-14',status:'ok',published:true,market:{inputSha256}}));
+fs.writeFileSync(health,JSON.stringify({runDate:'2026-10-14',status:'ok',published:true,market:{inputSha256,failed:0}}));
 assert.equal(gate({...options,event:'push'}).run,false);assert.equal(gate({...options,event:'schedule',now:new Date('2026-10-14T11:00:00Z')}).run,false);
 assert.equal(gate({...options,event:'workflow_dispatch',force:true}).run,true);
+fs.writeFileSync(health,JSON.stringify({runDate:'2026-10-14',status:'warning',published:true,market:{inputSha256,failed:1}}));assert.equal(gate({...options,event:'push'}).run,true,'A corrected research audit can retry the same OHLC input');
 fs.writeFileSync(health,JSON.stringify({runDate:'2026-10-14',status:'failed',published:false,market:{inputSha256}}));assert.equal(gate({...options,event:'schedule'}).run,true);
 assert.throws(()=>gate({...options,event:'schedule',now:new Date('2026-10-15T05:00:00Z')}),/current Prague-day/);
 assert.throws(()=>gate({...options,event:'workflow_dispatch',now:new Date('2026-10-14T01:00:00Z')}),/current Prague-day/);

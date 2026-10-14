@@ -9,7 +9,7 @@ function gate({event,now=new Date(),input='data/market-daily/latest.json',health
  if(p.schemaVersion!==1||p.timeframe!=='1D'||!Array.isArray(p.bars))throw Error('Invalid daily input');
  const t=new Date(p.fetchedAt||p.generatedAt);if(!Number.isFinite(+t)||+t>+now||parts(t).slice(0,10)!==today)throw Error('No current Prague-day Work collection; refusing stale run');
  const h=fs.existsSync(health)?JSON.parse(fs.readFileSync(health)):null;
- if(!force&&h?.runDate===today&&h.published===true&&h.status!=='failed'&&h.market?.inputSha256===inputSha256)return {run:false,reason:'This collection already published successfully today',inputSha256};
+ if(!force&&h?.runDate===today&&h.published===true&&h.status!=='failed'&&h.market?.failed===0&&h.market?.inputSha256===inputSha256)return {run:false,reason:'This collection already published successfully today',inputSha256};
  return {run:true,reason:'Fresh Work collection ready; no successful publication of this input today',inputSha256};
 }
 module.exports={parts,gate};
