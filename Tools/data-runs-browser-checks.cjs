@@ -13,6 +13,8 @@ const server=http.createServer((req,res)=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{browser=await chromium.launch({headless:true});}catch{browser=await chromium.launch({headless:true,channel:'msedge'});}
  const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:'+server.address().port+'/');
+ const snapshot=await page.evaluate(async()=>window.StaticMarketData.opportunities());assert.ok(snapshot.assets.filter(a=>a.candidates.length).every(a=>a.candidates.every(c=>c.scoringV1ByHistory&&c.scoringV2)),'Existing automatic V1/V2 scores remain built server-side');
  await page.goto('http://127.0.0.1:'+server.address().port+'/runs/');
  await page.locator('.run-day').first().waitFor();
  assert.ok(await page.locator('.run-steps li').count()>=10);
@@ -21,6 +23,7 @@ const server=http.createServer((req,res)=>{
  if(await page.locator('.run-day').count()>1){const button=page.locator('.run-day').nth(1),day=await button.getAttribute('data-day');await button.click();assert.equal(await page.locator('#runs-detail h3').first().textContent(),day);}
  await page.screenshot({path:path.join(root,'runs-desktop.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.getByRole('link',{name:'Data',exact:true}).isVisible(),true);
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile horizontal overflow');
  await page.screenshot({path:path.join(root,'runs-mobile.png'),fullPage:true});
  await page.route('**/data/manifest.json',r=>r.fulfill({status:503,body:'Unavailable'}));await page.getByRole('button',{name:'Obnovit',exact:true}).click();await page.waitForFunction(()=>document.getElementById('runs-state').textContent.includes('nelze ověřit'));

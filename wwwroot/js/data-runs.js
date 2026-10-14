@@ -35,7 +35,7 @@
  function show(day){
   selected=day;const h=runs.find(r=>r.runDate===day);if(!h)return;detail.replaceChildren();
   for(const b of history.querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.day===day));
-  detail.append(el('h3',h.runDate),badge(h.status));
+  detail.append(el('h3',h.runDate),el('p','Výsledek analytiky: '+(labels[h.status]||'Nedoloženo')),badge(h.status));
   if(h.mode==='safe-rehearsal')detail.append(el('p','Testovací běh — nejde o produkční aktualizaci.','runs-warning'));
   const meta=el('dl',null,'runs-meta');
   for(const [k,v]of [['Začátek',time(h.runStartedAt)],['Dokončení',time(h.runFinishedAt)],['Trvání',h.durationSeconds!=null?h.durationSeconds+' s':'—'],['Režim',h.mode||'Starší report'],['Screener kandidáti',h.screenerRows??'—'],['HTF zóny',h.htfZones??'—'],['EURUSD / poslední bar',h.instrumentChecks?.find(x=>x.symbol==='EURUSD')?.lastBarDate||'—'],['AAPL / poslední bar',h.instrumentChecks?.find(x=>x.symbol==='AAPL')?.lastBarDate||'—']])meta.append(el('dt',k),el('dd',v));detail.append(meta);
@@ -56,7 +56,8 @@
   manifest=null;try{manifest=await json('/data/manifest.json');}catch{warnings.push('Dostupnost publikované generace nelze ověřit.');}
   runs=mergeRuns(latest,saved);history.replaceChildren();detail.replaceChildren();
   for(const h of runs){const b=el('button',null,'run-day');b.type='button';b.dataset.day=h.runDate;b.append(el('strong',h.runDate),badge(h.status),el('small',time(h.runFinishedAt)));b.addEventListener('click',()=>show(h.runDate));history.append(b);}
-  state.textContent=(displayState(latest)==='failed'&&latest.status!=='failed'?'Pozor: poslední report je neaktuální. ':'')+'Poslední uložený běh: '+time(latest.runFinishedAt)+'. '+warnings.join(' ');
+  const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date());
+  state.textContent=(latest.runDate!==today?'Pro dnešní den zatím není uložený report. ':'')+(displayState(latest)==='failed'&&latest.status!=='failed'?'Pozor: poslední report je neaktuální. ':'')+'Poslední uložený běh: '+time(latest.runFinishedAt)+'. '+warnings.join(' ');
   if(runs.length)show(runs.some(h=>h.runDate===selected)?selected:runs[0].runDate);else state.textContent='Zatím není žádný uložený denní běh.';
  }catch(e){state.textContent=e.message;history.replaceChildren();detail.replaceChildren();}finally{refresh.disabled=false;}}
  refresh.addEventListener('click',load);load();setInterval(load,300000);

@@ -8,6 +8,7 @@ function publish({site='artifacts/morning-site',healthDir='artifacts/daily-healt
  if(h.mode==='safe-rehearsal')throw Error('Safe rehearsal cannot publish');
  if(h.status==='failed'||!h.eligibleForPublication)return {published:false,healthOnly:true};
  const m=JSON.parse(fs.readFileSync(path.join(site,'data/manifest.json'))),files=new Set(['index.html','staticwebapp.config.json','data/manifest.json']);
+ if(fs.existsSync(path.join(site,'runs/index.html')))files.add('runs/index.html');
  for(const a of m.assets)files.add(a.prices.path.replace(/^\//,''));
  for(const c of Object.values(m.contracts))for(const p of Object.values(c.files))files.add(p.replace(/^\//,''));
  for(const key of ['screener','opportunities','htfConfluence','v3LiveTracking'])if(m[key]?.path)files.add(m[key].path.replace(/^\//,''));
