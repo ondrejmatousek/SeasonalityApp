@@ -37,4 +37,10 @@ D1->H4 is unknown without data. Parent boundaries are not rewritten.
 Core and research/review candidates are separated by an explicit scope selector;
 default is core, research never enters its list. Neither list is validated performance.
 This is a read-only browser analysis over existing immutable static snapshots. It
+deduplicates per source instrument + timeframe + side + exact bounds + confirmation.
+Origin and base classifications share one physical zone, including refinement lists.
+Both type filters include it. Prefer origin evidence, otherwise latest/shortest base;
+do not sum scores or combine strongest components from competing detections.
+Distinct bounds, sides, confirmations and timeframes remain separate, not rounded.
+The analysis
 does not add feeds, write SQL, alter scoring, assert validated performance, or execute trades.

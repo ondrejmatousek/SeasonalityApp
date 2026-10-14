@@ -5,6 +5,13 @@ bars.push({date:date(30),open:100.2,high:100.5,low:99.5,close:99.8,volume:300},{
 const price={bars,latestClose:104.5},before=JSON.stringify(price),asOf=date(32);
 const origin=(p=price,a=asOf)=>Z.detect(p,'D1',a).find(z=>z.kind==='origin'&&z.baseDate===date(30)&&z.type==='demand');
 const wick=origin();assert.ok(wick,'No-BOS origins still exist');assert.equal(wick.bos.state,'no','Wick beyond swing is NOT BOS');assert.equal(wick.volume.state,'high');assert.equal(wick.session.state,'unknown');assert.equal(wick.lower,99.5);assert.equal(wick.upper,100.5);
+assert.deepEqual(wick.kinds,['origin','base'],'Same candle may have both classifications, but only one row');
+assert.equal(Z.detect(price,'D1',asOf).filter(z=>z.lower===wick.lower&&z.upper===wick.upper&&z.confirmedAt===wick.confirmedAt&&z.type===wick.type).length,1);
+assert.equal(wick.qualityPoints,1,'Duplicate classifications do not add quality points');
+assert.deepEqual(Z.deduplicate([wick,wick]),Z.deduplicate([wick]),'Idempotent merge');
+const physical=wick.detections[0];
+for(const change of [{timeframe:'W1'},{type:'supply'},{confirmedAt:date(34)},{upper:physical.upper+.00000001}])assert.equal(Z.deduplicate([physical,{...physical,...change,id:'other'}]).length,2,'Different timeframes/sides/confirmations/bounds stay distinct');
+assert.deepEqual(Z.deduplicate([...wick.detections].reverse()),Z.deduplicate(wick.detections),'Input order cannot choose stronger evidence');
 const close={...price,bars:bars.map((b,i)=>i===31?{...b,close:106}:b),latestClose:106};assert.equal(origin(close).bos.state,'yes','Close beyond swing qualifies');assert.equal(origin(close).bos.date,date(20));
 const mirrored={bars:bars.map(b=>({...b,open:200-b.open,high:200-b.low,low:200-b.high,close:200-b.close})),latestClose:95.5};assert.ok(Z.detect(mirrored,'D1',asOf).some(z=>z.kind==='origin'&&z.type==='supply'&&z.baseDate===date(30)));
 const noVol={...price,bars:bars.map(b=>({...b,volume:null}))};assert.equal(origin(noVol).volume.state,'unknown');assert.equal(origin(noVol).knownCriteria,1);assert.ok(origin(noVol));
@@ -24,5 +31,9 @@ const weekly=Z.sourceBars({bars:weeks},'W1','2025-07-17');assert.ok(weekly.every
 const partial=Z.sourceBars({bars:weeks.slice(2),weekly},'W1','2025-07-17');assert.equal(partial[0].volume,null,'Partial weekly coverage never fabricates volume');
 const m=JSON.parse(fs.readFileSync('data/generated/site/data/manifest.json')),h=JSON.parse(fs.readFileSync('data/generated/site'+m.htfConfluence.path));
 const pristine=JSON.stringify(h),rows=Object.values(h.prices).filter(p=>p.status==='ready').flatMap(p=>['D1','W1'].flatMap(tf=>Z.detect(p,tf,h.asOf)));
+for(const p of Object.values(h.prices).filter(p=>p.status==='ready'))for(const tf of ['D1','W1'])for(const options of [{},{bounds:'body-wick'},{volumeWindow:3}]){
+ const found=Z.detect(p,tf,h.asOf,options),keys=found.map(z=>JSON.stringify([z.timeframe,z.type,z.lower,z.upper,z.confirmedAt]));assert.equal(new Set(keys).size,keys.length,'No duplicate physical zones for any instrument/timeframe/parameter variant');
+}
+const cad=Z.detect(h.prices.CADJPY,'D1',h.asOf).filter(z=>z.baseDate==='2025-12-04'&&z.confirmedAt==='2025-12-09'&&z.type==='demand');assert.equal(cad.length,1,'CADJPY screenshot regression');assert.ok(cad[0].kinds.includes('origin')&&cad[0].kinds.includes('base'));
 assert.ok(rows.length>0);assert.ok(rows.every(r=>r.lower<r.upper&&r.confirmedAt<h.asOf&&r.session.state==='unknown'));assert.equal(JSON.stringify(h),pristine);
 console.log('PASS: zone-first origins/bases, optional close-only BOS, confirmed past pivots, source-volume averaging, missing data, no lookahead, W1 completeness, refinement containment and unchanged HTF snapshot. '+rows.length+' live-snapshot candidates.');

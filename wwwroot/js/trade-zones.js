@@ -3,6 +3,20 @@
  const defaults=Object.freeze({version:'trade-zones-v1-experimental',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
  const day=s=>Date.parse(s+'T00:00:00Z'),ms=86400000;
  const median=a=>{const s=[...a].sort((a,b)=>a-b);return s.length%2?s[(s.length-1)/2]:(s[s.length/2-1]+s[s.length/2])/2;};
+ // Per source instrument; don't round or merge nearby but different price bands.
+ function deduplicate(zones){
+  const groups=new Map();
+  for(const zone of zones)for(const z of zone.detections||[zone]){
+   const key=JSON.stringify([z.timeframe,z.type,z.lower,z.upper,z.confirmedAt]);
+   if(!groups.has(key))groups.set(key,new Map());groups.get(key).set(z.id,z);
+  }
+  return [...groups.values()].map(group=>{
+   // Prefer origin, otherwise latest/shortest base. Never cherry-pick the best score.
+   const detections=[...group.values()].sort((a,b)=>Number(b.kind==='origin')-Number(a.kind==='origin')||b.baseDate.localeCompare(a.baseDate)||a.baseEnd.localeCompare(b.baseEnd)||a.id.localeCompare(b.id));
+   const z=detections[0],kinds=['origin','base'].filter(k=>detections.some(d=>d.kind===k));
+   return {...z,id:[z.timeframe,z.type,z.lower,z.upper,z.confirmedAt].join(':'),kinds,detections};
+  });
+ }
  function settings(options={}){
   const c={...defaults,...options};
   for(const [k,min,max]of [['impulseAtr',1,4],['departureBars',1,5],['volumeRatio',1,4],['volumeWindow',1,3]])if(!Number.isFinite(c[k])||c[k]<min||c[k]>max)throw Error('Neplatný parametr '+k);
@@ -64,7 +78,7 @@
      }
     }
    }
-  }return out.sort((a,b)=>b.qualityPoints-a.qualityPoints||a.distanceAtr-b.distanceAtr||b.confirmedAt.localeCompare(a.confirmedAt)||a.id.localeCompare(b.id));
+  }return deduplicate(out).sort((a,b)=>b.qualityPoints-a.qualityPoints||a.distanceAtr-b.distanceAtr||b.confirmedAt.localeCompare(a.confirmedAt)||a.id.localeCompare(b.id));
  }
  function refine(parent,dailyZones){
   if(parent.timeframe!=='W1')return [];
@@ -78,5 +92,5 @@
   const cot=aligned?Htf.cotState(c):'insufficient';
   return {seasonal:sufficient?(aligned?'supports':'against'):'unknown',cot,macro:'unknown',candidate:c};
  }
- return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context};
+ return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate};
 });

@@ -2,7 +2,7 @@
  'use strict';
  const root=document.querySelector('.seasonality-page'),panel=document.getElementById('market-zones-view');if(!root||!panel)return;
  const by=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=String(text);return n;};
- const num=v=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:5}).format(v),labels={yes:'BOS close potvrzen',no:'Bez BOS',unknown:'Neověřeno',high:'Vysoké volume',normal:'Běžné volume',supports:'Podporuje',against:'Proti směru',confirms:'Potvrzuje',neutral:'Neutrální',insufficient:'Málo dat'},kind=z=>z.kind==='origin'?'Původ impulzu':'Konsolidační základna';
+ const num=v=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:5}).format(v),labels={yes:'BOS close potvrzen',no:'Bez BOS',unknown:'Neověřeno',high:'Vysoké volume',normal:'Běžné volume',supports:'Podporuje',against:'Proti směru',confirms:'Potvrzuje',neutral:'Neutrální',insufficient:'Málo dat'},kind=z=>(z.kinds||[z.kind]).map(k=>k==='origin'?'Původ impulzu':'Konsolidační základna').join(' + ');
  const badge=s=>{const b=el('span',labels[s]||'Neověřeno');b.className='tz-badge '+s;return b;};
  let snapshot,opps,all=[],list=[],selected,chart,loading=false;
  const config=()=>({impulseAtr:Number(by('tz-impulse').value),volumeWindow:Number(by('tz-volume-window').value),volumeRatio:Number(by('tz-volume-ratio').value),bounds:by('tz-bounds').value});
@@ -15,9 +15,9 @@
   }all.sort((a,b)=>b.zone.qualityPoints-a.zone.qualityPoints||a.zone.distanceAtr-b.zone.distanceAtr||b.zone.confirmedAt.localeCompare(a.zone.confirmedAt)||a.key.localeCompare(b.key));render();
  }
  function render(){
-  const search=by('tz-search').value.trim().toUpperCase();list=all.filter(r=>((r.asset?.mapping?.scope==='core')===(by('tz-scope').value==='core'))&&(!search||(r.key+' '+(r.asset?.name||'')).toUpperCase().includes(search))&&(by('tz-tf').value==='all'||r.zone.timeframe===by('tz-tf').value)&&(by('tz-kind').value==='all'||r.zone.kind===by('tz-kind').value)&&(by('tz-side').value==='all'||r.zone.type===by('tz-side').value)&&(by('tz-bos').value==='all'||r.zone.bos.state==='yes'));
+  const search=by('tz-search').value.trim().toUpperCase();list=all.filter(r=>((r.asset?.mapping?.scope==='core')===(by('tz-scope').value==='core'))&&(!search||(r.key+' '+(r.asset?.name||'')).toUpperCase().includes(search))&&(by('tz-tf').value==='all'||r.zone.timeframe===by('tz-tf').value)&&(by('tz-kind').value==='all'||(r.zone.kinds||[r.zone.kind]).includes(by('tz-kind').value))&&(by('tz-side').value==='all'||r.zone.type===by('tz-side').value)&&(by('tz-bos').value==='all'||r.zone.bos.state==='yes'));
   const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date()),stale=Date.parse(today)-Date.parse(snapshot.asOf)>86400000;
-  by('tz-status').textContent=`Snapshot ${snapshot.asOf} · ${list.length} kandidátů zón · řazení: doložené body kvality, vzdálenost ceny, stáří. ${stale?'STARŠÍ DATA — nehodnoť jako aktuální setup. ':''}${opps?.asOf!==snapshot.asOf?'Sezonní/COT kontext nedostupný nebo má jiné datum. ':''}Session a makro neověřeny. Nejde o nezávislé obchody ani pravděpodobnosti.`;by('tz-status').classList.toggle('is-error',stale);
+  by('tz-status').textContent=`Snapshot ${snapshot.asOf} · ${list.length} unikátních zón · řazení: doložené body kvality, vzdálenost ceny, stáří. ${stale?'STARŠÍ DATA — nehodnoť jako aktuální setup. ':''}${opps?.asOf!==snapshot.asOf?'Sezonní/COT kontext nedostupný nebo má jiné datum. ':''}Session a makro neověřeny. Nejde o nezávislé obchody ani pravděpodobnosti.`;by('tz-status').classList.toggle('is-error',stale);
   const body=by('tz-results');body.replaceChildren();
   for(const r of list){const z=r.zone,tr=el('tr');tr.dataset.zoneId=z.id;tr.dataset.symbol=r.key;
    const instrument=el('td',`${r.key} · ${z.timeframe} ${z.type}`);instrument.append(el('small',kind(z)),el('small',r.asset?.mapping?.scope==='core'?'Core zdroj':'Research / review'));tr.append(instrument);
@@ -38,6 +38,7 @@
   const refinement=by('tz-refinement');refinement.replaceChildren();const parent=el('option','Původní HTF zóna');parent.value='parent';refinement.append(parent);r.children.forEach((child,i)=>{const o=el('option',`D1 ${child.baseDate} · ${num(child.lower)}–${num(child.upper)}`);o.value=String(i);refinement.append(o);});
   by('tz-refine-note').textContent=z.timeframe==='D1'?'D1 → H4: chybí intradenní OHLC, zpřesnění neprovádíme.':r.children.length?`${r.children.length} D1 zón uvnitř W1, známých nejpozději při jejím potvrzení. Žádná nová umělá hranice.`:'Uvnitř této W1 zóny není doložená platná D1 zóna v dostupné historii.';
   by('tz-resolution').value=z.timeframe;
+  if(z.detections?.length>1)by('tz-evidence').textContent+=` Sloučeno ${z.detections.length} nálezů stejné zóny. Body se nesčítají; důkazy jsou z ${z.kind==='origin'?'původu impulzu':'nejkratší poslední základny'}.`;
   const seasonal=r.context.candidate;
   by('tz-caption').textContent=`${r.price.provider} ${r.price.symbol} · ${r.price.timezone} · poslední dokončený close ${num(r.price.latestClose)} (${r.price.latestDate}). Objem: provider volume${r.asset?.mapping?.exposureFamily==='FX'?' / spot FX — není centralizovaný obchodovaný objem':''}. Vodorovné pásmo = vybraná zóna. ${seasonal?`Svislé sezonní okno ${seasonal.startDate}–${seasonal.endDate}: ${seasonal.direction==='up'?'zelené pro růst':'červené pro pokles'}, i pokud jde proti směru zóny. Je to kontext, ne předpověď.`:'Sezonní okno není dostupné; žádné nevytváříme.'} Cena není živá.`;
   const context=by('tz-context');context.replaceChildren();const c=r.context.candidate,s=c?.histories?.[20]?.seasonal;

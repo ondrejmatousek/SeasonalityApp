@@ -7,6 +7,10 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();await page.locator('#tz-results button').first().waitFor();assert.ok(await page.locator('#tz-results button').count()>0);
  assert.ok(await page.locator('#tz-chart').getAttribute('data-candle-count'));assert.match(await page.locator('#tz-status').textContent(),/Session a makro neověřeny/);
  for(const row of await page.locator('#tz-results tr').allTextContents())assert.ok(!row.includes('Research / review'),'Core/research separation');
+ const rowKeys=await page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>r.dataset.symbol+'|'+r.dataset.zoneId));assert.equal(new Set(rowKeys).size,rowKeys.length,'Unique rendered zones');
+ await page.locator('#tz-search').fill('CADJPY');
+ const cad=page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'});assert.equal(await cad.count(),1);assert.match(await cad.textContent(),/Původ impulzu \+ Konsolidační základna/);
+ await page.locator('#tz-kind').selectOption('base');assert.equal(await page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'}).count(),1,'Merged zone still matches base filter');await page.locator('#tz-search').fill('');
  await page.locator('#tz-kind').selectOption('origin');for(const r of await page.locator('#tz-results tr').allTextContents())assert.match(r,/Původ impulzu/);
  await page.locator('#tz-bos').selectOption('yes');for(const r of await page.locator('#tz-results tr').allTextContents())assert.match(r,/BOS close potvrzen/);
  await page.locator('#tz-bos').selectOption('all');await page.locator('#tz-search').fill('GBPAUD');assert.ok(await page.locator('#tz-results button').count()>0);
