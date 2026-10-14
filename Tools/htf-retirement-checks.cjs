@@ -3,6 +3,8 @@ const {migrate}=require('./retire-htf-snapshot.cjs');
 const removed=['wwwroot/js/htf-zones.js','wwwroot/js/htf-ui.js','wwwroot/js/htf-chart.js','wwwroot/css/htf.css','Tools/build-htf-confluence.cjs','Tools/htf-checks.cjs','Tools/htf-export-checks.cjs','Tools/htf-browser-checks.cjs','Tools/fetch-htf-ohlc.ps1'];
 for(const file of removed)assert.equal(fs.existsSync(file),false,'Retired file '+file);
 const view=fs.readFileSync('Views/Seasonality/Index.cshtml','utf8');assert.ok(!view.includes('market-tab-htf')&&!view.includes('market-htf-view'));assert.ok(view.includes('market-tab-zones'));
+const generated=fs.readFileSync('data/generated/site/index.html','utf8');assert.ok(!generated.includes('market-tab-htf'));
+const inline=JSON.parse(generated.match(/<script id="static-market-manifest" type="application\/json">([\s\S]*?)<\/script>/)[1]);assert.deepEqual(inline,JSON.parse(fs.readFileSync('data/generated/site/data/manifest.json')));
 assert.ok(!fs.readFileSync('Tools/morning-analytics.cjs','utf8').includes('build-htf-confluence'));assert.ok(fs.readFileSync('Tools/morning-analytics.cjs','utf8').includes('build-zone-prices'));
 const root=path.resolve('artifacts/htf-retirement-test-'+crypto.randomBytes(8).toString('hex'));fs.mkdirSync(path.join(root,'data/screener'),{recursive:true});
 try{

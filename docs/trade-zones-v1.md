@@ -9,7 +9,8 @@ User rules: zone first, contextual signals second. Origins and continuation base
 are distinct. BOS requires a close beyond a confirmed swing and is optional.
 High source-candle volume is quality, not eligibility. London/NY departure timing
 is quality but cannot be inferred from D1 opening timestamps. Context is not a
-trade-success probability. Existing HTF detection, ingestion and rankings stay intact.
+trade-success probability. Ingestion and seasonal rankings stay intact; only the
+new zone-first detector remains active.
 
 Provisional exposed parameters: ATR(14); departure close >=1.5 ATR beyond full
 zone range within three bars; full wick bounds by default; body-to-outer-wick is

@@ -71,7 +71,7 @@ function run(request){
   check(request.htfFeed&&fs.existsSync(path.join(request.analyticsSnapshot,'data/manifest.json'))&&fs.existsSync(request.htfFeed),'Analytics snapshot/HTF evidence missing');
   const output=path.join(work,'site');
   const sourceManifestHash=hash(fs.readFileSync(path.join(request.analyticsSnapshot,'data/manifest.json')));
-  // Same scoring/HTF builders, frozen stock/COT snapshot, no SQL queries/refresh/publication/render-side DB setup.
+  // Same scoring/OHLC builders, frozen stock/COT snapshot, no SQL queries/refresh/publication/render-side DB setup.
   require('./morning-analytics.cjs').run({root,input,snapshot:request.analyticsSnapshot,output,
    feed:request.htfFeed,approvedRehearsalRoot:work,renderShell:false});
   for(const script of ['raw-seasonality-checks.cjs','zone-prices-checks.cjs','static-site-checks.cjs'])
