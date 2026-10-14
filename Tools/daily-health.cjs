@@ -11,6 +11,7 @@ function scheduleGate(schedule,now=new Date(),manual=false){
 }
 function create(now=new Date(),sourceCommit=process.env.SOURCE_COMMIT||process.env.GITHUB_SHA||'local'){
  return {schemaVersion:1,status:'running',runDate:day(now),runStartedAt:now.toISOString(),runFinishedAt:null,sourceCommit,
+  workflowUrl:process.env.GITHUB_REPOSITORY&&process.env.GITHUB_RUN_ID?`https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`:null,
   marketDailyFetchedAt:null,market:{status:'pending',received:0,inserted:0,duplicates:0,failed:0,failedSymbols:[]},
   stocks:{status:'pending'},cot:{status:'pending'},seasonality:{status:'pending'},htf:{status:'pending'},scoring:{status:'pending'},staticExport:{status:'pending'},
   seasonalityCandidates:0,htfZones:0,screenerRows:0,instrumentChecks:[],warnings:[],errors:[],published:false};
@@ -85,7 +86,7 @@ function finish(h,now=new Date()){
 function write(dir,h){
  fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'latest.json'),JSON.stringify(h,null,2));
  fs.writeFileSync(path.join(dir,h.runDate+'.json'),JSON.stringify(h,null,2));
- const files=fs.readdirSync(dir).filter(n=>/^\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort().reverse().slice(0,7);
+ const files=fs.readdirSync(dir).filter(n=>/^\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort().reverse().slice(0,30);
  fs.writeFileSync(path.join(dir,'history.json'),JSON.stringify({schemaVersion:1,runs:files.map(n=>read(path.join(dir,n)))},null,2));
 }
 function summary(h){

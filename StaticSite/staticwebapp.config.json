@@ -1,5 +1,8 @@
 {
   "routes": [
+    { "route": "/runs", "redirect": "/runs/", "statusCode": 301 },
+    { "route": "/runs/", "rewrite": "/runs/index.html", "headers": { "Cache-Control": "no-cache" } },
+    { "route": "/runs/index.html", "headers": { "Cache-Control": "no-cache" } },
     { "route": "/", "headers": { "Cache-Control": "no-cache" } },
     { "route": "/index.html", "headers": { "Cache-Control": "no-cache" } },
     { "route": "/Seasonality", "rewrite": "/index.html", "headers": { "Cache-Control": "no-cache" } },

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="~/css/cot.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/market-help.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/htf.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/daily-health.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/data-runs.css" asp-append-version="true" />
 </head>
 <body class="journal-shell app-section-shell">
     <header>
@@ -22,22 +22,20 @@
                     <span>SeasonalityApp</span>
                 </a>
                 <div class="navbar-nav"><a class="nav-link active" href="/">Seasonality &amp; COT</a></div>
-                <div class="daily-health" data-export-omit>
-                    <button id="daily-health-toggle" type="button" title="Data &amp; analytics status" aria-label="Data &amp; analytics status" aria-expanded="false" aria-controls="daily-health-panel"><span id="daily-health-dot" class="health-dot is-warning" aria-hidden="true"></span><span>Data</span></button>
-                    <section id="daily-health-panel" hidden aria-label="Data &amp; analytics status"><strong>Data &amp; analytics status</strong><div id="daily-health-content" role="status">Načítání health reportu…</div></section>
-                </div>
             </div>
         </nav>
     </header>
     <div class="app-workspace">
         <aside class="app-sidebar">
             <div class="sidebar-title">Analýza trhů</div>
-            <a class="sidebar-link active" href="/">Seasonality &amp; COT</a>
+            <a class="sidebar-link @(ViewData["DataPage"] is true ? "" : "active")" href="/">Seasonality &amp; COT</a>
+            <div class="sidebar-title">Data</div>
+            <a class="sidebar-link @(ViewData["DataPage"] is true ? "active" : "")" href="/runs/">Denní běhy</a>
         </aside>
         <main role="main" class="app-workspace-main">@RenderBody()</main>
     </div>
     <script src="~/js/static-market-data.js" asp-append-version="true"></script>
-    <script src="~/js/daily-health-status.js" asp-append-version="true"></script>
+    <script src="~/js/data-runs.js" asp-append-version="true"></script>
     <script src="~/js/market-chart-ui.js" asp-append-version="true"></script>
     <script src="~/js/seasonality-geometry.js" asp-append-version="true"></script>
     <script src="~/js/seasonality-year-trends.js" asp-append-version="true"></script>

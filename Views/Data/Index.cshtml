@@ -1,0 +1,16 @@
+@{
+    ViewData["DataPage"] = true;
+}
+<section class="data-runs" id="data-runs">
+    <header class="runs-heading">
+        <div><p class="runs-eyebrow">DATA / PROVOZ</p><h1>Denní běhy</h1><p>Sběr → SQL → validace → analytika → zveřejnění. Časy jsou v Europe/Prague.</p></div>
+        <button type="button" id="runs-refresh">Obnovit</button>
+    </header>
+    <p id="runs-state" role="status">Načítám uložené reporty…</p>
+    <p class="runs-note">Zelený přepočet není potvrzení nasazení. Dostupnost webu ověřujeme zvlášť proti jeho manifestu. Přijetí kolekce do SQL samo nepotvrzuje, že Work právě načetl nové svíčky z TradingView.</p>
+    <div class="runs-columns">
+        <section aria-labelledby="runs-history-heading"><h2 id="runs-history-heading">Historie po dnech</h2><div id="runs-history"></div></section>
+        <section aria-labelledby="runs-detail-heading"><h2 id="runs-detail-heading">Detail běhu</h2><div id="runs-detail"></div></section>
+    </div>
+    <noscript>Pro načtení uložených reportů je potřeba JavaScript.</noscript>
+</section>

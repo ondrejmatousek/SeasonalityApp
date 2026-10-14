@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
-const health=require('./daily-health.cjs'),ui=require('../wwwroot/js/daily-health-status.js');
+const health=require('./daily-health.cjs'),ui=require('../wwwroot/js/data-runs.js');
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'seasonality-health-'));
 for(const [date,cron]of [['2026-01-12T05:00:00Z','0 5 * * *'],['2026-07-12T04:00:00Z','0 4 * * *'],['2026-03-29T04:00:00Z','0 4 * * *'],['2026-10-25T05:00:00Z','0 5 * * *']]){
  assert.equal(health.scheduleGate(cron,new Date(date)),true);
@@ -24,7 +24,7 @@ report.instruments[0].failed=1;report.instruments[0].reason='OHLC conflict';asse
 report.instruments.shift();assert.match(health.ingestionGate(report,registry).errors.join(),/missing daily instrument/);
 report.providerSplice=true;assert.match(health.ingestionGate(report,registry).errors.join(),/splice/);
 for(let i=1;i<=9;i++){const h=health.create(new Date(`2026-10-${String(i).padStart(2,'0')}T04:00:00Z`),'test');health.finish(h,new Date(`2026-10-${String(i).padStart(2,'0')}T04:01:00Z`));health.write(temp,h);}
-assert.equal(JSON.parse(fs.readFileSync(path.join(temp,'history.json'))).runs.length,7);
+assert.equal(JSON.parse(fs.readFileSync(path.join(temp,'history.json'))).runs.length,9);
 const h=JSON.parse(fs.readFileSync(path.join(temp,'latest.json')));assert.equal(h.durationSeconds,60);
 assert.equal(ui.displayState(h,Date.parse(h.runFinishedAt)), 'ok');assert.equal(ui.displayState(h,Date.parse(h.staleAfter)+1),'failed');
 assert.equal(ui.displayState({...h,status:'warning'},Date.parse(h.runFinishedAt)), 'warning');assert.equal(ui.displayState({...h,status:'failed'},Date.parse(h.runFinishedAt)), 'failed');assert.equal(ui.displayState(null),'failed');

@@ -169,5 +169,13 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
         await view.View.RenderAsync(new ViewContext(action, view.View, data,
             new TempDataDictionary(http, tempData), writer, new HtmlHelperOptions()));
         await File.WriteAllTextAsync(Path.Combine(directory, "index.html"), writer.ToString());
+        var runsView = views.GetView(null, "/Views/Data/Index.cshtml", true);
+        if (!runsView.Success) throw new InvalidOperationException("Data runs view not found.");
+        using var runsWriter = new StringWriter();
+        await runsView.View.RenderAsync(new ViewContext(action, runsView.View,
+            new ViewDataDictionary(metadata, new ModelStateDictionary()),
+            new TempDataDictionary(http, tempData), runsWriter, new HtmlHelperOptions()));
+        Directory.CreateDirectory(Path.Combine(directory, "runs"));
+        await File.WriteAllTextAsync(Path.Combine(directory, "runs", "index.html"), runsWriter.ToString());
     }
 }

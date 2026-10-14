@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const ui=require('../wwwroot/js/data-runs.js');
+const h=JSON.parse(fs.readFileSync('artifacts/daily-health/latest.json'));
+const sql={generationId:1,receiptId:'a'.repeat(64),payloadSha256:'b'.repeat(64),auditSha256:'c'.repeat(64),stateSha256:'d'.repeat(64)};
+const report={...h,mode:'live',published:true,marketDailySql:sql};
+assert.equal(ui.steps(report,{marketDailySql:sql}).at(-1).status,'served');
+for(const key of Object.keys(sql))assert.equal(ui.steps(report,{marketDailySql:{...sql,[key]:'mismatch'}}).at(-1).status,'unknown');
+assert.equal(ui.steps({...report,published:false},{marketDailySql:sql}).at(-1).status,'unknown');
+assert.equal(ui.steps({...report,mode:'safe-rehearsal'},{marketDailySql:sql}).at(-1).status,'unknown');
+assert.equal(ui.steps(h,null)[0].status,'unknown','An existing collection never proves a new TradingView call');
+assert.equal(ui.steps({...h,marketDailySql:null},null)[1].status,'unknown');
+const old={...h,runFinishedAt:'2026-10-14T01:00:00Z',runDate:'2026-10-14'};
+const fresh={...old,runFinishedAt:'2026-10-14T04:00:00Z',status:'failed'};
+assert.equal(ui.mergeRuns(fresh,{runs:[old]}).length,1);assert.equal(ui.mergeRuns(fresh,{runs:[old]})[0].status,'failed');
+const layout=fs.readFileSync('Views/Shared/_Layout.cshtml','utf8');assert.ok(layout.includes('href="/runs/"'));assert.ok(!layout.includes('daily-health-toggle'));
+assert.ok(fs.readFileSync('Services/StaticSiteExporter.cs','utf8').includes('/Views/Data/Index.cshtml'));
+const routes=JSON.parse(fs.readFileSync('StaticSite/staticwebapp.config.json')).routes;assert.ok(routes.some(r=>r.route==='/runs/'&&r.rewrite==='/runs/index.html'));
+console.log('PASS: Data view navigation, daily selection, preserved failures, stale reports and exact live SQL provenance; no invented Work/deploy success.');

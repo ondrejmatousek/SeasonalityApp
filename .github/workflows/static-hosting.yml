@@ -42,6 +42,10 @@ jobs:
         if: steps.publication.outputs.run == 'true'
         with:
           ref: master
+      - uses: actions/setup-dotnet@v4
+        if: steps.publication.outputs.run == 'true'
+        with:
+          dotnet-version: '10.0.x'
       - name: Assemble previously verified static outputs (no analytics or SQL)
         if: steps.publication.outputs.run == 'true'
         run: |
@@ -52,6 +56,18 @@ jobs:
           cp -R wwwroot/. artifacts/public-site/
           mkdir -p artifacts/public-site/artifacts/daily-health
           cp artifacts/daily-health/*.json artifacts/public-site/artifacts/daily-health/
+          # Render current Razor navigation and the Data view without SQL or analytics.
+          dotnet build SeasonalityApp.slnx --configuration Release
+          dotnet bin/Release/net10.0/SeasonalityApp.dll --render-static-shell --output artifacts/public-site
+          cp StaticSite/staticwebapp.config.json artifacts/public-site/staticwebapp.config.json
+      - name: Overlay this morning's report including failed runs (keep last good analytics)
+        if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ github.event.workflow_run.id }}
+        run: |
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name daily-health --dir artifacts/run-health
+          cp artifacts/run-health/*.json artifacts/public-site/artifacts/daily-health/
       - name: Existing Azure static hosting publication
         if: steps.publication.outputs.run == 'true'
         uses: Azure/static-web-apps-deploy@v1

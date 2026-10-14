@@ -79,6 +79,19 @@ jobs:
           MarketDailyInboxWorker__Enabled: 'true'
           MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
           MarketDailyInboxWorker__BootstrapState: ${{ github.workspace }}/data/market-state
+      - name: Record SQL queue failure for the Data view
+        if: failure()
+        run: node Tools/finalize-morning-health.cjs
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+          JOB_STATUS: failure
+          FAILURE_STAGE: SQL queue validation or worker startup
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: daily-health
+          path: artifacts/daily-health/
+          retention-days: 90
   sql-publication:
     needs: sql-inbox-shadow
     if: success() && needs.sql-inbox-shadow.outputs.run == 'true' && !inputs.sql_inbox_shadow && ((github.event_name == 'workflow_dispatch' && inputs.sql_publish) || (github.event_name == 'schedule' && vars.MARKET_DAILY_SQL_MODE == 'publish'))
@@ -139,14 +152,14 @@ jobs:
           MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
           MarketDailySqlPublication__Enabled: 'true'
       - name: Record publication failure without changing committed web
-        if: always() && steps.gate.outputs.run == 'true'
+        if: always() && (steps.gate.outputs.run == 'true' || failure())
         run: node Tools/finalize-morning-health.cjs
         env:
           JOB_STATUS: ${{ job.status }}
           PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
           FAILURE_STAGE: SQL generation build / fence / non-forcing commit
       - uses: actions/upload-artifact@v4
-        if: always() && steps.gate.outputs.run == 'true'
+        if: always() && (steps.gate.outputs.run == 'true' || failure())
         with:
           name: daily-health
           path: artifacts/daily-health/
