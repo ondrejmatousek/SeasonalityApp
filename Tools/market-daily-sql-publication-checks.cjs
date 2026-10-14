@@ -1,0 +1,39 @@
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const {guardGeneration,evidence,prepareSnapshot,commit}=require('./market-daily-sql-publication.cjs');
+const {baselineFingerprint}=require('./market-daily-sql-worker.cjs');
+const {restore}=require('./market-history-seed.cjs'),{ingest}=require('./market-daily-ingest.cjs');
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const dir=path.resolve('artifacts','sql-publication-check-'+crypto.randomUUID()),source=path.join(dir,'source');
+const snapshot=()=>fs.readdirSync('data/market-state').sort().map(n=>[n,hash(fs.readFileSync(path.join('data/market-state',n)))]);
+const before=snapshot();
+fs.mkdirSync(path.join(source,'audit'),{recursive:true});
+try{
+ const daily=fs.readFileSync('data/market-daily/latest.json'),p=JSON.parse(daily),now=Date.parse(p.fetchedAt)+60000;
+ const audit=fs.readFileSync('data/market-daily/audit/'+p.runDate+'.json');
+ fs.writeFileSync(path.join(source,'latest.json'),daily);fs.writeFileSync(path.join(source,'audit',p.runDate+'.json'),audit);
+ const seedRoot=path.join(dir,'seed');restore(seedRoot);
+ const result=ingest({root:seedRoot,input:path.join(source,'latest.json'),includeReview:true,now});
+ assert.equal(result.failed,0);
+ const files=Object.fromEntries(fs.readdirSync(path.join(seedRoot,'daily-ingestion')).filter(n=>/^[A-Z]+\.json$/.test(n)).map(n=>[n,fs.readFileSync(path.join(seedRoot,'daily-ingestion',n),'utf8')]));
+ const baseline=baselineFingerprint(fs.readFileSync('data/market-history/tradingview-backfill-36-v1.json.gz.sha256'),fs.readFileSync('data/commodity-research/source-registry.json'));
+ const state=Buffer.from(JSON.stringify({schemaVersion:1,baselineFingerprint:baseline,files}));
+ fs.writeFileSync(path.join(source,'state.json'),state);
+ const c={schemaVersion:1,generationId:1,receiptId:hash(Buffer.from(hash(daily)+hash(audit),'hex')),payloadSha256:hash(daily),auditSha256:hash(audit),stateSha256:hash(state),baselineFingerprint:baseline,runDate:p.runDate};
+ const context=path.join(source,'context.json');fs.writeFileSync(context,JSON.stringify(c));
+ assert.equal(evidence(context,{now}).c.receiptId,c.receiptId);
+ assert.throws(()=>evidence(context,{now:Date.parse(p.fetchedAt)+25*3600000}));
+ assert.equal(guardGeneration(c,null),true);assert.equal(guardGeneration(c,c),false);
+ assert.equal(guardGeneration({...c,generationId:2},c),true);
+ assert.throws(()=>guardGeneration(c,{...c,generationId:2}));
+ assert.throws(()=>guardGeneration(c,{...c,stateSha256:'0'.repeat(64)}));
+ assert.throws(()=>evidence(path.resolve('data/context.json')));
+ fs.appendFileSync(path.join(source,'latest.json'),' ');assert.throws(()=>evidence(context,{now}));fs.writeFileSync(path.join(source,'latest.json'),daily);
+ const prepared=prepareSnapshot(context,{now});assert.equal(prepared.c.generationId,1);
+ assert.throws(()=>prepareSnapshot(context,{now}));
+ assert.throws(()=>commit(context),'Direct publication without SQL fence refused');
+ assert.deepEqual(snapshot(),before,'Canonical overlays unchanged');
+ console.log('PASS: exact SQL evidence/state staging, original freshness, 39-source parity, changed bytes/stale input rejection, monotonic generation/no-op guards and mandatory SQL fence; no production writes.');
+}finally{
+ assert.ok(path.dirname(dir)===path.resolve('artifacts')&&path.basename(dir).startsWith('sql-publication-check-'));
+ fs.rmSync(dir,{recursive:true});
+}

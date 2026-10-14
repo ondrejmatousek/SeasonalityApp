@@ -1,21 +1,16 @@
 name: Morning analytics
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'data/market-daily/latest.json'
-      - 'data/market-daily/audit/**'
   schedule:
     - cron: '7,22,37,52 1-8 * * *'
   workflow_dispatch:
     inputs:
-      force:
-        description: 'Rebuild even if this collection was already published today'
-        type: boolean
-        default: false
       sql_inbox_shadow:
         description: 'Process one SQL inbox receipt and rehearse analytics; NO production publication'
+        type: boolean
+        default: false
+      sql_publish:
+        description: 'Publish latest accepted SQL generation after fresh stock/COT export and checks'
         type: boolean
         default: false
 
@@ -27,122 +22,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  morning:
-    if: github.event_name != 'workflow_dispatch' || !inputs.sql_inbox_shadow
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: master
-          fetch-depth: 1
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Record actual checked-out source commit
-        run: echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-      - name: Select fresh Work collection immediately and skip duplicate successful runs
-        id: gate
-        run: node Tools/morning-trigger.cjs --gate
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          FORCE_RUN: ${{ inputs.force }}
-      - uses: actions/setup-dotnet@v4
-        if: steps.gate.outputs.run == 'true'
-        with:
-          dotnet-version: '10.0.x'
-      - name: Restore audited historical seed and cumulative same-provider state
-        id: bootstrap
-        if: steps.gate.outputs.run == 'true'
-        run: node Tools/market-history-seed.cjs
-      - name: Release build and regression tests
-        id: build
-        if: steps.gate.outputs.run == 'true'
-        run: |
-          dotnet build SeasonalityApp.slnx --configuration Release
-          dotnet run --project Tools/CotChecks/CotChecks.csproj --configuration Release
-          node Tools/morning-health-checks.cjs
-          node Tools/morning-trigger-checks.cjs
-          node Tools/unified-market-daily-checks.cjs
-          node Tools/commodity-research-checks.cjs
-          node Tools/commodity-daily-ingest-checks.cjs
-          node Tools/market-daily-ingest-checks.cjs
-          node Tools/core-market-checks.cjs
-          node Tools/opportunity-ranking-checks.cjs
-          node Tools/opportunity-scoring-v2-checks.cjs
-          node Tools/opportunity-scoring-v3-checks.cjs
-          node Tools/historical-cot-comparison-checks.cjs
-          node Tools/htf-checks.cjs
-      - name: Ingest, refresh existing Yahoo stocks/CFTC and rebuild staging analytics
-        if: steps.gate.outputs.run == 'true'
-        id: analytics
-        run: node Tools/morning-run.cjs
-        env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
-      - name: Restore unchanged cumulative V3 live tracking
-        id: tracking
-        if: steps.gate.outputs.run == 'true' && success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "seasonality-v3-live-ledger" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
-          if [ -n "$run_id" ] && [ "$run_id" != null ]; then
-            gh run download "$run_id" --name seasonality-v3-live-ledger --dir artifacts/v3-live-ledger
-          fi
-          node Tools/v3-live-tracking.cjs artifacts/morning-site artifacts/v3-live-ledger/ledger.json
-          node Tools/static-site-checks.cjs artifacts/morning-site
-      - name: Publish generated data only after all critical checks
-        if: steps.gate.outputs.run == 'true' && success()
-        id: publish
-        run: node Tools/publish-morning-data.cjs
-      - name: Always record failures and Job Summary
-        if: always() && steps.gate.outputs.run == 'true'
-        run: node Tools/finalize-morning-health.cjs
-        env:
-          JOB_STATUS: ${{ job.status }}
-          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
-          FAILURE_STAGE: ${{ steps.bootstrap.outcome == 'failure' && 'Historical seed restore' || steps.build.outcome == 'failure' && 'Release build / regression tests' || steps.analytics.outcome == 'failure' && 'Market ingestion / source refresh / analytics rebuild' || steps.tracking.outcome == 'failure' && 'Live tracking / static verification' || steps.publish.outcome == 'failure' && 'Static publication staging' || 'Unknown or cancelled step' }}
-      - name: Commit only generated data/state and health audits
-        id: commit
-        if: always() && steps.gate.outputs.run == 'true'
-        env:
-          ANALYTICS_OK: ${{ steps.publish.outcome == 'success' }}
-        run: |
-          git config user.name 'seasonality-data-bot'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f artifacts/daily-health
-          if [ "$ANALYTICS_OK" = true ]; then
-            git add data/generated/site
-            if [ -n "$(find data/market-state -maxdepth 1 -name '*.json' -print -quit 2>/dev/null)" ]; then git add data/market-state; fi
-          fi
-          if ! git diff --cached --quiet; then
-            git commit -m "Morning data and health $(TZ=Europe/Prague date +%F)"
-            # Fail on a concurrent writer; never force-push or overwrite its market input.
-            git push origin HEAD:master
-          fi
-      - name: Summarize publication/commit failure
-        if: failure() && steps.gate.outputs.run == 'true'
-        run: node Tools/finalize-morning-health.cjs
-        env:
-          JOB_STATUS: ${{ job.status }}
-          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
-          FAILURE_STAGE: ${{ steps.commit.outcome == 'failure' && 'Generated-data commit / non-forcing push' || 'See failed step above' }}
-      - uses: actions/upload-artifact@v4
-        if: always() && steps.gate.outputs.run == 'true'
-        with:
-          name: daily-health
-          path: artifacts/daily-health/
-          retention-days: 90
-      - uses: actions/upload-artifact@v4
-        if: steps.publish.outcome == 'success'
-        with:
-          name: seasonality-v3-live-ledger
-          path: artifacts/v3-live-ledger/ledger.json
-          retention-days: 90
   sql-inbox-shadow:
-    if: github.event_name == 'workflow_dispatch' && inputs.sql_inbox_shadow
+    if: (github.event_name == 'workflow_dispatch' && (inputs.sql_inbox_shadow || inputs.sql_publish)) || (github.event_name == 'schedule' && (vars.MARKET_DAILY_SQL_MODE == '' || vars.MARKET_DAILY_SQL_MODE == 'shadow' || vars.MARKET_DAILY_SQL_MODE == 'publish'))
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -163,9 +46,11 @@ jobs:
           node Tools/market-daily-sql-worker-checks.cjs
           node Tools/market-daily-preflight-checks.cjs
       - name: Fetch read-only ETF HTF evidence for analytics rehearsal
+        if: inputs.sql_inbox_shadow
         shell: pwsh
         run: ./Tools/fetch-htf-ohlc.ps1 -OutputDir artifacts/sql-inbox-htf
       - name: Process ONE receipt into SQL shadow history and verify private analytics
+        if: inputs.sql_inbox_shadow
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-once
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
@@ -174,3 +59,89 @@ jobs:
           MarketDailyInboxWorker__BootstrapState: ${{ github.workspace }}/data/market-state
           MarketDailyInboxWorker__AnalyticsSnapshot: ${{ github.workspace }}/data/generated/site
           MarketDailyInboxWorker__HtfFeed: ${{ github.workspace }}/artifacts/sql-inbox-htf
+      - name: Drain up to five SQL receipts with lease/CAS validation, no publication
+        if: '!inputs.sql_inbox_shadow'
+        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-queue
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          MarketDailyInboxWorker__Enabled: 'true'
+          MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
+          MarketDailyInboxWorker__BootstrapState: ${{ github.workspace }}/data/market-state
+  sql-publication:
+    needs: sql-inbox-shadow
+    if: success() && !inputs.sql_inbox_shadow && ((github.event_name == 'workflow_dispatch' && inputs.sql_publish) || (github.event_name == 'schedule' && vars.MARKET_DAILY_SQL_MODE == 'publish'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Record checked-out source
+        run: echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Release build and SQL publication regressions
+        run: |
+          node Tools/market-history-seed.cjs
+          dotnet build SeasonalityApp.slnx --configuration Release
+          node Tools/market-daily-sql-publication-checks.cjs
+          node Tools/morning-health-checks.cjs
+      - name: Select latest accepted SQL generation and skip committed duplicates
+        id: gate
+        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --export-market-inbox
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          MarketDailyInboxWorker__Enabled: 'true'
+          MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
+      - name: Build from exact SQL evidence with existing live Yahoo stocks/CFTC refresh
+        if: steps.gate.outputs.run == 'true'
+        run: node Tools/market-daily-sql-publication.cjs artifacts/sql-market/context.json
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+      - name: Preserve existing V3 live ledger and verify final static output
+        if: steps.gate.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "seasonality-v3-live-ledger" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
+          if [ -n "$run_id" ] && [ "$run_id" != null ]; then
+            gh run download "$run_id" --name seasonality-v3-live-ledger --dir artifacts/v3-live-ledger
+          fi
+          node Tools/v3-live-tracking.cjs artifacts/morning-site artifacts/v3-live-ledger/ledger.json
+          node Tools/static-site-checks.cjs artifacts/morning-site
+      - name: Fence SQL generation and atomically commit verified site/state without force push
+        id: publish
+        if: steps.gate.outputs.run == 'true'
+        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --publish-market-inbox
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          MarketDailyInboxWorker__Enabled: 'true'
+          MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
+          MarketDailySqlPublication__Enabled: 'true'
+      - name: Record publication failure without changing committed web
+        if: always() && steps.gate.outputs.run == 'true'
+        run: node Tools/finalize-morning-health.cjs
+        env:
+          JOB_STATUS: ${{ job.status }}
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+          FAILURE_STAGE: SQL generation build / fence / non-forcing commit
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.gate.outputs.run == 'true'
+        with:
+          name: daily-health
+          path: artifacts/daily-health/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: steps.publish.outcome == 'success'
+        with:
+          name: seasonality-v3-live-ledger
+          path: artifacts/v3-live-ledger/ledger.json
+          retention-days: 90

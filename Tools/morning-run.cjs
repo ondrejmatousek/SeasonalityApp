@@ -1,7 +1,7 @@
 // The only live orchestrator. Generates staging outputs, NEVER deploys or pushes.
 const fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process');
 const health=require('./daily-health.cjs'),{prepare}=require('./prepare-market-sources.cjs'),{run}=require('./morning-analytics.cjs');
-function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json',snapshot=null,output='artifacts/morning-site',feed='artifacts/htf-ohlc',healthDir='artifacts/daily-health'}={}){
+function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json',snapshot=null,output='artifacts/morning-site',feed='artifacts/htf-ohlc',healthDir='artifacts/daily-health',dailySource=null}={}){
  const h=health.create(),safe=Boolean(snapshot);h.mode=safe?'safe-rehearsal':'live';
  const command=(cmd,args)=>execFileSync(cmd,args,{stdio:'inherit',env:process.env});
  const node=(script,...args)=>command(process.execPath,[script,...args]);
@@ -9,7 +9,7 @@ function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market
  try{
   h.market.status='running';const payload=JSON.parse(fs.readFileSync(input));h.marketDailyFetchedAt=payload.fetchedAt||payload.generatedAt||null;
   h.market.received=Array.isArray(payload.bars)?payload.bars.length:0;health.marketFreshness(input);
-  const bundle=stage('market',()=>prepare({root,input})),r=bundle.ingestion;
+  const bundle=stage('market',()=>prepare({root,input,dailySource})),r=bundle.ingestion;
   h.market={status:'ok',received:r.instruments.reduce((n,a)=>n+a.received,0),inserted:r.inserted,duplicates:r.skipped,failed:r.failed,
    failedSymbols:r.instruments.filter(a=>a.failed).map(a=>a.symbol),inputSha256:r.inputSha256};
   const gates=health.ingestionGate(r,JSON.parse(fs.readFileSync(path.join(root,'test-source-registry.json'))));

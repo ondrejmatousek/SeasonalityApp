@@ -8,9 +8,50 @@ using SeasonalityApp.Services;
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+if(args.Contains("--export-market-inbox",StringComparer.Ordinal)||args.Contains("--publish-market-inbox",StringComparer.Ordinal))
+{
+    if(!builder.Configuration.GetValue<bool>("MarketDailyInboxWorker:Enabled"))throw new InvalidOperationException("Explicit SQL worker opt-in required.");
+    var sql=builder.Configuration.GetConnectionString("DefaultConnection")??throw new InvalidOperationException("SQL connection required.");
+    var sqlBuilder=new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(sql);sqlBuilder.ConnectTimeout=Math.Max(sqlBuilder.ConnectTimeout,120);
+    var store=new MarketDailySqlInbox(sqlBuilder.ConnectionString);
+    var repository=Path.GetFullPath(builder.Configuration["MarketDailyInboxWorker:RepositoryRoot"]??throw new InvalidOperationException("Repository required."));
+    var head=await store.ReadPublicationSnapshotAsync();
+    if(args.Contains("--export-market-inbox",StringComparer.Ordinal))
+    {
+        var run=head is not null;
+        var manifest=Path.Combine(repository,"data","generated","site","data","manifest.json");
+        if(run&&File.Exists(manifest))
+        {
+            using var previous=System.Text.Json.JsonDocument.Parse(await File.ReadAllBytesAsync(manifest));
+            if(previous.RootElement.TryGetProperty("marketDailySql",out var published))
+            {
+                var generation=published.GetProperty("generationId").GetInt64();
+                if(generation>head!.GenerationId)throw new InvalidDataException("SQL head older than committed web generation.");
+                if(generation==head!.GenerationId)
+                {
+                    if(published.GetProperty("stateSha256").GetString()!=head.StateSha256||published.GetProperty("receiptId").GetString()!=head.ReceiptId)
+                        throw new InvalidDataException("Committed SQL generation identity changed.");
+                    run=false;
+                }
+            }
+        }
+        if(run)MarketDailySqlPublication.Export(head!,repository,"artifacts/sql-market",DateTimeOffset.UtcNow);
+        if(Environment.GetEnvironmentVariable("GITHUB_OUTPUT") is string output)await File.AppendAllTextAsync(output,"run="+run.ToString().ToLowerInvariant()+"\n");
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new {run,generationId=head?.GenerationId}));
+    }
+    else
+    {
+        if(!builder.Configuration.GetValue<bool>("MarketDailySqlPublication:Enabled"))throw new InvalidOperationException("Explicit SQL publication opt-in required.");
+        if(head is null)throw new InvalidOperationException("No accepted SQL generation.");
+        var context=Path.Combine(repository,"artifacts","sql-market","context.json");
+        MarketDailySqlPublication.CheckContext(head,context);
+        await store.WithPublicationFenceAsync(head,()=>MarketDailySqlPublication.CommitAsync(repository,context));
+    }
+    return;
+}
 // Explicit shadow-only CLI, before any stock/COT database registration or schema initialization.
 // Requires a repository/Node runtime and an opt-in flag; never starts during ordinary web deployment.
-if (args.Contains("--process-market-inbox-once", StringComparer.Ordinal))
+if (args.Contains("--process-market-inbox-once", StringComparer.Ordinal)||args.Contains("--process-market-inbox-queue",StringComparer.Ordinal))
 {
     if (!builder.Configuration.GetValue<bool>("MarketDailyInboxWorker:Enabled"))
         throw new InvalidOperationException("MarketDailyInboxWorker:Enabled must be explicitly true.");
@@ -19,12 +60,20 @@ if (args.Contains("--process-market-inbox-once", StringComparer.Ordinal))
     var state=builder.Configuration["MarketDailyInboxWorker:BootstrapState"];
     if (string.IsNullOrWhiteSpace(inboxConnection)||string.IsNullOrWhiteSpace(repository)||string.IsNullOrWhiteSpace(state))
         throw new InvalidOperationException("Shadow inbox worker configuration incomplete.");
-    var worker=new MarketDailyInboxWorker(new MarketDailySqlInbox(inboxConnection),repository,state,
+    var workerConnection=new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(inboxConnection);
+    workerConnection.ConnectTimeout=Math.Max(workerConnection.ConnectTimeout,120);
+    var worker=new MarketDailyInboxWorker(new MarketDailySqlInbox(workerConnection.ConnectionString),repository,state,
         builder.Configuration["MarketDailyInboxWorker:NodeExecutable"]??"node",
         builder.Configuration["MarketDailyInboxWorker:AnalyticsSnapshot"],builder.Configuration["MarketDailyInboxWorker:HtfFeed"]);
-    var result=await worker.ProcessOneAsync();
-    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
-    if(result.Status is not ("Committed" or "Empty"))Environment.ExitCode=1;
+    var queue=args.Contains("--process-market-inbox-queue",StringComparer.Ordinal);
+    for(var i=0;i<(queue?5:1);i++)
+    {
+        var result=await worker.ProcessOneAsync();
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
+        if(result.Status=="Empty")break;
+        if(result.Status!="Committed"){Environment.ExitCode=1;break;}
+        if(queue&&i==4){Console.WriteLine("Queue batch limit reached; continue next scheduled run before publication.");Environment.ExitCode=1;}
+    }
     return;
 }
 MarketDailyProbe.Register(builder.Services);

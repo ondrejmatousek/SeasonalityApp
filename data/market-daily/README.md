@@ -1,6 +1,18 @@
-# Single daily TradingView collection
+# Archived GitHub collection — live intake is SQL/MCP
 
-The collector writes exactly ONE complete 39-instrument collection:
+GitHub collection writes are retired. Do NOT update `latest.json`, dated archives
+or audits here. Preserve existing files as historical evidence/test fixtures.
+The active collector sends one unchanged 39-instrument daily JSON AND its common
+completion audit through the authenticated `submit_market_daily` Seasonality tool.
+Keep the 03:00 Europe/Prague schedule. On a failed submission report the error;
+never silently fall back to GitHub, fabricate bars or rewrite `fetchedAt`.
+The server returns a durable SQL receipt; Actions validate/process the SQL queue.
+The collector must not invoke workers, deploys or analytics itself.
+See `docs/market-daily-sql-rollout.md` for processing/publication and recovery.
+
+## Historical repository format (not an active writer instruction)
+
+The former collector stored exactly ONE complete 39-instrument collection:
 
 - `data/market-daily/latest.json`
 - `data/market-daily/YYYY-MM-DD.json` (the SAME bytes; archive date is collection date in Europe/Prague)

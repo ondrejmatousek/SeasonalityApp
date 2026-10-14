@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const {ingest,loadSeries,supplementalEntries}=require('./market-daily-ingest.cjs');
 const read=f=>JSON.parse(fs.readFileSync(f,'utf8')),sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const appKey=k=>k==='XAGUSD'?'SILVER':k;
-function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json'}={}) {
+function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json',dailySource=null}={}) {
  root=path.resolve(root);const registry=read(path.join(root,'test-source-registry.json'));
  const ingestion=ingest({root,input,includeReview:true});
  const dir=path.join(root,'analytics-sources-v1');fs.mkdirSync(dir,{recursive:true});
@@ -17,7 +17,7 @@ function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market
    const htfStart=e.logicalSymbol==='SPX'?`${Math.max(1962,e.firstCompleteYearWithNoFlatOhlc||1962)}-01-01`:minYear?`${minYear}-01-01`:null;
    const source={schemaVersion:1,assetKey:appKey(e.logicalSymbol),logicalSymbol:e.logicalSymbol,id:e.canonicalTestId,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,
     timeframe:'1D',assetClass:e.assetClass,instrumentKind:e.instrumentKind,status:e.status,review:e.status!=='canonical-test-candidate',
-    historicalSource:e.seasonalitySource,dailySource:'data/market-daily/latest.json',overlaySource:`daily-ingestion/${e.logicalSymbol}.json`,
+    historicalSource:e.seasonalitySource,dailySource:dailySource||'data/market-daily/latest.json',overlaySource:`daily-ingestion/${e.logicalSymbol}.json`,
     historicalSha256:sha(fs.readFileSync(path.join(root,e.seasonalitySource))),ingestionRunId:ingestion.runId,
     dailyStatus:ingestion.instruments.find(x=>x.symbol===e.logicalSymbol)?.reason||'unchanged or updated',
     seasonalityFrom:minYear?`${minYear}-01-01`:null,htfFrom:htfStart,
@@ -42,7 +42,7 @@ function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market
    const e=supplementalEntries().find(e=>e.logicalSymbol===item.assetKey),stored=loadSeries(root,e,path.join(root,'daily-ingestion'));
    const results=ingestion.instruments.filter(r=>r.symbol===item.assetKey),failed=results.some(r=>r.failed);
    source.bars=stored.rows;source.prices=stored.rows.filter(b=>b.date>=source.seasonalityFrom).map(b=>[b.date,b.close]);
-   source.dailySource=results.length?(results.at(-1).input||input):'Awaiting first validated daily JSON';
+   source.dailySource=dailySource||(results.length?(results.at(-1).input||input):'Awaiting first validated daily JSON');
    source.dailyStatus=failed?'daily-error':results.length?'daily-connected':'awaiting-daily';
    source.overlaySource=`daily-ingestion/${item.assetKey}.json`;
    source.reason='Research only / unsupported for validated ranking. Continuous roll gaps may affect seasonality; no contract-aware reconstruction.';

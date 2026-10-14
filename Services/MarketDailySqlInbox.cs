@@ -173,6 +173,64 @@ public sealed class MarketDailySqlInbox(string connectionString)
         return new(r.GetInt64(0), r.GetString(1), bytes);
     }
 
+    public sealed record PublicationSnapshot(long GenerationId,string BaselineFingerprint,string StateSha256,
+        string ReceiptId,string PayloadSha256,string AuditSha256,byte[] StateUtf8,byte[] DailyUtf8,byte[] AuditUtf8,byte[] ReportUtf8);
+
+    public async Task<PublicationSnapshot?> ReadPublicationSnapshotAsync(CancellationToken ct=default)
+    {
+        await using var c=new SqlConnection(connectionString);await c.OpenAsync(ct);
+        return await ReadPublicationSnapshotAsync(c,ct);
+    }
+
+    private static async Task<PublicationSnapshot?> ReadPublicationSnapshotAsync(SqlConnection c,CancellationToken ct)
+    {
+        await using var command=new SqlCommand("""
+            SELECT TOP (1) h.GenerationId,h.BaselineFingerprint,h.StateSha256,h.ReceiptId,
+                i.PayloadSha256,i.AuditSha256,h.StateUtf8,i.DailyUtf8,i.AuditUtf8,h.ReportUtf8
+            FROM market_daily.ShadowHistory h JOIN market_daily.Inbox i ON i.ReceiptId=h.ReceiptId
+            WHERE i.Status='ShadowAccepted' ORDER BY h.GenerationId DESC
+            """,c);
+        await using var r=await command.ExecuteReaderAsync(ct);
+        if(!await r.ReadAsync(ct))return null;
+        var s=new PublicationSnapshot(r.GetInt64(0),r.GetString(1),r.GetString(2),r.GetString(3),r.GetString(4),r.GetString(5),
+            (byte[])r[6],(byte[])r[7],(byte[])r[8],(byte[])r[9]);
+        if(Hash(s.StateUtf8)!=s.StateSha256||Hash(s.DailyUtf8)!=s.PayloadSha256||Hash(s.AuditUtf8)!=s.AuditSha256||
+            Hash(Convert.FromHexString(s.PayloadSha256+s.AuditSha256))!=s.ReceiptId)
+            throw new InvalidDataException("Publication evidence hash mismatch.");
+        using var report=JsonDocument.Parse(s.ReportUtf8);RejectDuplicateKeys(report.RootElement);
+        if(!report.RootElement.GetProperty("accepted").GetBoolean()||Text(report.RootElement,"baselineFingerprint")!=s.BaselineFingerprint||
+            Text(report.RootElement,"payloadSha256")!=s.PayloadSha256||Text(report.RootElement,"auditSha256")!=s.AuditSha256)
+            throw new InvalidDataException("Publication admission binding mismatch.");
+        return s;
+    }
+
+    // Hold the SAME lock used by generation advancement until the non-forcing Git push finishes.
+    // This is an explicit Actions CLI capability, never an MCP tool or web startup action.
+    public async Task WithPublicationFenceAsync(PublicationSnapshot expected,Func<Task> publish,CancellationToken ct=default)
+    {
+        await using var c=new SqlConnection(connectionString);await c.OpenAsync(ct);
+        await using var acquire=new SqlCommand("""
+            DECLARE @result int;
+            EXEC @result=sys.sp_getapplock @Resource=N'MarketDailyInbox:ShadowCommit',
+                @LockMode='Exclusive',@LockOwner='Session',@LockTimeout=10000;
+            SELECT @result;
+            """,c);
+        if((int)(await acquire.ExecuteScalarAsync(ct))!<0)throw new InvalidOperationException("Publication fence busy.");
+        try
+        {
+            var current=await ReadPublicationSnapshotAsync(c,ct);
+            if(current is null||current.GenerationId!=expected.GenerationId||current.StateSha256!=expected.StateSha256||
+                current.ReceiptId!=expected.ReceiptId||Hash(current.ReportUtf8)!=Hash(expected.ReportUtf8))
+                throw new InvalidDataException("SQL generation advanced; stale publication refused.");
+            await publish();
+        }
+        finally
+        {
+            await using var release=new SqlCommand("EXEC sys.sp_releaseapplock @Resource=N'MarketDailyInbox:ShadowCommit',@LockOwner='Session';",c);
+            await release.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+    }
+
     public async Task<bool> RecordAdmissionFailureAsync(Lease lease,byte[] reportUtf8,CancellationToken ct=default)
     {
         var report=reportUtf8.ToArray();CheckBytes(report);

@@ -199,6 +199,7 @@ try
     await using(var c=new SqlConnection(test))
     {await c.OpenAsync();await using var command=new SqlCommand("SELECT COUNT(*) FROM sys.tables WHERE schema_id=SCHEMA_ID('dbo')",c);
      Check((int)(await command.ExecuteScalarAsync())! == 0,"CLI never initializes stock/COT schemas");}
+    await SqlPublicationChecks.RunAsync(store,test);
     await McpSqlChecks.RunAsync(test,Path.GetFullPath(Environment.GetEnvironmentVariable("MARKET_DAILY_PROBE_TEST_BUNDLE")??"artifacts/tradingview-backfill-36-v1/analytics-sources-v1/manifest.json"),payload,audit);
     Console.WriteLine("PASS: real SQL + HTTP/application CLI + Node worker, full analytics rehearsal and freshness checks, 39-bar append/replay/conflict admission, exact bytes, atomic shadow generation/ACK, CAS/lease fencing, crash retry, no canonical file/stock/COT writes or publication. No production receiver/tool enabled.");
 }
