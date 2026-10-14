@@ -1,10 +1,19 @@
 name: Morning analytics
 
 on:
+  push:
+    branches: [master]
+    paths:
+      - 'data/market-daily/latest.json'
+      - 'data/market-daily/audit/**'
   schedule:
-    - cron: '0 4 * * *'
-    - cron: '0 5 * * *'
+    - cron: '7,22,37,52 1-8 * * *'
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Rebuild even if this collection was already published today'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -22,17 +31,17 @@ jobs:
         with:
           ref: master
           fetch-depth: 1
-      - name: Record actual checked-out source commit
-        run: echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Select 06:00 Europe/Prague cron (DST aware)
+      - name: Record actual checked-out source commit
+        run: echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Select fresh Work collection immediately and skip duplicate successful runs
         id: gate
-        run: node Tools/daily-health.cjs --gate
+        run: node Tools/morning-trigger.cjs --gate
         env:
           EVENT_NAME: ${{ github.event_name }}
-          SCHEDULE: ${{ github.event.schedule }}
+          FORCE_RUN: ${{ inputs.force }}
       - uses: actions/setup-dotnet@v4
         if: steps.gate.outputs.run == 'true'
         with:
@@ -48,6 +57,8 @@ jobs:
           dotnet build SeasonalityApp.slnx --configuration Release
           dotnet run --project Tools/CotChecks/CotChecks.csproj --configuration Release
           node Tools/morning-health-checks.cjs
+          node Tools/morning-trigger-checks.cjs
+          node Tools/unified-market-daily-checks.cjs
           node Tools/commodity-research-checks.cjs
           node Tools/commodity-daily-ingest-checks.cjs
           node Tools/market-daily-ingest-checks.cjs

@@ -3,18 +3,9 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const {ingest,loadSeries,supplementalEntries}=require('./market-daily-ingest.cjs');
 const read=f=>JSON.parse(fs.readFileSync(f,'utf8')),sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const appKey=k=>k==='XAGUSD'?'SILVER':k;
-function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json',extension='data/market-daily/commodity-extension/latest.json'}={}) {
+function prepare({root='artifacts/tradingview-backfill-36-v1',input='data/market-daily/latest.json'}={}) {
  root=path.resolve(root);const registry=read(path.join(root,'test-source-registry.json'));
  const ingestion=ingest({root,input,includeReview:true});
- if(fs.existsSync(extension)){
-  try{
-   const payload=read(extension),at=Date.parse(payload.fetchedAt||payload.generatedAt);
-   if(!Number.isFinite(at)||at>Date.now()||Date.now()-at>24*3600000)throw Error('Commodity extension stale or invalid fetchedAt');
-   const r=ingest({root,input:extension,includeReview:true,researchOnly:true});
-   for(const k of ['inserted','skipped','failed','notEnabled'])ingestion[k]+=r[k];
-   ingestion.instruments.push(...r.instruments.map(a=>({...a,input:extension})));ingestion.extension={input:extension,inputSha256:r.inputSha256,fetchedAt:r.fetchedAt};
-  }catch(err){ingestion.extension={input:extension,error:err.message};}
- }
  const dir=path.join(root,'analytics-sources-v1');fs.mkdirSync(dir,{recursive:true});
  const entries=[];
  for(const e of registry.entries){

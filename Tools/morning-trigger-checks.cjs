@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto');
+const {parts,gate}=require('./morning-trigger.cjs'),root=fs.mkdtempSync(path.join(os.tmpdir(),'morning-trigger-')),input=path.join(root,'input.json'),health=path.join(root,'health.json');
+for(const [date,expected]of [['2026-01-12T01:00:00Z','2026-01-12 02:00:00'],['2026-07-12T01:00:00Z','2026-07-12 03:00:00'],['2026-03-29T01:00:00Z','2026-03-29 03:00:00'],['2026-10-25T01:00:00Z','2026-10-25 02:00:00']])assert.equal(parts(new Date(date)),expected);
+fs.writeFileSync(input,JSON.stringify({schemaVersion:1,timeframe:'1D',fetchedAt:'2026-10-14T01:03:49Z',bars:[]}));
+const options={input,health,now:new Date('2026-10-14T04:00:00Z')};
+assert.equal(gate({...options,event:'schedule'}).run,true);assert.equal(gate({...options,event:'push'}).run,true);
+assert.equal(gate({...options,event:'schedule',now:new Date('2026-10-14T00:59:00Z')}).run,false);
+assert.equal(gate({...options,event:'push',now:new Date('2026-10-14T01:04:00Z')}).run,true,'Run immediately after Work collection, not at 06:00');
+assert.equal(gate({...options,event:'workflow_dispatch',now:new Date('2026-10-14T02:00:00Z')}).run,true);
+const inputSha256=crypto.createHash('sha256').update(fs.readFileSync(input)).digest('hex');
+fs.writeFileSync(health,JSON.stringify({runDate:'2026-10-14',status:'ok',published:true,market:{inputSha256}}));
+assert.equal(gate({...options,event:'push'}).run,false);assert.equal(gate({...options,event:'schedule',now:new Date('2026-10-14T11:00:00Z')}).run,false);
+assert.equal(gate({...options,event:'workflow_dispatch',force:true}).run,true);
+fs.writeFileSync(health,JSON.stringify({runDate:'2026-10-14',status:'failed',published:false,market:{inputSha256}}));assert.equal(gate({...options,event:'schedule'}).run,true);
+assert.throws(()=>gate({...options,event:'schedule',now:new Date('2026-10-15T05:00:00Z')}),/current Prague-day/);
+assert.throws(()=>gate({...options,event:'workflow_dispatch',now:new Date('2026-10-14T01:00:00Z')}),/current Prague-day/);
+console.log('PASS: immediate Work push trigger, Prague/DST dates, manual/retry gate, stale-input rejection and successful-input deduplication.');

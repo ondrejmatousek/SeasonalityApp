@@ -1,6 +1,6 @@
 # Daily ingestion: Wheat, Live Cattle, Soybeans
 
-The immutable `data/commodity-research/source-registry.json` remains the historical authority. The three SHA-pinned TradingView histories are never rewritten. The existing morning pipeline accepts their exact identities in `data/market-daily/latest.json`, or optionally reads `data/market-daily/commodity-extension/latest.json` with the same schemaVersion 1 envelope and bars dialect. Extension freshness is checked independently (24 hours). Its adjacent `audit/YYYY-MM-DD.json` is read using Prague collection date.
+The immutable `data/commodity-research/source-registry.json` remains the historical authority. The three SHA-pinned TradingView histories are never rewritten. All 39 daily instruments now share `data/market-daily/latest.json` and one adjacent `audit/YYYY-MM-DD.json`, using Prague collection date. `commodity-extension` is no longer an active ingestion input; old split evidence is archived under `data/market-daily-legacy`.
 
 | Logical symbol | Provider | Provider symbol | Canonical ID |
 |---|---|---|---|

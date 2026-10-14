@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const {merge}=require('./unify-market-daily.cjs');
+const directory='data/market-daily/migration-evidence/2026-10-14',read=n=>JSON.parse(fs.readFileSync(directory+'/'+n+'.json'));
+const base=read('original36'),extra=read('research3'),a=read('originalAudit'),b=read('researchAudit');
+const result=merge(base,extra,a,b);assert.equal(result.payload.bars.length,39);
+assert.deepEqual(result.payload.bars,[...base.bars,...extra.bars],'No provider values/identity/timestamp repairs');
+assert.equal(result.audit.runs.find(r=>r.checkedAt===base.fetchedAt).entries.length,39);
+assert.throws(()=>merge(base,{...extra,fetchedAt:'2000-01-01T00:00:00Z'},a,b),/different timestamps/);
+assert.throws(()=>merge(base,{...extra,bars:[extra.bars[0],extra.bars[0],extra.bars[2]]},a,b),/Duplicate logical symbol/);
+const current=JSON.parse(fs.readFileSync('data/market-daily/latest.json'));assert.equal(current.bars.length,39);assert.equal(new Set(current.bars.map(b=>b.symbol)).size,39);
+console.log('PASS: one 39-instrument envelope, lossless migration/audit merge and no mixed collections.');
