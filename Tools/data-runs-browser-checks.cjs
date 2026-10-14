@@ -19,11 +19,12 @@ const server=http.createServer((req,res)=>{
  await page.locator('.run-day').first().waitFor();
  assert.ok(await page.locator('.run-steps li').count()>=10);
  assert.equal(await page.locator('#daily-health-toggle').count(),0);
+ assert.equal(await page.locator('.app-navbar .nav-link').count(),0,'No duplicate links in the top-right header');
  await page.getByRole('link',{name:'Denní běhy',exact:true}).waitFor();
  if(await page.locator('.run-day').count()>1){const button=page.locator('.run-day').nth(1),day=await button.getAttribute('data-day');await button.click();assert.equal(await page.locator('#runs-detail h3').first().textContent(),day);}
  await page.screenshot({path:path.join(root,'runs-desktop.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});
- assert.equal(await page.getByRole('link',{name:'Data',exact:true}).isVisible(),true);
+ assert.equal(await page.getByRole('link',{name:'Denní běhy',exact:true}).isVisible(),true,'Sidebar navigation remains reachable on mobile');
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile horizontal overflow');
  await page.screenshot({path:path.join(root,'runs-mobile.png'),fullPage:true});
  await page.route('**/data/manifest.json',r=>r.fulfill({status:503,body:'Unavailable'}));await page.getByRole('button',{name:'Obnovit',exact:true}).click();await page.waitForFunction(()=>document.getElementById('runs-state').textContent.includes('nelze ověřit'));

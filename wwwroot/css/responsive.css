@@ -14,7 +14,9 @@ img { max-width: 100%; }
     body.app-section-shell, body.marketing-shell { height: auto; min-height: 100dvh; overflow: visible; margin-bottom: 0; }
     .app-workspace { display: block; height: auto; min-height: calc(100dvh - 64px); overflow: visible; }
     .app-workspace-main, .marketing-shell .app-fullbleed, .marketing-shell main { height: auto; overflow: visible; }
-    .app-sidebar { display: none; }
+    .app-sidebar { display: flex; flex-wrap: wrap; width: 100%; gap: 8px; padding: 8px 12px; }
+    .app-sidebar .sidebar-title { display: none; }
+    .app-sidebar .sidebar-link { flex: 0 1 auto; width: auto; margin: 0; }
     .app-mobile-sections { display: block; width: 100%; border-block: 1px solid var(--tj-border); margin-block: 8px; padding-block: 8px; }
     .app-navbar { padding: 8px 12px; }
     #app-navigation { max-height: calc(100dvh - 76px); overflow-y: auto; }
