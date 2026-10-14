@@ -8,6 +8,25 @@ using SeasonalityApp.Services;
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+// Explicit shadow-only CLI, before any stock/COT database registration or schema initialization.
+// Requires a repository/Node runtime and an opt-in flag; never starts during ordinary web deployment.
+if (args.Contains("--process-market-inbox-once", StringComparer.Ordinal))
+{
+    if (!builder.Configuration.GetValue<bool>("MarketDailyInboxWorker:Enabled"))
+        throw new InvalidOperationException("MarketDailyInboxWorker:Enabled must be explicitly true.");
+    var inboxConnection=builder.Configuration.GetConnectionString("DefaultConnection");
+    var repository=builder.Configuration["MarketDailyInboxWorker:RepositoryRoot"];
+    var state=builder.Configuration["MarketDailyInboxWorker:BootstrapState"];
+    if (string.IsNullOrWhiteSpace(inboxConnection)||string.IsNullOrWhiteSpace(repository)||string.IsNullOrWhiteSpace(state))
+        throw new InvalidOperationException("Shadow inbox worker configuration incomplete.");
+    var worker=new MarketDailyInboxWorker(new MarketDailySqlInbox(inboxConnection),repository,state,
+        builder.Configuration["MarketDailyInboxWorker:NodeExecutable"]??"node",
+        builder.Configuration["MarketDailyInboxWorker:AnalyticsSnapshot"],builder.Configuration["MarketDailyInboxWorker:HtfFeed"]);
+    var result=await worker.ProcessOneAsync();
+    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
+    if(result.Status is not ("Committed" or "Empty"))Environment.ExitCode=1;
+    return;
+}
 MarketDailyProbe.Register(builder.Services);
 var marketMcpReady = MarketDailyMcp.Register(builder.Services, builder.Configuration);
 // Explicit isolated probe host: no SQL registration, schema initialization or market jobs.

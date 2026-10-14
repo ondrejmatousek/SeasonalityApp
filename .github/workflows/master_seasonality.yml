@@ -47,6 +47,12 @@ jobs:
       - name: Isolated HTTP probe regression (no SQL or external requests)
         run: node Tools/market-daily-probe-checks.cjs
 
+      - name: Read-only market admission regression (isolated histories, no production writes)
+        run: node Tools/market-daily-preflight-checks.cjs
+
+      - name: Checkout-independent SQL worker baseline regression
+        run: node Tools/market-daily-sql-worker-checks.cjs
+
       - name: Isolated MCP OAuth resource regression (no SQL or external requests)
         run: dotnet run --project Tools/MarketMcpChecks/MarketMcpChecks.csproj -c Release
 

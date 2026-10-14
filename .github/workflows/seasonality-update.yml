@@ -14,6 +14,10 @@ on:
         description: 'Rebuild even if this collection was already published today'
         type: boolean
         default: false
+      sql_inbox_shadow:
+        description: 'Process one SQL inbox receipt and rehearse analytics; NO production publication'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -24,6 +28,7 @@ concurrency:
 
 jobs:
   morning:
+    if: github.event_name != 'workflow_dispatch' || !inputs.sql_inbox_shadow
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -134,3 +139,37 @@ jobs:
           name: seasonality-v3-live-ledger
           path: artifacts/v3-live-ledger/ledger.json
           retention-days: 90
+  sql-inbox-shadow:
+    if: github.event_name == 'workflow_dispatch' && inputs.sql_inbox_shadow
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build explicit worker and check admission engine
+        run: |
+          dotnet build SeasonalityApp.slnx --configuration Release
+          node Tools/market-daily-sql-worker-checks.cjs
+          node Tools/market-daily-preflight-checks.cjs
+      - name: Fetch read-only ETF HTF evidence for analytics rehearsal
+        shell: pwsh
+        run: ./Tools/fetch-htf-ohlc.ps1 -OutputDir artifacts/sql-inbox-htf
+      - name: Process ONE receipt into SQL shadow history and verify private analytics
+        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-once
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          MarketDailyInboxWorker__Enabled: 'true'
+          MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
+          MarketDailyInboxWorker__BootstrapState: ${{ github.workspace }}/data/market-state
+          MarketDailyInboxWorker__AnalyticsSnapshot: ${{ github.workspace }}/data/generated/site
+          MarketDailyInboxWorker__HtfFeed: ${{ github.workspace }}/artifacts/sql-inbox-htf

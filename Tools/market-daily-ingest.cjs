@@ -137,7 +137,7 @@ function loadSeries(root,e,overlay) {
   for(let i=1;i<rows.length;i++)check(rows[i].timestamp>rows[i-1].timestamp && rows[i].date!==rows[i-1].date, 'stored duplicate timestamp/date');
   return {historical,daily,file,rows};
 }
-function ingest({input='data/market-daily/latest.json',root='artifacts/tradingview-backfill-36-v1',includeReview=false,now=Date.now(),supplement='data/commodity-research',researchOnly=false}={}) {
+function ingest({input='data/market-daily/latest.json',root='artifacts/tradingview-backfill-36-v1',includeReview=false,now=Date.now(),supplement='data/commodity-research',researchOnly=false,dryRun=false}={}) {
   root=path.resolve(root);
   const bytes=fs.readFileSync(input), payload=JSON.parse(bytes);
   check(payload.schemaVersion===1, 'unsupported schemaVersion');
@@ -158,18 +158,19 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
   for(const e of supplementalEntries(supplement)){check(!entries.has(e.logicalSymbol),'duplicate supplemental symbol');entries.set(e.logicalSymbol,e);}
   for(const e of entries.values())check(/^[A-Z0-9]+$/.test(e.logicalSymbol) && !e.productionActive, 'unsafe/active registry entry');
   const overlay=path.join(root,'daily-ingestion'), lock=path.join(overlay,'.lock');
-  fs.mkdirSync(overlay,{recursive:true});
-  check(fs.realpathSync(overlay).startsWith(fs.realpathSync(root)+path.sep),'overlay outside test root');
-  fs.mkdirSync(lock); // Exclusive manual writer; a stale lock fails closed, never auto-deleted.
+  if(!dryRun)fs.mkdirSync(overlay,{recursive:true});
+  if(fs.existsSync(overlay))check(fs.realpathSync(overlay).startsWith(fs.realpathSync(root)+path.sep),'overlay outside test root');
+  if(dryRun)check(!fs.existsSync(lock),'ingestion writer active; preflight must be retried');
+  else fs.mkdirSync(lock); // Exclusive manual writer; a stale lock fails closed, never auto-deleted.
   try {
     const report={schemaVersion:1,runId:crypto.randomUUID(),startedAt:new Date(now).toISOString(),input:path.resolve(input),inputSha256:sha(bytes),generatedAt:payload.generatedAt,
-      mode:includeReview?'all-test-and-research':'24-clean-FX-plus-NDX',fetchedAt,productionChanged:false,providerSplice:false,inserted:0,skipped:0,failed:0,notEnabled:0,instruments:[]};
-    const evidenceDir=path.join(overlay,'evidence');fs.mkdirSync(evidenceDir,{recursive:true});
+      mode:dryRun?'preflight-only':includeReview?'all-test-and-research':'24-clean-FX-plus-NDX',fetchedAt,productionChanged:false,providerSplice:false,inserted:0,plannedInsertions:0,skipped:0,failed:0,notEnabled:0,instruments:[]};
+    const evidenceDir=path.join(overlay,'evidence');if(!dryRun)fs.mkdirSync(evidenceDir,{recursive:true});
     const evidenceFile=path.join(evidenceDir,report.inputSha256+'.json');
     if(fs.existsSync(evidenceFile))check(sha(fs.readFileSync(evidenceFile))===report.inputSha256,'raw evidence hash mismatch');
-    else fs.writeFileSync(evidenceFile,bytes,{flag:'wx'});
-    report.rawEvidence=path.relative(root,evidenceFile);
-    if(auditBytes){const auditHash=sha(auditBytes),f=path.join(evidenceDir,auditHash+'.json');if(!fs.existsSync(f))fs.writeFileSync(f,auditBytes,{flag:'wx'});report.completionAuditSha256=auditHash;}
+    else if(!dryRun)fs.writeFileSync(evidenceFile,bytes,{flag:'wx'});
+    if(!dryRun)report.rawEvidence=path.relative(root,evidenceFile);
+    if(auditBytes){const auditHash=sha(auditBytes),f=path.join(evidenceDir,auditHash+'.json');if(!dryRun&&!fs.existsSync(f))fs.writeFileSync(f,auditBytes,{flag:'wx'});report.completionAuditSha256=auditHash;}
     const groups=new Map();
     const aliases={NASDAQ100:'NDX',SP500:'SPX',NATURALGAS:'NATGAS'};
     for(const b of payload.bars){const inputSymbol=typeof b?.symbol==='string'?b.symbol:'<missing-symbol>',key=aliases[inputSymbol]||inputSymbol;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(b);}
@@ -206,23 +207,26 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
         r.canonicalTestId=e.canonicalTestId;r.beforeLastTimestamp=stored.rows.at(-1).timestamp;r.beforeLastDate=stored.rows.at(-1).date;
         if(additions.length) {
           const bars=[...(stored.daily?.bars||[]),...additions].sort((a,b)=>a.timestamp-b.timestamp);
-          atomic(stored.file,{schemaVersion:1,id:e.canonicalTestId,logicalSymbol:symbol,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,timeframe:'1D',
+          if(!dryRun)atomic(stored.file,{schemaVersion:1,id:e.canonicalTestId,logicalSymbol:symbol,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,timeframe:'1D',
             productionActive:false,scope:'test/research only',historicalSource:e.seasonalitySource,historicalSha256:sha(fs.readFileSync(historyFile(root,e))),
             htfPolicy:symbol==='SPX'?'Do not consume historical close-only data; HTF range not activated':'No HTF rebuild/activation',bars});
-          r.inserted=additions.length;
+          if(dryRun)r.plannedInsertions=additions.length;
+          else r.inserted=additions.length;
         }
         r.afterLastTimestamp=Math.max(r.beforeLastTimestamp,...normalized.map(b=>b.timestamp));r.afterLastDate=byTime.get(r.afterLastTimestamp).date;
         r.appendedAfterHistoricalTail=additions.length>0 && additions[0].timestamp>stored.historical.bars.at(-1).timestamp;
-        report.inserted+=r.inserted;report.skipped+=r.skipped;
+        report.inserted+=r.inserted;report.plannedInsertions+=r.plannedInsertions||0;report.skipped+=r.skipped;
       } catch(err) {
         // Transaction boundary is the entire instrument: no partial writes on a conflict.
         r.inserted=0;r.skipped=0;r.failed=inputBars.length;r.reason=err.message;report.failed+=r.failed;
       }
     }
-    fs.mkdirSync(path.join(overlay,'runs'),{recursive:true});
-    fs.writeFileSync(path.join(overlay,'runs',report.runId+'.json'),JSON.stringify(report,null,2),{flag:'wx'});
+    if(!dryRun){
+      fs.mkdirSync(path.join(overlay,'runs'),{recursive:true});
+      fs.writeFileSync(path.join(overlay,'runs',report.runId+'.json'),JSON.stringify(report,null,2),{flag:'wx'});
+    }
     return report;
-  } finally { fs.rmdirSync(lock); }
+  } finally { if(!dryRun)fs.rmdirSync(lock); }
 }
 module.exports={ingest,validateBar,loadSeries,auditCompletion,supplementalEntries,historyFile};
 if(require.main===module) {

@@ -3,7 +3,10 @@ const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),asse
 const {ingest,supplementalEntries,loadSeries}=require('./market-daily-ingest.cjs');
 const {restore}=require('./market-history-seed.cjs');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'commodity-daily-'));
-restore(root);
+// Append fixtures start at the immutable seed, not at today's production overlay.
+// Otherwise a new real daily bar collides with the synthetic next-day OHLC.
+const initialState=path.join(root,'empty-initial-state');fs.mkdirSync(initialState);
+restore(root,{state:initialState});
 const entries=supplementalEntries(),now=Date.parse('2026-10-16T12:00:00Z'),observed='2026-10-16T10:00:00Z';
 const old=entries.map(e=>loadSeries(root,e,path.join(root,'daily-ingestion')).historical.bars.at(-1));
 const bars=entries.map((e,i)=>({...old[i],symbol:e.logicalSymbol,provider:e.provider,providerSymbol:e.providerSymbol,sourceIdentity:e.sourceIdentity,timeframe:'1D',assetClass:'futures',timestamp:old[i].timestamp+86400,date:new Date((old[i].timestamp+86400)*1000).toISOString().slice(0,10),completed:true,status:'ok',sessionEnd:new Date((old[i].timestamp+86400+23*3600)*1000).toISOString()}));

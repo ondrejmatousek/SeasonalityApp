@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {baselineFingerprint}=require('./market-daily-sql-worker.cjs');
+const checksum=fs.readFileSync('data/market-history/tradingview-backfill-36-v1.json.gz.sha256','utf8').trim();
+const registry=JSON.parse(fs.readFileSync('data/commodity-research/source-registry.json','utf8'));
+const expected=baselineFingerprint(checksum+'\n',JSON.stringify(registry,null,2));
+assert.equal(expected,baselineFingerprint(checksum+'\r\n',JSON.stringify(registry,null,4).replaceAll('\n','\r\n')));
+assert.equal(baselineFingerprint(checksum,'{"b":2,"a":1}'),baselineFingerprint(checksum,'{"a":1,"b":2}'));
+assert.notEqual(expected,baselineFingerprint('0'.repeat(64),JSON.stringify(registry)));
+assert.notEqual(baselineFingerprint(checksum,'{"a":1}'),baselineFingerprint(checksum,'{"a":2}'));
+assert.throws(()=>baselineFingerprint('invalid','{}'));
+console.log('PASS: SQL worker baseline is checkout-independent and detects source changes.');

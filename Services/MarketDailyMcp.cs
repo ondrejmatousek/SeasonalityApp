@@ -2,16 +2,20 @@ using System.ComponentModel;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Security.Claims;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using ModelContextProtocol;
 using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
+using ModelContextProtocol.Protocol;
 
 namespace SeasonalityApp.Services;
 
 // OAuth resource server only. The configured provider owns login, PKCE, consent and refresh tokens.
-// Never accepts the REST probe's shared secret or calls any ingestion/SQL service.
+// Never accepts the REST probe's shared secret. SQL quarantine writes require a separate explicit opt-in/scope.
 public static class MarketDailyMcp
 {
     public const string Path = "/mcp/market-daily";
@@ -19,12 +23,15 @@ public static class MarketDailyMcp
     public const string MetadataPath = "/.well-known/oauth-protected-resource/mcp/market-daily";
     public const string Scheme = "MarketDailyOAuth";
     public const string Scope = "market.validate";
+    public const string IngestScope = "market.ingest";
     public const string Policy = "MarketDailyValidate";
 
     public static bool Register(IServiceCollection services, IConfiguration config)
     {
         var settings = SettingsFor(config);
         if (settings is null) return false;
+        var inbox = InboxConfigured(config);
+        if(config.GetValue<bool>("MarketDailyInbox:Enabled")&&!inbox)return false;
         var issuer = settings.Issuer;
         services.AddAuthentication().AddJwtBearer(Scheme, options =>
         {
@@ -61,12 +68,52 @@ public static class MarketDailyMcp
                     (c.User.FindFirst("tid")?.Value == settings.Tenant && c.User.FindFirst("ver")?.Value == "2.0")) &&
                 c.User.FindFirst(settings.Provider == "Auth0" ? "sub" : "oid")?.Value == settings.Owner &&
                 c.User.FindFirst("azp")?.Value == settings.Client &&
-                (c.User.FindFirst(settings.Provider == "Auth0" ? "scope" : "scp")?.Value
-                    .Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(Scope, StringComparer.Ordinal) ?? false));
+                (HasScope(c.User,config,Scope)||(inbox&&HasScope(c.User,config,IngestScope))));
         }));
-        services.AddMcpServer().WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless)
-            .WithTools<MarketDailyValidationTool>();
+        var tools=new List<McpServerTool>{CreateTool<MarketDailyValidationTool>(nameof(MarketDailyValidationTool.ValidateMarketDaily),settings.DiscoveryScope)};
+        if(inbox)
+        {
+            services.AddSingleton(new MarketDailySqlInbox(config.GetConnectionString("DefaultConnection")!));
+            tools.Add(CreateTool<MarketDailySubmissionTool>(nameof(MarketDailySubmissionTool.SubmitMarketDaily),IngestScope));
+        }
+        services.AddMcpServer().WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools(tools);
         return true;
+    }
+
+    private static McpServerTool CreateTool<T>(string method,string scope) where T:class =>
+        McpServerTool.Create(typeof(T).GetMethod(method)!,
+            (RequestContext<CallToolRequestParams> context)=>ActivatorUtilities.CreateInstance<T>(context.Services!),
+            new McpServerToolCreateOptions { Meta=new JsonObject {
+                // Official ChatGPT compatibility metadata; actual scope checks remain in each handler.
+                ["securitySchemes"]=new JsonArray(new JsonObject { ["type"]="oauth2",["scopes"]=new JsonArray(scope) })
+            }});
+
+    public static bool InboxConfigured(IConfiguration config)
+    {
+        if(!config.GetValue<bool>("MarketDailyInbox:Enabled")||config["MarketDailyInbox:Mode"]!="shadow"||
+            config["MarketDailyMcp:Provider"]!="Auth0")return false;
+        try
+        {
+            var connection=new SqlConnectionStringBuilder(config.GetConnectionString("DefaultConnection")??"");
+            return !string.IsNullOrWhiteSpace(connection.DataSource)&&!string.IsNullOrWhiteSpace(connection.InitialCatalog)&&
+                !new[]{"master","model","msdb","tempdb"}.Contains(connection.InitialCatalog,StringComparer.OrdinalIgnoreCase);
+        }
+        catch(ArgumentException){return false;}
+    }
+
+    public static bool HasScope(ClaimsPrincipal? user,IConfiguration config,string scope)=>user?.Identity?.IsAuthenticated==true &&
+        (user.FindFirst(config["MarketDailyMcp:Provider"]=="Auth0"?"scope":"scp")?.Value
+            .Split(' ',StringSplitOptions.RemoveEmptyEntries).Contains(scope,StringComparer.Ordinal)??false);
+
+    public static CallToolResult ScopeRequired(string scope)=>new() {
+        IsError=true,Content=[new TextContentBlock { Text="Authorization required for scope "+scope+"." }],
+        Meta=new JsonObject { ["mcp/www_authenticate"]=new JsonArray(
+            $"Bearer resource_metadata=\"{Resource[..Resource.IndexOf(Path,StringComparison.Ordinal)]}{MetadataPath}\", error=\"insufficient_scope\", error_description=\"Additional permission required\", scope=\"{scope}\"") }
+    };
+    public static CallToolResult ToolResult(object value,bool error=false)
+    {
+        var json=JsonSerializer.Serialize(value,new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        return new() { IsError=error,Content=[new TextContentBlock { Text=json }],StructuredContent=JsonSerializer.Deserialize<JsonElement>(json) };
     }
 
     private sealed record OAuthSettings(string Provider, string Issuer, string Audience,
@@ -100,6 +147,7 @@ public static class MarketDailyMcp
     public static void Map(WebApplication app, bool ready)
     {
         var settings = SettingsFor(app.Configuration);
+        var inbox=InboxConfigured(app.Configuration);
         if (!ready || settings is null)
         {
             app.MapMethods(Path, ["GET", "POST", "DELETE"], () => Results.Json(new
@@ -119,7 +167,8 @@ public static class MarketDailyMcp
                 context.Connection.RemoteIpAddress is { } ip && System.Net.IPAddress.IsLoopback(ip);
             if (!context.Request.IsHttps && !local) { context.Response.StatusCode = 400; return; }
             if (context.Request.Headers.ContainsKey("Origin")) { context.Response.StatusCode = 403; return; }
-            if (context.Request.ContentLength > 524288) { context.Response.StatusCode = 413; return; }
+            var maxBytes=inbox?1048576:524288; // two bounded 256-KiB JSON strings plus JSON-RPC escaping
+            if (context.Request.ContentLength > maxBytes) { context.Response.StatusCode = 413; return; }
             if (context.Request.Method == "POST")
             {
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
@@ -130,7 +179,7 @@ public static class MarketDailyMcp
                     var chunk = new byte[8192]; int count;
                     while ((count = await context.Request.Body.ReadAsync(chunk, timeout.Token)) > 0)
                     {
-                        if (buffer.Length + count > 524288) { context.Response.StatusCode = 413; return; }
+                        if (buffer.Length + count > maxBytes) { context.Response.StatusCode = 413; return; }
                         buffer.Write(chunk, 0, count);
                     }
                 }
@@ -147,7 +196,7 @@ public static class MarketDailyMcp
         {
             resource = Resource,
             authorization_servers = new[] { settings.Issuer },
-            scopes_supported = new[] { settings.DiscoveryScope }, bearer_methods_supported = new[] { "header" }
+            scopes_supported = inbox?new[] { settings.DiscoveryScope,IngestScope }:new[] { settings.DiscoveryScope }, bearer_methods_supported = new[] { "header" }
         }));
         app.MapMcp(Path).RequireAuthorization(Policy).RequireRateLimiting("market-daily-probe");
     }
@@ -158,10 +207,13 @@ public sealed class MarketDailyValidationTool(IConfiguration config, IWebHostEnv
 {
     [McpServerTool(Name = "validate_market_daily", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Validate the exact daily JSON for all 39 registered market instruments. No persistence, ingestion, SQL, analytics or jobs. Completion/session evidence is NOT independently checked. Never pass credentials in arguments.")]
-    public async Task<string> ValidateMarketDaily(
+    public async Task<CallToolResult> ValidateMarketDaily(
         [Description("Exact UTF-8 JSON text of market-daily/latest.json, unchanged. Must contain all 39 bars.")] string dailyJson,
+        RequestContext<CallToolRequestParams> context,
         CancellationToken cancellationToken)
     {
+        if(!MarketDailyMcp.HasScope(context.User,config,MarketDailyMcp.Scope))
+            return MarketDailyMcp.ScopeRequired(config["MarketDailyMcp:Provider"]=="Auth0"?MarketDailyMcp.Scope:MarketDailyMcp.Resource+"/"+MarketDailyMcp.Scope);
         if (string.IsNullOrEmpty(dailyJson) || Encoding.UTF8.GetByteCount(dailyJson) > 262144)
             throw new McpException("Daily JSON is empty or exceeds 256 KiB.");
         try
@@ -175,7 +227,7 @@ public sealed class MarketDailyValidationTool(IConfiguration config, IWebHostEnv
             var count = MarketDailyProbe.Validate(payload.RootElement, registry.RootElement.GetProperty("entries"), DateTimeOffset.UtcNow);
             if (count != 39) throw new McpException("This experiment requires all 39 instruments.");
             var digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(dailyJson))).ToLowerInvariant();
-            return JsonSerializer.Serialize(new
+            return MarketDailyMcp.ToolResult(new
             {
                 mode = "validation-only", receivedBars = count, payloadSha256 = digest,
                 receiptId = "mcp-probe-" + digest[..24], receivedAt = DateTimeOffset.UtcNow,
