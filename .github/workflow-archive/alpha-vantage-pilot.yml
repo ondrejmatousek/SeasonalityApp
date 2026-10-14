@@ -1,3 +1,4 @@
+# Archived 2026-10-14: completed research pilot, not part of production data flow.
 name: Alpha Vantage FX pilot (no deployment)
 on:
   workflow_dispatch:
