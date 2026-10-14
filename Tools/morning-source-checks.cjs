@@ -2,7 +2,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const dir=path.resolve(process.argv[2]||'artifacts/morning-market-routing-v1'),legacy=path.resolve(process.argv[3]||'artifacts/htf-preview');
 const bundleRoot=path.resolve(process.argv[4]||'artifacts/tradingview-backfill-36-v1/analytics-sources-v1');
 const read=(root,p)=>JSON.parse(fs.readFileSync(path.join(root,p.replace(/^\//,'')),'utf8'));
-const m=read(dir,'data/manifest.json'),old=read(legacy,'data/manifest.json'),htf=read(dir,m.htfConfluence.path),summary=read(dir,m.screener.path),opps=read(dir,m.opportunities.path);
+const m=read(dir,'data/manifest.json'),old=read(legacy,'data/manifest.json'),htf=read(dir,m.zonePrices.path),summary=read(dir,m.screener.path),opps=read(dir,m.opportunities.path);
 const hash=f=>crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 const expected={EURUSD:['OANDA','OANDA:EURUSD'],NDX:['NASDAQ','NASDAQ:NDX'],SPX:['S&P','SP:SPX'],XAUUSD:['OANDA','OANDA:XAUUSD'],WTI:['NYMEX','NYMEX:CL1!']};
 for(const [key,[provider,symbol]]of Object.entries(expected)){

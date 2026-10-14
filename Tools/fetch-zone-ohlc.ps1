@@ -1,3 +1,4 @@
+# Shared OHLC evidence for Obchodni zony; no retired confluence calculation.
 param([Parameter(Mandatory=$true)][string]$OutputDir)
 $ErrorActionPreference='Stop'
 $htfRoot=[System.IO.Path]::GetFullPath($OutputDir)

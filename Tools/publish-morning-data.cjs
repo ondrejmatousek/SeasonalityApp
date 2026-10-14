@@ -11,7 +11,7 @@ function publish({site='artifacts/morning-site',healthDir='artifacts/daily-healt
  if(fs.existsSync(path.join(site,'runs/index.html')))files.add('runs/index.html');
  for(const a of m.assets)files.add(a.prices.path.replace(/^\//,''));
  for(const c of Object.values(m.contracts))for(const p of Object.values(c.files))files.add(p.replace(/^\//,''));
- for(const key of ['screener','opportunities','htfConfluence','v3LiveTracking'])if(m[key]?.path)files.add(m[key].path.replace(/^\//,''));
+ for(const key of ['screener','opportunities','zonePrices','v3LiveTracking'])if(m[key]?.path)files.add(m[key].path.replace(/^\//,''));
  if(fs.existsSync(path.join(site,'data/screener/v3-live-ledger.json')))files.add('data/screener/v3-live-ledger.json');
  // Stage all bytes in a fresh tree first; don't touch last good committed outputs on validation failure.
  const staging=destination+'.staging';if(fs.existsSync(staging))throw Error('Publication staging already exists');fs.mkdirSync(staging,{recursive:true});

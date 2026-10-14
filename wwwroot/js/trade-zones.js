@@ -1,4 +1,4 @@
-(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./htf-zones.js'));else root.TradeZones=factory(root.HtfZones);})(typeof globalThis==='object'?globalThis:this,function(Htf){
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./market-candles.js'));else root.TradeZones=factory(root.MarketCandles);})(typeof globalThis==='object'?globalThis:this,function(Htf){
  'use strict';
  const defaults=Object.freeze({version:'trade-zones-v1-experimental',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
  const day=s=>Date.parse(s+'T00:00:00Z'),ms=86400000;

@@ -1,4 +1,4 @@
-const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),zones=require('../wwwroot/js/htf-zones.js');
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),zones=require('../wwwroot/js/market-candles.js');
 const dir=path.resolve(process.argv[2]),feedDir=path.resolve(process.argv[3]),read=p=>JSON.parse(fs.readFileSync(p,'utf8').replace(/^\uFEFF/,''));
 const manifest=read(path.join(dir,'data/manifest.json')),opps=read(path.join(dir,manifest.opportunities.path.slice(1))),asOf=opps.asOf,prices={},assets=[];
 const bundlePath=process.argv[4]?path.resolve(process.argv[4]):null;
@@ -17,11 +17,11 @@ for(const a of opps.assets.filter(a=>a.mapping.scope==='core'||a.mapping.priceSo
                 if(bars.length<100)throw Error('Insufficient modern valid OHLC');
                 if(Date.parse(asOf)-Date.parse(bars.at(-1).date)>7*86400000)throw Error('Stale TradingView OHLC (>7 days)');
                 if(bars.slice(-100).some((b,i,s)=>i&&Date.parse(b.date)-Date.parse(s[i-1].date)>7*86400000))throw Error('Recent TradingView gap >7 days');
-                const latest=bars.at(-1),found=['D1','W1'].flatMap(tf=>zones.detect(bars,tf,asOf));
+                const latest=bars.at(-1);
                 prices[key]={status:'ready',provider:data.provider,symbol:data.providerSymbol,sourceIdentity:data.sourceIdentity,priceSeriesId:data.id,
                     observedAt:bundle.builtAt,timezone:data.timezone,priceType:'Exact TradingView provider OHLC',cutoff:data.sessionContract,revisionPolicy:'Daily OHLC conflicts fail closed; immutable raw backfill',
                     review:data.review,sourceStatus:data.status,htfFrom:data.htfFrom,barCount:bars.length,excludedBars:data.bars.length-bars.length,latestDate:latest.date,latestClose:latest.close,
-                    bars:bars.slice(-400),weekly:zones.weekly(bars,asOf).slice(-104),zones:found};
+                    bars:bars.slice(-400),weekly:zones.weekly(bars,asOf).slice(-104)};
             }else{
             if(manifest.priceRouting&&a.mapping.priceKind!=='etf')throw Error('No registered market source; Yahoo fallback prohibited');
             const feed=read(path.join(feedDir,key+'.json'));if(feed.error)throw Error(feed.error);
@@ -37,16 +37,15 @@ for(const a of opps.assets.filter(a=>a.mapping.scope==='core'||a.mapping.priceSo
             // Never let an unadjusted ETF split manufacture a base/departure pattern.
             const splitDates=Object.values(r.events?.splits||{}).map(e=>new Intl.DateTimeFormat('sv-SE',{timeZone:timezone}).format(new Date(e.date*1000))).filter(d=>d<asOf).sort();
             const lastSplit=splitDates.at(-1),detectionBars=lastSplit?bars.filter(b=>b.date>=lastSplit):bars;
-            const found=['D1','W1'].flatMap(tf=>zones.detect(detectionBars,tf,asOf));
-            prices[key]={status:'ready',provider:feed.provider,symbol:feed.symbol,url:feed.url,observedAt:feed.observedAt,timezone,priceType:'unadjusted provider OHLC',cutoff:'Completed daily candles only: trading date before evaluation date; W1 excludes current week',revisionPolicy:'Provider may revise history; snapshot retained per deployment, not strict PIT',lastSplit:lastSplit||null,barCount:bars.length,excludedBars:r.timestamp.length-bars.length,latestDate:bars.at(-1).date,latestClose:bars.at(-1).close,bars:detectionBars.slice(-400),weekly:zones.weekly(detectionBars,asOf).slice(-104),zones:found};
+            prices[key]={status:'ready',provider:feed.provider,symbol:feed.symbol,url:feed.url,observedAt:feed.observedAt,timezone,priceType:'unadjusted provider OHLC',cutoff:'Completed daily candles only: trading date before evaluation date; W1 excludes current week',revisionPolicy:'Provider may revise history; snapshot retained per deployment, not strict PIT',lastSplit:lastSplit||null,barCount:bars.length,excludedBars:r.timestamp.length-bars.length,latestDate:bars.at(-1).date,latestClose:bars.at(-1).close,bars:detectionBars.slice(-400),weekly:zones.weekly(detectionBars,asOf).slice(-104)};
             }
-        }catch(e){prices[key]={status:'unavailable',error:e.message,bars:[],weekly:[],zones:[]};}
+        }catch(e){prices[key]={status:'unavailable',error:e.message,bars:[],weekly:[]};}
     }
-    const p=prices[key];assets.push({key:a.key,name:a.name,mapping:a.mapping,matches:p.status==='ready'?zones.match(p.zones,a.candidates,p.latestClose,asOf):[]});
+    assets.push({key:a.key,name:a.name,mapping:a.mapping});
 }
-const payload={schemaVersion:1,modelVersion:zones.config.version,asOf,builtAt:new Date().toISOString(),config:zones.config,prices,assets};
-const json=JSON.stringify(payload),hash=crypto.createHash('sha256').update(json).digest('hex').slice(0,20),url=`/data/screener/htf-confluence.${hash}.json`;
-fs.writeFileSync(path.join(dir,url.slice(1)),json);manifest.htfConfluence={path:url,asOf,modelVersion:zones.config.version};
+const modelVersion='zone-price-snapshot-v1',payload={schemaVersion:1,modelVersion,asOf,builtAt:new Date().toISOString(),prices,assets};
+const json=JSON.stringify(payload),hash=crypto.createHash('sha256').update(json).digest('hex').slice(0,20),url=`/data/screener/zone-prices.${hash}.json`;
+fs.writeFileSync(path.join(dir,url.slice(1)),json);manifest.zonePrices={path:url,asOf,modelVersion};delete manifest.htfConfluence;
 const safe=JSON.stringify(manifest).replace(/[<>&\u2028\u2029]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'));
 fs.writeFileSync(path.join(dir,'data/manifest.json'),safe);const file=path.join(dir,'index.html');fs.writeFileSync(file,fs.readFileSync(file,'utf8').replace(/(<script id="static-market-manifest" type="application\/json">)[\s\S]*?(<\/script>)/,(_,s,e)=>s+safe+e));
-console.log(JSON.stringify({asOf,feeds:Object.keys(prices).length,available:Object.values(prices).filter(p=>p.status==='ready').length,unavailable:Object.entries(prices).filter(([,p])=>p.status!=='ready').map(([key,p])=>({key,error:p.error})),matches:assets.reduce((n,a)=>n+a.matches.length,0)},null,2));
+console.log(JSON.stringify({asOf,feeds:Object.keys(prices).length,available:Object.values(prices).filter(p=>p.status==='ready').length,unavailable:Object.entries(prices).filter(([,p])=>p.status!=='ready').map(([key,p])=>({key,error:p.error}))},null,2));

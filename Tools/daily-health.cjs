@@ -13,8 +13,8 @@ function create(now=new Date(),sourceCommit=process.env.SOURCE_COMMIT||process.e
  return {schemaVersion:1,status:'running',runDate:day(now),runStartedAt:now.toISOString(),runFinishedAt:null,sourceCommit,
   workflowUrl:process.env.GITHUB_REPOSITORY&&process.env.GITHUB_RUN_ID?`https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`:null,
   marketDailyFetchedAt:null,market:{status:'pending',received:0,inserted:0,duplicates:0,failed:0,failedSymbols:[]},
-  stocks:{status:'pending'},cot:{status:'pending'},seasonality:{status:'pending'},htf:{status:'pending'},scoring:{status:'pending'},staticExport:{status:'pending'},
-  seasonalityCandidates:0,htfZones:0,screenerRows:0,instrumentChecks:[],warnings:[],errors:[],published:false};
+  stocks:{status:'pending'},cot:{status:'pending'},seasonality:{status:'pending'},zonePrices:{status:'pending'},scoring:{status:'pending'},staticExport:{status:'pending'},
+  seasonalityCandidates:0,zoneCandidates:0,screenerRows:0,instrumentChecks:[],warnings:[],errors:[],published:false};
 }
 function marketFreshness(input,now=new Date()){
  const p=read(input),at=p.fetchedAt||p.generatedAt,t=Date.parse(at);
@@ -37,7 +37,7 @@ function stockRefreshAudit(audit){
  return warnings;
 }
 function checkOutputs(dir,h,now=new Date()){
- const m=read(path.join(dir,'data/manifest.json')),op=read(path.join(dir,m.opportunities.path)),htf=read(path.join(dir,m.htfConfluence.path));
+ const m=read(path.join(dir,'data/manifest.json')),op=read(path.join(dir,m.opportunities.path)),htf=read(path.join(dir,m.zonePrices.path));
  const expected={AAPL:['Yahoo',null],EURUSD:['OANDA','OANDA:EURUSD'],NDX:['NASDAQ','NASDAQ:NDX'],SPX:['S&P','SP:SPX'],XAUUSD:['OANDA','OANDA:XAUUSD'],WTI:['NYMEX','NYMEX:CL1!']};
  for(const [symbol,[provider,providerSymbol]]of Object.entries(expected)){
   const a=m.assets.find(a=>a.key===symbol),s=a?.priceSource||{},p=htf.prices[symbol],research=['XAUUSD','WTI'].includes(symbol);
@@ -61,7 +61,7 @@ function checkOutputs(dir,h,now=new Date()){
  h.stocks={...h.stocks,snapshotAt:new Date(stamp).toISOString(),lastBarDate:apple?.prices.lastDate,status:h.errors.some(e=>/AAPL|Stock SQL/.test(e))?'failed':h.stocks.status};
  for(const a of op.assets.filter(a=>a.mapping.scope==='core')){
   const p=htf.prices[a.mapping.priceKey||a.key];
-  if(!p||p.status!=='ready'){h.htf.status='failed';h.errors.push('Core HTF failed '+a.key+': '+(p?.error||'missing output'));}
+  if(!p||p.status!=='ready'){h.zonePrices.status='failed';h.errors.push('Core zone OHLC failed '+a.key+': '+(p?.error||'missing output'));}
  }
  for(const [key,p]of Object.entries(htf.prices))if(p.status!=='ready'&&!op.assets.some(a=>a.key===key&&a.mapping.scope==='core'))h.warnings.push('Research HTF '+key+': '+p.error);
  const historicalOnly=m.assets.filter(a=>a.priceSource?.dailyStatus==='historical-only').map(a=>a.key);
@@ -71,7 +71,8 @@ function checkOutputs(dir,h,now=new Date()){
  const staleResearch=m.assets.filter(a=>a.priceSource?.dailyStatus==='daily-connected' && Date.parse(day(now))-Date.parse(a.prices.lastDate)>4*86400000).map(a=>a.key);
  if(staleResearch.length)h.warnings.push('Stale research daily bars: '+staleResearch.join(', '));
  h.seasonalityCandidates=op.assets.reduce((n,a)=>n+a.candidates.length,0);h.screenerRows=h.seasonalityCandidates;
- h.htfZones=Object.values(htf.prices).reduce((n,p)=>n+p.zones.length,0);
+ const detector=require('../wwwroot/js/trade-zones.js');
+ h.zoneCandidates=Object.values(htf.prices).filter(p=>p.status==='ready').reduce((n,p)=>n+['D1','W1'].reduce((v,tf)=>v+detector.detect(p,tf,htf.asOf||m.zonePrices.asOf||day(now)).length,0),0);
  const dates=Object.values(m.contracts).map(c=>c.lastDate).filter(Boolean).sort();
  h.cot={...h.cot,latestPositionsDate:dates.at(-1)||null,contracts:Object.keys(m.contracts).length};
  if(!dates.length||Date.parse(day(now))-Date.parse(dates.at(-1))>14*86400000){h.cot.status='warning';h.warnings.push('COT dataset missing or latest positions older than 14 days');}
@@ -90,9 +91,9 @@ function write(dir,h){
  fs.writeFileSync(path.join(dir,'history.json'),JSON.stringify({schemaVersion:1,runs:files.map(n=>read(path.join(dir,n)))},null,2));
 }
 function summary(h){
- const rows=[['Overall',h.status],...['market','stocks','cot','seasonality','htf','scoring','staticExport'].map(k=>[k,h[k].status]),
+ const rows=[['Overall',h.status],...['market','stocks','cot','seasonality','zonePrices','scoring','staticExport'].map(k=>[k,h[k].status]),
  ['Received / inserted / duplicates / failed',`${h.market.received} / ${h.market.inserted} / ${h.market.duplicates} / ${h.market.failed}`],
- ...['EURUSD','AAPL'].map(k=>[k+' last date',h.instrumentChecks.find(c=>c.symbol===k)?.lastBarDate||'unavailable']),['Screener candidates',h.screenerRows],['HTF zones',h.htfZones]];
+ ...['EURUSD','AAPL'].map(k=>[k+' last date',h.instrumentChecks.find(c=>c.symbol===k)?.lastBarDate||'unavailable']),['Screener candidates',h.screenerRows],['Trading zones',h.zoneCandidates]];
  return '## Morning analytics\n\n| Check | Result |\n|---|---|\n'+rows.map(r=>'| '+r.join(' | ')+' |').join('\n')+'\n\n'+[...h.errors.map(e=>'ERROR: '+e),...h.warnings.map(e=>'WARNING: '+e)].map(e=>'- '+e.replace(/\n/g,' ')).join('\n')+'\n';
 }
 module.exports={day,scheduleGate,create,marketFreshness,ingestionGate,stockRefreshAudit,checkOutputs,finish,write,summary};

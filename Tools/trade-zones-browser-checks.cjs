@@ -25,7 +25,8 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  await page.locator('#tz-reload').click();await page.waitForFunction(()=>document.getElementById('tz-caption').textContent.includes('Sezonní okno není dostupné'));
  assert.ok(await page.locator('#tz-results button').count()>0,'Missing seasonality never hides zones');
  await page.waitForFunction(()=>document.getElementById('tz-chart').dataset.seasonalStart==='null');
- await page.getByRole('tab',{name:'HTF shoda',exact:true}).click();await page.waitForFunction(()=>document.getElementById('htf-status').textContent.includes('Vyhodnoceno'));assert.equal(await page.locator('#market-zones-view').isVisible(),false);assert.equal(await page.locator('#market-htf-view').isVisible(),true);
+ assert.equal(await page.getByRole('tab',{name:'HTF shoda',exact:true}).count(),0);assert.equal(await page.locator('#market-htf-view').count(),0);
+ const resources=await page.locator('script[src],link[rel=stylesheet]').evaluateAll(nodes=>nodes.map(n=>n.src||n.href));assert.ok(!resources.some(s=>/\/(htf-ui|htf-chart|htf-zones|htf)\.(js|css)/.test(s)),'Retired resources not loaded');
  await page.getByRole('tab',{name:'Seasonality',exact:true}).click();assert.equal(await page.locator('#market-seasonality-view').isVisible(),true);assert.deepEqual(errors,[]);
- console.log('PASS: actual zone-first tab, live snapshot rendering/chart, origin/BOS/asset/volume/bounds filters, empty states, desktop/mobile and unchanged HTF/Seasonality tab navigation.');
+ console.log('PASS: actual zone-first tab, chart/seasonal window, filters, desktop/mobile, no retired HTF tab/resources and working Seasonality navigation.');
  }finally{if(browser)await browser.close();server.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -23,12 +23,12 @@ function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market
    // Existing CFTC refresh only; no change to COT definitions or normalization.
    try{stage('cot',()=>command('dotnet',['run','--project','SeasonalityApp.csproj','-c','Release','--no-build','--','--update-cot-once']));}
    catch{h.cot.status='warning';h.warnings.push('COT refresh failed; existing snapshot freshness will be checked');}
-   command('pwsh',['-NoProfile','-File','Tools/fetch-htf-ohlc.ps1','-OutputDir',feed]);
+   command('pwsh',['-NoProfile','-File','Tools/fetch-zone-ohlc.ps1','-OutputDir',feed]);
   }else{h.stocks.status='snapshot-only';h.cot.status='snapshot-only';h.warnings.push('Safe rehearsal: no stock/COT refresh, no SQL writes, no publication');}
   run({root,input,snapshot,output,feed,prepared:true,onStage:stage});
   stage('staticExport',()=>{
    health.checkOutputs(output,h);
-   node('Tools/raw-seasonality-checks.cjs',output);node('Tools/htf-export-checks.cjs',output);node('Tools/static-site-checks.cjs',output);
+   node('Tools/raw-seasonality-checks.cjs',output);node('Tools/zone-prices-checks.cjs',output);node('Tools/static-site-checks.cjs',output);
   });
   h.eligibleForPublication=!safe;
  }catch(e){if(h.market.status==='running')h.market.status='failed';h.errors.push(e.message);h.eligibleForPublication=false;}

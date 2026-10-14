@@ -1,0 +1,8 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),candles=require('../wwwroot/js/market-candles.js');
+const dir=path.resolve(process.argv[2]),read=p=>JSON.parse(fs.readFileSync(path.join(dir,p.replace(/^\//,'')),'utf8')),m=read('data/manifest.json'),s=read(m.zonePrices.path),op=read(m.opportunities.path);
+assert.ok(!m.htfConfluence,'Retired HTF output is not published');assert.equal(s.asOf,op.asOf);assert.equal(s.modelVersion,'zone-price-snapshot-v1');assert.equal(Object.keys(s.prices).length,m.priceRouting?38:32);
+assert.ok(!s.config,'No retired detector config');
+for(const a of s.assets){assert.ok(a.mapping.scope==='core'||m.priceRouting&&a.mapping.priceSource?.id);assert.ok(op.assets.some(v=>v.key===a.key));assert.ok(!a.matches,'No legacy zone/seasonality matches');}
+for(const [key,p]of Object.entries(s.prices)){assert.ok(!p.zones,'Old detector results removed');if(p.status!=='ready')continue;assert.ok(p.symbol&&p.timezone&&p.provider&&p.observedAt);assert.ok(p.bars.every(b=>candles.valid(b)&&b.date<s.asOf));assert.ok(p.weekly.every(b=>candles.valid(b)&&b.endDate<s.asOf));assert.ok(!key.includes('=F'),'No futures execution prices');}
+if(m.priceRouting)for(const key of ['EURUSD','NDX','SPX','XAUUSD','WTI']){const p=s.prices[key];assert.notEqual(p.provider,'Yahoo Finance');if(p.status==='ready'){const a=m.assets.find(a=>a.key===key);assert.equal(p.priceSeriesId,a.priceSource.id);assert.equal(p.symbol,a.priceSource.providerSymbol);}}
+console.log('PASS: dedicated zone OHLC snapshot, registered provenance, closed D1/W1, research scope and no retired HTF calculations/results.');

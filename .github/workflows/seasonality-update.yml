@@ -57,10 +57,10 @@ jobs:
           dotnet build SeasonalityApp.slnx --configuration Release
           node Tools/market-daily-sql-worker-checks.cjs
           node Tools/market-daily-preflight-checks.cjs
-      - name: Fetch read-only ETF HTF evidence for analytics rehearsal
+      - name: Fetch read-only ETF OHLC evidence for trading zones rehearsal
         if: steps.queue_gate.outputs.run == 'true' && inputs.sql_inbox_shadow
         shell: pwsh
-        run: ./Tools/fetch-htf-ohlc.ps1 -OutputDir artifacts/sql-inbox-htf
+        run: ./Tools/fetch-zone-ohlc.ps1 -OutputDir artifacts/sql-inbox-htf
       - name: Process ONE receipt into SQL shadow history and verify private analytics
         if: steps.queue_gate.outputs.run == 'true' && inputs.sql_inbox_shadow
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-once

@@ -15,7 +15,7 @@ for(const e of registry.entries){
 }
 const preview=process.argv[2],baseline=process.argv[3];
 if(preview){
- const read=(root,p)=>JSON.parse(fs.readFileSync(path.join(root,p.replace(/^\//,'')))),m=read(preview,'data/manifest.json'),op=read(preview,m.opportunities.path),h=read(preview,m.htfConfluence.path);
+ const read=(root,p)=>JSON.parse(fs.readFileSync(path.join(root,p.replace(/^\//,'')))),m=read(preview,'data/manifest.json'),op=read(preview,m.opportunities.path),h=read(preview,m.zonePrices.path);
  for(const e of registry.entries){const a=m.assets.find(a=>a.key===e.assetKey),p=read(preview,a.prices.path);assert.equal(a.priceSource.providerSymbol,e.providerSymbol);assert.ok(p.prices.length>10000);assert.equal(op.assets.find(a=>a.key===e.assetKey).mapping.scope,'research');assert.equal(h.prices[e.assetKey],undefined,'No research HTF activation');}
  if(baseline){const old=read(baseline,'data/manifest.json'),prior=read(baseline,old.opportunities.path);for(const a of op.assets.filter(a=>a.mapping.scope==='core'))assert.equal(fingerprint(a.candidates),fingerprint(prior.assets.find(p=>p.key===a.key).candidates),'Core scores and intervals unchanged '+a.key+' (only historical-dataset collection timestamp excluded)');assert.deepEqual(op.calibrationV3,prior.calibrationV3,'Research histories do not change core relative ranks');
  for(const a of m.assets.filter(a=>!registry.entries.some(e=>e.assetKey===a.key))){const prev=old.assets.find(p=>p.key===a.key);assert.deepEqual(read(preview,a.prices.path).prices,read(baseline,prev.prices.path).prices,'Other prices unchanged '+a.key);}

@@ -1,4 +1,9 @@
-# Obchodní zóny — experimental, separate from HTF confluence
+# Obchodní zóny — experimental
+
+HTF shoda was retired on 2026-10-14 at the user's request. The dedicated
+zonePrices snapshot contains OHLC only; old detection/matching results, tab,
+scripts, tests and CSS were removed. Shared candles and chart now belong to
+Obchodní zóny; the historical COT context formula remains unchanged.
 
 User rules: zone first, contextual signals second. Origins and continuation bases
 are distinct. BOS requires a close beyond a confirmed swing and is optional.

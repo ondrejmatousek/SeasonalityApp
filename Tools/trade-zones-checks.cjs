@@ -29,7 +29,7 @@ assert.equal(Z.context(wick,{candidates:[candidate]},asOf).seasonal,'against','C
 const weeks=[];for(let w=0;w<28;w++)for(let d=0;d<5;d++)weeks.push({date:new Date(Date.UTC(2025,0,6+7*w+d)).toISOString().slice(0,10),open:100,high:101,low:99,close:100,volume:100});
 const weekly=Z.sourceBars({bars:weeks},'W1','2025-07-17');assert.ok(weekly.every(w=>w.date<'2025-07-14'));assert.equal(weekly[1].volume,500);
 const partial=Z.sourceBars({bars:weeks.slice(2),weekly},'W1','2025-07-17');assert.equal(partial[0].volume,null,'Partial weekly coverage never fabricates volume');
-const m=JSON.parse(fs.readFileSync('data/generated/site/data/manifest.json')),h=JSON.parse(fs.readFileSync('data/generated/site'+m.htfConfluence.path));
+const m=JSON.parse(fs.readFileSync('data/generated/site/data/manifest.json')),h=JSON.parse(fs.readFileSync('data/generated/site'+m.zonePrices.path));
 const pristine=JSON.stringify(h),rows=Object.values(h.prices).filter(p=>p.status==='ready').flatMap(p=>['D1','W1'].flatMap(tf=>Z.detect(p,tf,h.asOf)));
 for(const p of Object.values(h.prices).filter(p=>p.status==='ready'))for(const tf of ['D1','W1'])for(const options of [{},{bounds:'body-wick'},{volumeWindow:3}]){
  const found=Z.detect(p,tf,h.asOf,options),keys=found.map(z=>JSON.stringify([z.timeframe,z.type,z.lower,z.upper,z.confirmedAt]));assert.equal(new Set(keys).size,keys.length,'No duplicate physical zones for any instrument/timeframe/parameter variant');

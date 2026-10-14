@@ -2,7 +2,7 @@
 (() => {
     const iso=t=>typeof t==='string'?t:typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):`${t.year}-${String(t.month).padStart(2,'0')}-${String(t.day).padStart(2,'0')}`;
     const day=s=>Date.parse(s+'T00:00:00Z'),fmt=s=>new Date(day(s)).toLocaleDateString('cs-CZ');
-    window.HtfPriceChart={create(container,tip,{price,zone,candidate,resolution}){
+    window.ZonePriceChart={create(container,tip,{price,zone,candidate,resolution}){
         const L=window.LightweightCharts;if(!L)throw Error('Knihovna cenového grafu není dostupná');
         const bars=resolution==='W1'?price.weekly:price.bars;
         const precision=price.latestClose<10?5:price.latestClose<1000?3:2;

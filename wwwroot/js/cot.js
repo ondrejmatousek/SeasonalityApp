@@ -41,7 +41,6 @@
     function switchTab(tab) {
         const cotActive = tab.dataset.marketTab === 'cot';
         const screenerActive = tab.dataset.marketTab === 'screener';
-        const htfActive = tab.dataset.marketTab === 'htf';
         const zonesActive = tab.dataset.marketTab === 'zones';
         tabs.forEach(button => {
             const active = button === tab;
@@ -50,16 +49,14 @@
             button.tabIndex = active ? 0 : -1;
         });
         panel.hidden = !cotActive;
-        seasonality.hidden = cotActive || screenerActive || htfActive || zonesActive;
+        seasonality.hidden = cotActive || screenerActive || zonesActive;
         byId('market-screener-view').hidden = !screenerActive;
-        byId('market-htf-view').hidden = !htfActive;
         byId('market-zones-view').hidden = !zonesActive;
-        root.classList.toggle('is-screener', screenerActive || htfActive || zonesActive);
-        byId('market-instrument-title').textContent = zonesActive ? 'Obchodní zóny' : htfActive ? 'HTF shoda' : screenerActive ? 'Screener' : asset?.name || 'Instrument';
+        root.classList.toggle('is-screener', screenerActive || zonesActive);
+        byId('market-instrument-title').textContent = zonesActive ? 'Obchodní zóny' : screenerActive ? 'Screener' : asset?.name || 'Instrument';
         tooltip.hidden = true;
         if (cotActive) load();
         else if (screenerActive) root.dispatchEvent(new CustomEvent('screener-visible'));
-        else if (htfActive) root.dispatchEvent(new CustomEvent('htf-visible'));
         else if (zonesActive) root.dispatchEvent(new CustomEvent('zones-visible'));
         else root.dispatchEvent(new CustomEvent('seasonality-visible'));
     }

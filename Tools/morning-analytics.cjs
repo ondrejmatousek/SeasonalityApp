@@ -23,7 +23,7 @@ function run({root='artifacts/tradingview-backfill-36-v1',input='data/market-dai
  onStage('seasonality',()=>exec('Tools/build-screener.cjs',[output]));
  // Candidate discovery uses the existing COT context; formulas stay unchanged.
  onStage('scoring',()=>exec('Tools/build-opportunities.cjs',[output]));
- onStage('htf',()=>exec('Tools/build-htf-confluence.cjs',[output,path.resolve(feed),bundlePath]));
+ onStage('zonePrices',()=>exec('Tools/build-zone-prices.cjs',[output,path.resolve(feed),bundlePath]));
  const m=JSON.parse(fs.readFileSync(path.join(output,'data/manifest.json')));
  const representatives=['AAPL','EURUSD','NDX','SPX','XAUUSD','WTI'].map(key=>{const a=m.assets.find(a=>a.key===key);return {key,...a.priceSource,actualPricePath:a.prices.path,count:a.prices.count,lastDate:a.prices.lastDate};});
  const report={builtAt:new Date().toISOString(),mode:snapshot?'offline snapshot rehearsal; not a live stock refresh':'fresh SQL stock/COT export',ingestion:bundle.ingestion,representatives,stockRowsPreserved:routing.stocksPreserved,unsupported:routing.unsupported,productionDeployment:false,schedulingChanged:false};

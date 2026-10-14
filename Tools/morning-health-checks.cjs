@@ -37,7 +37,7 @@ const site=path.join(temp,'site');fs.mkdirSync(path.join(site,'data'),{recursive
 const identity={AAPL:['Yahoo',null],EURUSD:['OANDA','OANDA:EURUSD'],NDX:['NASDAQ','NASDAQ:NDX'],SPX:['S&P','SP:SPX'],XAUUSD:['OANDA','OANDA:XAUUSD'],WTI:['NYMEX','NYMEX:CL1!']};
 const assets=Object.entries(identity).map(([key,[provider,providerSymbol]])=>({key,assetClass:key==='AAPL'?'equity':key==='EURUSD'?'forex':['NDX','SPX'].includes(key)?'index':'commodity',stockProviders:key==='AAPL'?['Yahoo']:null,
  prices:{path:'/data/'+key+'.json',count:1,lastDate:'2026-10-09'},priceSource:{provider,providerSymbol,id:key==='AAPL'?null:'source:'+key,sourceIdentity:key==='AAPL'?'existing-stock-sql':'test:'+key}}));
-const manifest={assets,stockSnapshotAt:'2026-10-12T04:00:00Z',opportunities:{path:'/data/op.json'},htfConfluence:{path:'/data/htf.json'},contracts:{test:{lastDate:'2026-10-06'}}};
+const manifest={assets,stockSnapshotAt:'2026-10-12T04:00:00Z',opportunities:{path:'/data/op.json'},zonePrices:{path:'/data/htf.json'},contracts:{test:{lastDate:'2026-10-06'}}};
 const writeFixtures=()=>{fs.writeFileSync(path.join(site,'data/manifest.json'),JSON.stringify(manifest));for(const a of assets)fs.writeFileSync(path.join(site,a.prices.path),JSON.stringify({priceSource:a.priceSource,prices:[['2026-10-09',1]]}));};
 fs.writeFileSync(path.join(site,'data/op.json'),JSON.stringify({assets:[{key:'EURUSD',mapping:{scope:'core',priceKey:'EURUSD'},candidates:[{}]}]}));
 fs.writeFileSync(path.join(site,'data/htf.json'),JSON.stringify({prices:Object.fromEntries(assets.map(a=>[a.key,{status:'ready',zones:[],priceSeriesId:a.priceSource.id}]))}));

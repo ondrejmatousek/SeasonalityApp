@@ -33,10 +33,10 @@
     return {
         exportedAt: manifest.exportedAt,
         priceSource(key) { return assetFor(key)?.priceSource || null; },
-        async htf() {
-            if (!manifest.htfConfluence) throw new Error('HTF snapshot zatím není k dispozici');
-            const payload = await read(manifest.htfConfluence.path);
-            if (payload.schemaVersion !== 1 || !Array.isArray(payload.assets) || !payload.prices) throw new Error('Invalid HTF snapshot');
+        async zonePrices() {
+            if (!manifest.zonePrices) throw new Error('OHLC snapshot pro Obchodní zóny zatím není k dispozici');
+            const payload = await read(manifest.zonePrices.path);
+            if (payload.schemaVersion !== 1 || payload.modelVersion !== 'zone-price-snapshot-v1' || !Array.isArray(payload.assets) || !payload.prices) throw new Error('Invalid zone OHLC snapshot');
             return payload;
         },
         async opportunities() {

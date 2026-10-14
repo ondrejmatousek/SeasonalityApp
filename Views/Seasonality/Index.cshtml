@@ -14,7 +14,6 @@
                 <button id="market-tab-seasonality" type="button" role="tab" aria-selected="true" aria-controls="market-seasonality-view" tabindex="0" class="is-active" data-market-tab="seasonality">Seasonality</button>
                 <button id="market-tab-cot" type="button" role="tab" aria-selected="false" aria-controls="market-cot-view" tabindex="-1" data-market-tab="cot">COT</button>
                 <button id="market-tab-screener" type="button" role="tab" aria-selected="false" aria-controls="market-screener-view" tabindex="-1" data-market-tab="screener">Screener</button>
-                <button id="market-tab-htf" type="button" role="tab" aria-selected="false" aria-controls="market-htf-view" tabindex="-1" data-market-tab="htf">HTF shoda</button>
                 <button id="market-tab-zones" type="button" role="tab" aria-selected="false" aria-controls="market-zones-view" tabindex="-1" data-market-tab="zones">Obchodní zóny</button>
             </nav>
             <div class="seasonality-asset-search" data-export-omit>
@@ -33,7 +32,7 @@
                 <p>Objem = průměr 1–3 výchozích a bezprostředně předchozích svíček / medián 20 svíček před nimi. FX objem není centralizovaný obchodovaný objem; typ poskytovatele může být tick/proxy. Chybějící objem je neověřený. D1/W1 data nepotvrzují London/NY session, makro zatím nemá datový zdroj.</p>
                 <p>Doložené body: BOS 2, nadprůměrný objem 1, ověřená session 1. Zde session zůstává neověřena. Body nemění existence zón a nejsou procenta; současně ukazujeme pokrytí důkazů. Kontext se vztahuje k datu snapshotu, nikoli historickému vzniku zóny.</p>
             </details>
-            <div class="htf-controls">
+            <div class="zone-controls">
                 <label>Instrument<input id="tz-search" type="search" placeholder="Např. GBPAUD" /></label>
                 <label>Rozsah<select id="tz-scope"><option value="core">Core instrumenty</option><option value="research">Research / review zvlášť</option></select></label>
                 <label>Timeframe<select id="tz-tf"><option value="all">D1 + W1</option><option>D1</option><option>W1</option></select></label>
@@ -47,43 +46,15 @@
                 <button id="tz-reload" type="button">Znovu načíst</button>
             </div>
             <p id="tz-status" role="status">Načtení při otevření záložky.</p>
-            <section id="tz-detail" class="htf-card" hidden>
+            <section id="tz-detail" class="zone-card" hidden>
                 <h3 id="tz-title"></h3><p id="tz-evidence"></p>
-                <div class="htf-chart-toolbar"><label>Svíčky<select id="tz-resolution"><option>D1</option><option>W1</option></select></label><button id="tz-reset" type="button">Reset pohledu</button><label>Zpřesnění<select id="tz-refinement"><option value="parent">Původní HTF zóna</option></select></label></div>
+                <div class="zone-chart-toolbar"><label>Svíčky<select id="tz-resolution"><option>D1</option><option>W1</option></select></label><button id="tz-reset" type="button">Reset pohledu</button><label>Zpřesnění<select id="tz-refinement"><option value="parent">Původní HTF zóna</option></select></label></div>
                 <p id="tz-refine-note"></p>
-                <div class="htf-chart-wrap"><div id="tz-chart" tabindex="0" aria-label="Cenový graf obchodní zóny"></div><div id="tz-tip" class="htf-tooltip" hidden></div></div>
-                <p id="tz-caption"></p><div id="tz-context" class="htf-metrics"></div>
+                <div class="zone-chart-wrap"><div id="tz-chart" tabindex="0" aria-label="Cenový graf obchodní zóny"></div><div id="tz-tip" class="zone-tooltip" hidden></div></div>
+                <p id="tz-caption"></p><div id="tz-context" class="zone-metrics"></div>
             </section>
-            <div class="htf-table-wrap"><table class="htf-table"><thead><tr><th>Instrument / zóna</th><th>Vznik / cena</th><th>Kvalita / důkazy</th><th>Sezonalita</th><th>Historická COT shoda</th><th></th></tr></thead><tbody id="tz-results"></tbody></table></div>
+            <div class="zone-table-wrap"><table class="zone-table"><thead><tr><th>Instrument / zóna</th><th>Vznik / cena</th><th>Kvalita / důkazy</th><th>Sezonalita</th><th>Historická COT shoda</th><th></th></tr></thead><tbody id="tz-results"></tbody></table></div>
             <details><summary>Pokrytí a omezení</summary><div id="tz-coverage"></div><p>Počítáme z dostupných D1/W1 snapshotů, nikoli z živých cen. Sezonalita není podmínkou zobrazení. Zóny stejného impulzu se mohou překrývat a nejsou nezávislé obchody. W1 lze zpřesnit jen existující D1 zónou uvnitř původní zóny, známou nejpozději při jejím potvrzení; D1 → H4 zatím nelze bez H4 dat.</p></details>
-        </section>
-        <section id="market-htf-view" role="tabpanel" aria-labelledby="market-tab-htf" hidden>
-            <h2>HTF zóny + sezonalita + COT <small>Experimentální</small></h2>
-            <p>Hledáme návrat ceny do denní nebo týdenní demand / supply zóny ve směru sezonality. COT je samostatné potvrzení, ne podmínka vytvoření zóny. Nejde o pokyn ke vstupu.</p>
-            <div class="htf-controls">
-                <label>Výběr<select id="htf-mode"><option value="near">Zóna + sezonalita · cena poblíž</option><option value="confirmed">Navíc COT potvrzuje</option><option value="all">Všechny shody · i vzdálené zóny</option></select></label>
-                <label>Timeframe<select id="htf-timeframe"><option value="all">D1 + W1</option><option>D1</option><option>W1</option></select></label>
-                <label>Směr<select id="htf-direction"><option value="all">Oba</option><option value="up">Růst · demand</option><option value="down">Pokles · supply</option></select></label>
-                <button id="htf-retry" type="button">Znovu načíst</button>
-            </div>
-            <p id="htf-status" role="status">Načtení při otevření záložky.</p>
-            <section id="htf-detail" class="htf-card" hidden>
-                <h3 id="htf-chart-title"></h3>
-                <div class="htf-chart-toolbar" aria-label="Ovládání cenového grafu">
-                    <label>Svíčky <select id="htf-chart-resolution"><option>D1</option><option>W1</option></select></label>
-                    <button id="htf-chart-zoom-in" type="button" aria-label="Přiblížit graf">+</button>
-                    <button id="htf-chart-zoom-out" type="button" aria-label="Oddálit graf">−</button>
-                    <button id="htf-chart-reset" type="button">Reset pohledu</button>
-                    <button id="htf-chart-fit" type="button">Celá dostupná historie</button>
-                    <span>Kolečko: zoom · tažení: posun · pravá osa: cenové měřítko</span>
-                </div>
-                <div class="htf-chart-wrap"><div id="htf-price-chart" tabindex="0" aria-label="Interaktivní svíčkový graf. Kolečkem přibližuj, tažením posouvej. Klávesy plus, minus a nula ovládají pohled."></div><div id="htf-tooltip" class="htf-tooltip" hidden></div></div>
-                <small class="htf-chart-credit"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™ · © 2025 TradingView, Inc.</a> · denní snapshot, nikoli živá cena</small>
-                <p id="htf-chart-caption"></p>
-                <div id="htf-metrics" class="htf-metrics"></div>
-            </section>
-            <div class="htf-table-wrap"><table class="htf-table"><thead><tr><th>Instrument / reference</th><th>Zóna</th><th>Cena u zóny</th><th>Sezonní interval</th><th>Sezonalita · 20 let</th><th>Historická COT shoda</th><th>Další krok</th></tr></thead><tbody id="htf-results"></tbody></table></div>
-            <details class="htf-card"><summary>Jak se shoda hledá a co omezuje výsledky?</summary><p>D1 a W1: 1–3 kompaktní základové svíčky, odchod do 3 svíček alespoň 1,5 ATR a průraz předchozího 20svíčkového rozpětí. Zóna je od knotu k hraně těla základny. Close za vzdálenější hranou zónu ruší; maximálně jeden návrat, stáří do 365 dní. Blízkost znamená nejvýše 0,5 ATR při vzniku zóny. Návraty počítáme po epizodách denních dotyků.</p><p>Sezonalita používá existující intervaly z maximální dokončené historie; ověření směru vychází z posledních 20 let, alespoň 8 období, četnost nad 50 % a medián ve směru. Vstup do 30 dní. COT používá nezměněnou komponentu C; méně než 8 podobných nebo 8 ostatních případů = málo dat, nikoli potvrzení. Raw skóre screeneru se nemění.</p><p>Graf obsahuje pouze dokončené OHLC svíčky. Zvýraznění budoucího období není cenová předpověď. NQ/MNQ používají cenovou referenci NDX, ES/MES SPX; zónové úrovně indexu nejsou realizační ceny futures. Data jsou denní snapshot, nikoli intradenní feed. Před vstupem ověř aktuální cenu, strukturu a risk.</p><p>Ranní přepočet je plánovaný kolem 06:00 Europe/Prague včetně letního času; dokončení GitHub Actions může být opožděné. Skutečný stav posledního běhu najdeš pod indikátorem Data v horní liště. Pokud aktualizace selže, datum starého snapshotu je uvedené a stará shoda není prezentovaná jako aktuální.</p><div id="htf-coverage"></div></details>
         </section>
         <section id="market-seasonality-view" class="market-seasonality-view" role="tabpanel" aria-labelledby="market-tab-seasonality">
         <nav class="seasonality-tabs" aria-label="Seasonality views">

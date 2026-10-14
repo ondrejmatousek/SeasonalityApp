@@ -74,7 +74,7 @@ function run(request){
   // Same scoring/HTF builders, frozen stock/COT snapshot, no SQL queries/refresh/publication/render-side DB setup.
   require('./morning-analytics.cjs').run({root,input,snapshot:request.analyticsSnapshot,output,
    feed:request.htfFeed,approvedRehearsalRoot:work,renderShell:false});
-  for(const script of ['raw-seasonality-checks.cjs','htf-export-checks.cjs','static-site-checks.cjs'])
+  for(const script of ['raw-seasonality-checks.cjs','zone-prices-checks.cjs','static-site-checks.cjs'])
    execFileSync(process.execPath,[path.resolve('Tools',script),output],{stdio:'inherit'});
   const health=require('./daily-health.cjs'),checks=health.create();checks.mode='safe-rehearsal';
   health.checkOutputs(output,checks);
@@ -83,7 +83,7 @@ function run(request){
   report.analyticsRehearsal={passed:true,publicationEligible:false,shellRefreshed:false,
    manifestSha256:hash(manifestBytes),stockSnapshotAt:manifest.stockSnapshotAt,
    sourceSnapshotSha256:sourceManifestHash,healthWarnings:checks.warnings,
-   screener:manifest.screener,opportunities:manifest.opportunities,htfConfluence:manifest.htfConfluence};
+   screener:manifest.screener,opportunities:manifest.opportunities,zonePrices:manifest.zonePrices};
  }
  return {report,state};
 }

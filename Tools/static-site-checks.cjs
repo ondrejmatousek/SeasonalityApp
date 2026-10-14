@@ -180,6 +180,13 @@ function exportChecks(directory) {
         }
     }
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    if(manifest.zonePrices){
+        assert.ok(!manifest.htfConfluence,'Retired HTF output must not be active');
+        const zonePrices=checkHash(manifest.zonePrices.path);assert.equal(zonePrices.modelVersion,'zone-price-snapshot-v1');
+        assert.ok(Object.values(zonePrices.prices).every(p=>!Object.hasOwn(p,'zones')));
+        assert.ok(zonePrices.assets.every(a=>!Object.hasOwn(a,'matches')));
+        assert.ok(!html.includes('market-tab-htf')&&!html.includes('market-htf-view'),'No retired HTF tab');
+    }
     for(const key of ['MILK','BUTTER','CHEESE','KCWHEAT','LIVECATTLE','FEEDERCATTLE','LEANHOGS']) {
         const asset=manifest.assets.find(a=>a.key===key);assert.ok(asset);
         if(manifest.priceRouting&&asset.priceSource?.status==='unavailable'){
