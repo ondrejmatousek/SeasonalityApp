@@ -7,7 +7,7 @@
         const bars=resolution==='W1'?price.weekly:price.bars;
         const precision=price.latestClose<10?5:price.latestClose<1000?3:2;
         const number=v=>new Intl.NumberFormat('cs-CZ',{minimumFractionDigits:precision,maximumFractionDigits:precision}).format(v);
-        const seasonal=candidate.direction==='up'
+        const seasonal=candidate?.direction==='up'
             ? {fill:'#22c55e22',line:'#22c55ebb',text:'#86efac',label:'Sezonní růst'}
             : {fill:'#ef444422',line:'#ef4444bb',text:'#fca5a5',label:'Sezonní pokles'};
         const chart=L.createChart(container,{
@@ -24,7 +24,7 @@
         const data=bars.map(b=>({time:b.date,open:b.open,high:b.high,low:b.low,close:b.close}));
         // Future whitespace locates the seasonal interval; never invent future candles.
         const cursor=new Date(day(bars.at(-1).date));let extra=0;
-        while(extra<8||cursor.toISOString().slice(0,10)<candidate.endDate){
+        while(extra<8||cursor.toISOString().slice(0,10)<(candidate?.endDate||bars.at(-1).date)){
             cursor.setUTCDate(cursor.getUTCDate()+(resolution==='W1'?7:1));
             if(resolution==='W1'||![0,6].includes(cursor.getUTCDay())){data.push({time:cursor.toISOString().slice(0,10)});extra++;}
             if(extra>260)break;
@@ -41,7 +41,7 @@
             return anchor===null||previous===null?null:anchor+(p-last)*(anchor-previous);
         };
         const renderer={draw(target){target.useMediaCoordinateSpace(({context:ctx,mediaSize:{width,height}})=>{
-            const start=x(candidate.startDate),end=x(candidate.endDate),base=x(zone.baseDate),upper=series.priceToCoordinate(zone.upper),lower=series.priceToCoordinate(zone.lower);
+            const start=candidate?x(candidate.startDate):null,end=candidate?x(candidate.endDate):null,base=x(zone.baseDate),upper=series.priceToCoordinate(zone.upper),lower=series.priceToCoordinate(zone.lower);
             container.dataset.seasonalStart=String(start);container.dataset.seasonalEnd=String(end);
             ctx.save();ctx.beginPath();ctx.rect(0,0,width,height);ctx.clip();
             if(start!==null&&end!==null){ctx.fillStyle=seasonal.fill;ctx.fillRect(start,0,end-start,height);ctx.strokeStyle=seasonal.line;ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=seasonal.text;ctx.font='11px sans-serif';ctx.fillText(seasonal.label,Math.max(6,start+6),height-12);}
