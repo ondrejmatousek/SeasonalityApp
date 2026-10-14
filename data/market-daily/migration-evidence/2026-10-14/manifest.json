@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "originals": {
+    "original36": {
+      "file": "data\\market-daily\\migration-evidence\\2026-10-14\\original36.json",
+      "sha256": "efcee24782307a1d19498389be9df18d5800be563f1c5986ff7115a712acaf5e"
+    },
+    "research3": {
+      "file": "data\\market-daily\\migration-evidence\\2026-10-14\\research3.json",
+      "sha256": "7262654712e6f601dab1f3373d8a376fe8b228d08551080f793f9720ca2ac380"
+    },
+    "originalAudit": {
+      "file": "data\\market-daily\\migration-evidence\\2026-10-14\\originalAudit.json",
+      "sha256": "e07641dfa0ced84d42fb814460823a4d613f2b94eac774cc9bfd80fe27952a85"
+    },
+    "researchAudit": {
+      "file": "data\\market-daily\\migration-evidence\\2026-10-14\\researchAudit.json",
+      "sha256": "5f89848f83e42a01dfe89667c4ef7d44d0a10bd1e78668b342c8ee17890829dd"
+    }
+  },
+  "notice": "Provider OHLC/timestamps unchanged; only collection envelopes/audits merged"
+}
