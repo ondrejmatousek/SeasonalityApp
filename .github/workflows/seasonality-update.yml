@@ -158,6 +158,7 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build explicit worker and check admission engine
         run: |
+          node Tools/market-history-seed.cjs
           dotnet build SeasonalityApp.slnx --configuration Release
           node Tools/market-daily-sql-worker-checks.cjs
           node Tools/market-daily-preflight-checks.cjs
