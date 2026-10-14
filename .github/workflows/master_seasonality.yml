@@ -50,6 +50,9 @@ jobs:
       - name: Isolated MCP OAuth resource regression (no SQL or external requests)
         run: dotnet run --project Tools/MarketMcpChecks/MarketMcpChecks.csproj -c Release
 
+      - name: Isolated Auth0 MCP resource regression (no SQL or external requests)
+        run: dotnet run --project Tools/MarketMcpChecks/MarketMcpChecks.csproj -c Release -- --auth0
+
       - name: dotnet publish
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 

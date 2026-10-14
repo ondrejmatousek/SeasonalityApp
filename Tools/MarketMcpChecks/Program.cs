@@ -24,7 +24,11 @@ const string tenant = "10000000-0000-0000-0000-000000000001";
 const string audience = "10000000-0000-0000-0000-000000000002";
 const string owner = "10000000-0000-0000-0000-000000000003";
 const string clientId = "10000000-0000-0000-0000-000000000004";
-var issuer = $"https://login.microsoftonline.com/{tenant}/v2.0";
+var useAuth0 = args.Contains("--auth0", StringComparer.Ordinal);
+var issuer = useAuth0 ? "https://isolated-regression.eu.auth0.com/" : $"https://login.microsoftonline.com/{tenant}/v2.0";
+var expectedAudience = useAuth0 ? MarketDailyMcp.Resource : audience;
+var expectedOwner = useAuth0 ? "auth0|isolated-owner" : owner;
+var expectedClient = useAuth0 ? "https://chatgpt.com/oauth/isolated-regression/client.json" : clientId;
 var bundle = Path.GetFullPath(Environment.GetEnvironmentVariable("MARKET_DAILY_PROBE_TEST_BUNDLE") ??
     "artifacts/tradingview-backfill-36-v1/analytics-sources-v1/manifest.json");
 var input = File.ReadAllText("data/market-daily/latest.json");
@@ -32,11 +36,13 @@ var before = Snapshot();
 using var rsa = RSA.Create(2048);
 var key = new RsaSecurityKey(rsa) { KeyId = Guid.NewGuid().ToString() };
 void Check(bool ok, string label) { if (!ok) throw new Exception(label); }
-string Token(string scope = "market.validate", string aud = audience, string oid = owner,
-    string azp = clientId, string? iss = null, bool expired = false, SecurityKey? signingKey = null)
+string Token(string scope = "market.validate", string? aud = null, string? oid = null,
+    string? azp = null, string? iss = null, bool expired = false, SecurityKey? signingKey = null, bool wrongClaimNames = false)
 {
-    var jwt = new JwtSecurityToken(iss ?? issuer, aud,
-        [new("tid", tenant), new("oid", oid), new("azp", azp), new("ver", "2.0"), new("scp", scope)],
+    var auth0Claims = useAuth0 && !wrongClaimNames;
+    var jwt = new JwtSecurityToken(iss ?? issuer, aud ?? expectedAudience,
+        [new("tid", tenant), new(auth0Claims ? "sub" : "oid", oid ?? expectedOwner), new("azp", azp ?? expectedClient),
+            new("ver", "2.0"), new(auth0Claims ? "scope" : "scp", scope)],
         DateTime.UtcNow.AddHours(-1), expired ? DateTime.UtcNow.AddMinutes(-5) : DateTime.UtcNow.AddMinutes(5),
         new SigningCredentials(signingKey ?? key, SecurityAlgorithms.RsaSha256));
     return new JwtSecurityTokenHandler().WriteToken(jwt);
@@ -48,8 +54,11 @@ async Task<(WebApplication App, HttpClient Http)> Start(bool enabled, bool confi
     b.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
     {
         ["MarketDailyMcp:Enabled"] = enabled.ToString(), ["MarketDailyMcp:TenantId"] = configured ? tenant : null,
-        ["MarketDailyMcp:Audience"] = audience, ["MarketDailyMcp:AllowedObjectId"] = owner,
-        ["MarketDailyMcp:AllowedClientId"] = clientId, ["MarketData:BundlePath"] = bundle,
+        ["MarketDailyMcp:Provider"] = useAuth0 ? "Auth0" : "Entra",
+        ["MarketDailyMcp:Auth0Domain"] = configured ? "isolated-regression.eu.auth0.com" : null,
+        ["MarketDailyMcp:Audience"] = expectedAudience, ["MarketDailyMcp:AllowedObjectId"] = owner,
+        ["MarketDailyMcp:AllowedSubject"] = expectedOwner,
+        ["MarketDailyMcp:AllowedClientId"] = expectedClient, ["MarketData:BundlePath"] = bundle,
         ["MarketDailyProbe:AllowLocalHttp"] = "true"
     });
     MarketDailyProbe.Register(b.Services);
@@ -85,6 +94,21 @@ async Task<JsonElement> Json(HttpResponseMessage r)
 }
 var init = new { jsonrpc = "2.0", id = 1, method = "initialize", @params = new
 { protocolVersion = "2025-11-25", capabilities = new { }, clientInfo = new { name = "isolated-regression", version = "1.0" } } };
+if (useAuth0)
+{
+    foreach (var mutation in new[] {
+        ("Auth0Domain", "127.0.0.1"), ("Auth0Domain", "tenant.eu.auth0.com.attacker.example"),
+        ("Auth0Domain", "https://tenant.eu.auth0.com/"), ("Auth0Domain", "tenant.eu.auth0.com:443"),
+        ("Audience", "https://wrong.example/api"), ("AllowedSubject", "*"), ("AllowedClientId", "*") })
+    {
+        var values = new Dictionary<string, string?> {
+            ["MarketDailyMcp:Enabled"] = "true", ["MarketDailyMcp:Provider"] = "Auth0",
+            ["MarketDailyMcp:Auth0Domain"] = "isolated-regression.eu.auth0.com", ["MarketDailyMcp:Audience"] = expectedAudience,
+            ["MarketDailyMcp:AllowedSubject"] = expectedOwner, ["MarketDailyMcp:AllowedClientId"] = expectedClient };
+        values["MarketDailyMcp:" + mutation.Item1] = mutation.Item2;
+        Check(!MarketDailyMcp.Register(new ServiceCollection(), new ConfigurationBuilder().AddInMemoryCollection(values).Build()), "Invalid Auth0 settings fail closed");
+    }
+}
 foreach (var state in new[] { (false, true), (true, false) })
 {
     var (app, http) = await Start(state.Item1, state.Item2);
@@ -100,7 +124,8 @@ try
     using var metaResponse = await h.GetAsync(MarketDailyMcp.MetadataPath);
     var meta = await Json(metaResponse);
     Check(meta.GetProperty("resource").GetString() == MarketDailyMcp.Resource, "Canonical resource URL");
-    Check(meta.GetProperty("authorization_servers")[0].GetString() == issuer, "Entra discovery issuer");
+    Check(meta.GetProperty("authorization_servers")[0].GetString() == issuer, "Provider-specific discovery issuer");
+    Check(meta.GetProperty("scopes_supported")[0].GetString() == (useAuth0 ? MarketDailyMcp.Scope : MarketDailyMcp.Resource + "/" + MarketDailyMcp.Scope), "Provider-specific scope metadata");
     foreach (var invalid in new[] { "shared-probe-token", Token(aud: "wrong"), Token(iss: "https://wrong.example"), Token(expired: true) })
     { using var r = await Rpc(h, init, invalid); Check(r.StatusCode == HttpStatusCode.Unauthorized, "Invalid token rejected"); }
     using var otherRsa = RSA.Create(2048);
@@ -108,6 +133,7 @@ try
     foreach (var forbidden in new[] { Token(scope: "other"), Token(oid: clientId), Token(azp: owner) })
     { using var r = await Rpc(h, init, forbidden); Check(r.StatusCode == HttpStatusCode.Forbidden, "Scope/owner/client isolation: " + (int)r.StatusCode); }
     var auth = Token();
+    if (useAuth0) { using var r = await Rpc(h, init, Token(wrongClaimNames: true)); Check(r.StatusCode == HttpStatusCode.Forbidden, "No cross-provider identity/scope fallback"); }
     using (var r = await Rpc(h, init, auth, "https://untrusted.example")) Check(r.StatusCode == HttpStatusCode.Forbidden, "Browser Origin rejected");
     using (var r = await Rpc(h, init, auth)) Check(r.IsSuccessStatusCode && (await Json(r)).TryGetProperty("result", out _), "Real SDK initialize");
     using (var r = await Rpc(h, new { jsonrpc = "2.0", id = 2, method = "tools/list" }, auth))
@@ -146,7 +172,7 @@ try
     for (var i = 0; i < 31; i++) { using var r = await Rpc(h, init, null); if ((int)r.StatusCode == 429) { limited = true; break; } }
     Check(limited, "Rate limiting");
     Check(Snapshot() == before, "No stored market data changed");
-    Console.WriteLine("PASS: real stateless MCP initialize/list/call, 39-bar validation, JWT signature/issuer/audience/expiry/scope/owner/client checks, fail-closed config, limits, no SQL/files/jobs writes. OAuth interactive login NOT tested.");
+    Console.WriteLine($"PASS ({(useAuth0 ? "Auth0" : "Entra")}): real stateless MCP initialize/list/call, 39-bar validation, JWT signature/issuer/audience/expiry/scope/owner/client checks, fail-closed config, limits, no SQL/files/jobs writes. OAuth interactive login NOT tested.");
 }
 finally { h.Dispose(); await host.StopAsync(); await host.DisposeAsync(); }
 

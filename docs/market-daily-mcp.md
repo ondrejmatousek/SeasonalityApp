@@ -1,5 +1,7 @@
 # Market daily validation MCP — staged, not connected to Work
 
+Update 2026-10-14: user approved authentication outside Azure. **Auth0 is now the preferred candidate**, with a tested provider-specific JWT adapter and a dedicated [setup guide](market-daily-auth0-setup.md). The Entra contract below is retained for regression/reference only; it is not a recommendation to configure Work against unverified Entra discovery. No Auth0 tenant or hosted Work login is configured yet.
+
 ## Implemented
 
 - Official C# MCP SDK 2.2.0, stateless Streamable HTTP at `/mcp/market-daily`.
@@ -7,7 +9,7 @@
 - All 39 registered instruments required, using the existing source registry and `MarketDailyProbe.Validate`; maximum 256 KiB argument / 512 KiB transport, bounded body-read time, 30 requests/IP/minute, no browser Origin/CORS access.
 - No persistence, SQL registration in the isolated test host, ingestion, queues, analytics or provider fallback. Completion declarations are checked, not independently proven. Research flags/routing/scoring remain untouched.
 - Receipt/checksum is deterministic for identical input bytes. It explicitly reports `persisted:false`, `analyticsTriggered:false`, `completionValidated:false`.
-- OAuth resource validation uses ASP.NET JWT middleware: RS256 signature, v2 issuer, tenant, audience, expiry, `market.validate` scope, one owner object ID and one allowed OAuth client ID. No shared-probe-token fallback.
+- OAuth resource validation uses ASP.NET JWT middleware: RS256 signature, issuer, audience, expiry, `market.validate` scope and one allowed owner/client. Entra uses `tid/ver/oid/scp`; Auth0 uses its exact issuer, `sub/scope/azp`, pinned standard tenant domain and canonical MCP resource audience. No cross-provider claim or shared-probe-token fallback.
 - No custom authorization server, DCR server, token storage, password form or OAuth login is implemented. Entra is the intended authorization provider candidate, not a proven Work connection.
 
 ## Default and configuration
@@ -54,6 +56,7 @@ Prepare the existing 39-series bundle, then:
 dotnet build SeasonalityApp.slnx -c Release
 node Tools/market-daily-probe-checks.cjs
 dotnet run --project Tools/MarketMcpChecks/MarketMcpChecks.csproj -c Release
+dotnet run --project Tools/MarketMcpChecks/MarketMcpChecks.csproj -c Release -- --auth0
 ```
 
 An already prepared isolated 39-series bundle can be selected with `MARKET_DAILY_PROBE_TEST_BUNDLE`. MCP checks launch an actual HTTP host using the production MCP resource configuration and validator. Only the separate test executable generates an ephemeral RSA key and pins a static test JWKS in memory; it never changes the production configuration or disables signature validation. Tests cover initialize, list (exactly one tool), call with 39 bars/checksum, invalid signature/issuer/audience/expiry, wrong scopes/owner/client, disabled/missing configuration, malformed/stale/incomplete/provider/OHLC inputs, request limits and unchanged stored market files. Test-envelope freshness is updated in memory only, not in the repository daily feed.

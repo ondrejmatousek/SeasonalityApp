@@ -10,7 +10,7 @@ using ModelContextProtocol.Server;
 
 namespace SeasonalityApp.Services;
 
-// OAuth resource server only. Entra owns login, PKCE, consent and refresh tokens.
+// OAuth resource server only. The configured provider owns login, PKCE, consent and refresh tokens.
 // Never accepts the REST probe's shared secret or calls any ingestion/SQL service.
 public static class MarketDailyMcp
 {
@@ -23,9 +23,9 @@ public static class MarketDailyMcp
 
     public static bool Register(IServiceCollection services, IConfiguration config)
     {
-        if (!Ready(config)) return false;
-        var tenant = config["MarketDailyMcp:TenantId"]!;
-        var issuer = $"https://login.microsoftonline.com/{tenant}/v2.0";
+        var settings = SettingsFor(config);
+        if (settings is null) return false;
+        var issuer = settings.Issuer;
         services.AddAuthentication().AddJwtBearer(Scheme, options =>
         {
             options.Authority = issuer;
@@ -35,7 +35,7 @@ public static class MarketDailyMcp
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true, ValidIssuer = issuer,
-                ValidateAudience = true, ValidAudience = config["MarketDailyMcp:Audience"],
+                ValidateAudience = true, ValidAudience = settings.Audience,
                 ValidateLifetime = true, RequireExpirationTime = true,
                 ValidateIssuerSigningKey = true, RequireSignedTokens = true,
                 ValidAlgorithms = [SecurityAlgorithms.RsaSha256], ClockSkew = TimeSpan.FromSeconds(30)
@@ -48,7 +48,7 @@ public static class MarketDailyMcp
                     context.Response.StatusCode = 401;
                     // Configured canonical URL, never Host/X-Forwarded-Host from the caller.
                     context.Response.Headers.WWWAuthenticate =
-                        $"Bearer resource_metadata=\"{Resource[..Resource.IndexOf(Path, StringComparison.Ordinal)]}{MetadataPath}\", scope=\"{Resource}/{Scope}\"";
+                        $"Bearer resource_metadata=\"{Resource[..Resource.IndexOf(Path, StringComparison.Ordinal)]}{MetadataPath}\", scope=\"{settings.DiscoveryScope}\"";
                     return Task.CompletedTask;
                 }
             };
@@ -57,24 +57,50 @@ public static class MarketDailyMcp
         {
             policy.AddAuthenticationSchemes(Scheme).RequireAuthenticatedUser();
             policy.RequireAssertion(c =>
-                c.User.FindFirst("tid")?.Value == tenant &&
-                c.User.FindFirst("ver")?.Value == "2.0" &&
-                c.User.FindFirst("oid")?.Value == config["MarketDailyMcp:AllowedObjectId"] &&
-                c.User.FindFirst("azp")?.Value == config["MarketDailyMcp:AllowedClientId"] &&
-                (c.User.FindFirst("scp")?.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(Scope, StringComparer.Ordinal) ?? false));
+                (settings.Provider == "Auth0" ||
+                    (c.User.FindFirst("tid")?.Value == settings.Tenant && c.User.FindFirst("ver")?.Value == "2.0")) &&
+                c.User.FindFirst(settings.Provider == "Auth0" ? "sub" : "oid")?.Value == settings.Owner &&
+                c.User.FindFirst("azp")?.Value == settings.Client &&
+                (c.User.FindFirst(settings.Provider == "Auth0" ? "scope" : "scp")?.Value
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(Scope, StringComparer.Ordinal) ?? false));
         }));
         services.AddMcpServer().WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless)
             .WithTools<MarketDailyValidationTool>();
         return true;
     }
 
-    private static bool Ready(IConfiguration c) => c.GetValue<bool>("MarketDailyMcp:Enabled") &&
-        new[] { "TenantId", "Audience", "AllowedObjectId", "AllowedClientId" }
-            .All(k => Guid.TryParse(c[$"MarketDailyMcp:{k}"], out var id) && id != Guid.Empty);
+    private sealed record OAuthSettings(string Provider, string Issuer, string Audience,
+        string Owner, string Client, string DiscoveryScope, string? Tenant = null);
+
+    private static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && value.Length <= 512 &&
+        !value.Any(ch => char.IsWhiteSpace(ch) || char.IsControl(ch) || ch == '*');
+
+    private static OAuthSettings? SettingsFor(IConfiguration c)
+    {
+        if (!c.GetValue<bool>("MarketDailyMcp:Enabled")) return null;
+        var provider = c["MarketDailyMcp:Provider"] ?? "Entra";
+        if (provider == "Auth0")
+        {
+            var domain = c["MarketDailyMcp:Auth0Domain"];
+            // Restrict JWKS/discovery destination to a standard Auth0 tenant, not an arbitrary URL/SSRF target.
+            if (domain is null || !System.Text.RegularExpressions.Regex.IsMatch(domain,
+                @"\A[a-z0-9][a-z0-9-]{0,62}\.(?:(?:eu|us|au|jp|uk|ca)\.)?auth0\.com\z") ||
+                c["MarketDailyMcp:Audience"] != Resource ||
+                !Identifier(c["MarketDailyMcp:AllowedSubject"]) || !Identifier(c["MarketDailyMcp:AllowedClientId"])) return null;
+            return new(provider, $"https://{domain}/", Resource, c["MarketDailyMcp:AllowedSubject"]!,
+                c["MarketDailyMcp:AllowedClientId"]!, Scope);
+        }
+        if (provider != "Entra" || !new[] { "TenantId", "Audience", "AllowedObjectId", "AllowedClientId" }
+            .All(k => Guid.TryParse(c[$"MarketDailyMcp:{k}"], out var id) && id != Guid.Empty)) return null;
+        var tenant = c["MarketDailyMcp:TenantId"]!;
+        return new(provider, $"https://login.microsoftonline.com/{tenant}/v2.0", c["MarketDailyMcp:Audience"]!,
+            c["MarketDailyMcp:AllowedObjectId"]!, c["MarketDailyMcp:AllowedClientId"]!, $"{Resource}/{Scope}", tenant);
+    }
 
     public static void Map(WebApplication app, bool ready)
     {
-        if (!ready)
+        var settings = SettingsFor(app.Configuration);
+        if (!ready || settings is null)
         {
             app.MapMethods(Path, ["GET", "POST", "DELETE"], () => Results.Json(new
             { code = "MARKET_DAILY_MCP_NOT_CONFIGURED", validationOnly = true }, statusCode: 503))
@@ -120,8 +146,8 @@ public static class MarketDailyMcp
         app.MapGet(MetadataPath, () => Results.Json(new
         {
             resource = Resource,
-            authorization_servers = new[] { $"https://login.microsoftonline.com/{app.Configuration["MarketDailyMcp:TenantId"]}/v2.0" },
-            scopes_supported = new[] { $"{Resource}/{Scope}" }, bearer_methods_supported = new[] { "header" }
+            authorization_servers = new[] { settings.Issuer },
+            scopes_supported = new[] { settings.DiscoveryScope }, bearer_methods_supported = new[] { "header" }
         }));
         app.MapMcp(Path).RequireAuthorization(Policy).RequireRateLimiting("market-daily-probe");
     }
