@@ -29,6 +29,24 @@
         "fetchedAt": "2026-10-13T05:31:41.620Z",
         "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
       }
+    },
+    {
+      "timestamp": 1791898200,
+      "providerTimestamp": "2026-10-13T13:30:00.000Z",
+      "providerUtcDate": "2026-10-13",
+      "date": "2026-10-13",
+      "open": 7795.27,
+      "high": 7814.15,
+      "low": 7786.11,
+      "close": 7805.45,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Daily producer declared completed sessionEnd",
+      "sessionEnd": "2026-10-13T20:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "861feafe5136cda3b630925bd2f3cbb0c32fe604d8d631a13298c8885d3578fd",
+        "fetchedAt": "2026-10-14T01:03:49Z",
+        "runId": "353a710b-9b2a-456a-aae9-9f4d46ec3051"
+      }
     }
   ]
 }

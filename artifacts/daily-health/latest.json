@@ -1,25 +1,25 @@
 {
   "schemaVersion": 1,
   "status": "ok",
-  "runDate": "2026-10-13",
-  "runStartedAt": "2026-10-13T14:14:34.546Z",
-  "runFinishedAt": "2026-10-13T14:27:57.779Z",
-  "sourceCommit": "57a7f362c2c22f5273d06cbb609aad9656d5b8ab",
-  "marketDailyFetchedAt": "2026-10-13T05:31:41.620Z",
+  "runDate": "2026-10-14",
+  "runStartedAt": "2026-10-14T05:45:44.074Z",
+  "runFinishedAt": "2026-10-14T06:00:30.691Z",
+  "sourceCommit": "75bf120bbfb0ca1f3ad7683c6915995ada73a65f",
+  "marketDailyFetchedAt": "2026-10-14T01:03:49Z",
   "market": {
     "status": "ok",
     "received": 39,
-    "inserted": 0,
-    "duplicates": 39,
+    "inserted": 39,
+    "duplicates": 0,
     "failed": 0,
     "failedSymbols": [],
-    "inputSha256": "ad2dc1999ff438b43f52d12bbb51a941a12cea5fb1126bf8d88e739bb0c7808c"
+    "inputSha256": "861feafe5136cda3b630925bd2f3cbb0c32fe604d8d631a13298c8885d3578fd"
   },
   "stocks": {
     "status": "ok",
     "refresh": {
-      "startedAt": "2026-10-13T14:15:23.6006734+00:00",
-      "finishedAt": "2026-10-13T14:25:20.4874702+00:00",
+      "startedAt": "2026-10-14T05:46:38.5263145+00:00",
+      "finishedAt": "2026-10-14T05:57:43.0630039+00:00",
       "attempted": 457,
       "yahooSucceeded": [
         "DBC",
@@ -485,8 +485,8 @@
       "fallbackSucceeded": [],
       "failedSymbols": []
     },
-    "snapshotAt": "2026-10-13T14:26:50.811Z",
-    "lastBarDate": "2026-10-12"
+    "snapshotAt": "2026-10-14T05:59:07.902Z",
+    "lastBarDate": "2026-10-13"
   },
   "cot": {
     "status": "ok",
@@ -513,7 +513,7 @@
       "symbol": "AAPL",
       "historicalSource": "existing-stock-sql",
       "dailySource": "existing Yahoo stock refresh → SQL → fresh static export",
-      "lastBarDate": "2026-10-12",
+      "lastBarDate": "2026-10-13",
       "seasonalitySource": "existing-stock-sql",
       "htfSource": null,
       "provider": "Yahoo",
@@ -523,7 +523,7 @@
       "symbol": "EURUSD",
       "historicalSource": "validated-v2/series/EURUSD.json",
       "dailySource": "data/market-daily/latest.json",
-      "lastBarDate": "2026-10-12",
+      "lastBarDate": "2026-10-13",
       "seasonalitySource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
       "provider": "OANDA",
@@ -534,7 +534,7 @@
       "symbol": "NDX",
       "historicalSource": "validated-v2/series/NDX.json",
       "dailySource": "data/market-daily/latest.json",
-      "lastBarDate": "2026-10-12",
+      "lastBarDate": "2026-10-13",
       "seasonalitySource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
       "htfSource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
       "provider": "NASDAQ",
@@ -545,7 +545,7 @@
       "symbol": "SPX",
       "historicalSource": "validated-v2/series/SPX.json",
       "dailySource": "data/market-daily/latest.json",
-      "lastBarDate": "2026-10-12",
+      "lastBarDate": "2026-10-13",
       "seasonalitySource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
       "htfSource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
       "provider": "S&P",
@@ -556,7 +556,7 @@
       "symbol": "XAUUSD",
       "historicalSource": "validated-v2/series/XAUUSD.json",
       "dailySource": "data/market-daily/latest.json",
-      "lastBarDate": "2026-10-12",
+      "lastBarDate": "2026-10-13",
       "seasonalitySource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
       "provider": "OANDA",
@@ -567,7 +567,7 @@
       "symbol": "WTI",
       "historicalSource": "validated-v2/series/WTI.json",
       "dailySource": "data/market-daily/latest.json",
-      "lastBarDate": "2026-10-11",
+      "lastBarDate": "2026-10-12",
       "seasonalitySource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
       "htfSource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
       "provider": "NYMEX",
@@ -580,7 +580,7 @@
   "published": true,
   "mode": "live",
   "eligibleForPublication": true,
-  "durationSeconds": 803,
-  "staleAfter": "2026-10-15T02:27:57.779Z",
+  "durationSeconds": 887,
+  "staleAfter": "2026-10-15T18:00:30.691Z",
   "publication": "Generated files prepared for commit; hosting remains separate"
 }

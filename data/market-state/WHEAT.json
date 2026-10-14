@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "id": "commodity:WHEAT:CBOT:ZW1!:tv-research:v1",
+  "logicalSymbol": "WHEAT",
+  "provider": "CBOT",
+  "providerSymbol": "CBOT:ZW1!",
+  "sourceIdentity": "CBOT_TRADINGVIEW_RESEARCH",
+  "timeframe": "1D",
+  "productionActive": false,
+  "scope": "test/research only",
+  "historicalSource": "validated/WHEAT.json",
+  "historicalSha256": "f65685fcbeec2e45375cededefe7c7fbc685904689f5cc1c6e46b24ff0d3891b",
+  "htfPolicy": "No HTF rebuild/activation",
+  "bars": [
+    {
+      "timestamp": 1791849600,
+      "providerTimestamp": "2026-10-13T00:00:00.000Z",
+      "providerUtcDate": "2026-10-13",
+      "date": "2026-10-13",
+      "open": 672.25,
+      "high": 681,
+      "low": 665.75,
+      "close": 669.25,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Documented CBOT:ZW1! D1 session and timestamp identify trade date 2026-10-13. At 2026-10-14T01:03:49Z, local time 2026-10-13 20:03:49 is after the conservative 17:00:00 acceptance boundary; October 13 is a regular trading day. This boundary is not claimed as exact provider time_close.",
+        "checkedAt": "2026-10-14T01:03:49Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/markets/agriculture/grains/wheat",
+            "finding": "ZW Chicago Globex 19:00-07:45 and 08:30-13:20, with trade date following evening opening."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "2026 product holiday calendar: October 13 is a regular trading day; all times Chicago unless specified."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "861feafe5136cda3b630925bd2f3cbb0c32fe604d8d631a13298c8885d3578fd",
+        "fetchedAt": "2026-10-14T01:03:49Z",
+        "runId": "353a710b-9b2a-456a-aae9-9f4d46ec3051"
+      }
+    }
+  ]
+}

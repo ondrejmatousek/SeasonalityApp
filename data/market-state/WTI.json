@@ -51,6 +51,39 @@
         "fetchedAt": "2026-10-13T05:31:41.620Z",
         "runId": "45441fcc-ef8a-4eeb-ac6c-7f7e9becc68d"
       }
+    },
+    {
+      "timestamp": 1791842400,
+      "providerTimestamp": "2026-10-12T22:00:00.000Z",
+      "providerUtcDate": "2026-10-12",
+      "date": "2026-10-12",
+      "open": 93.21,
+      "high": 95.11,
+      "low": 91.7,
+      "close": 94.14,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Documented NYMEX:CL1! D1 session and timestamp identify trade date 2026-10-13. At 2026-10-14T01:03:49Z, local time 2026-10-13 20:03:49 is after the conservative 17:00:00 acceptance boundary; October 13 is a regular trading day. This boundary is not claimed as exact provider time_close.",
+        "checkedAt": "2026-10-14T01:03:49Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/education/courses/event-contracts-underlying-markets/wti-overview",
+            "finding": "WTI trading 17:00 previous day to 16:00 America/Chicago."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "2026 product holiday calendar: October 13 is a regular trading day; all times Chicago unless specified."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "861feafe5136cda3b630925bd2f3cbb0c32fe604d8d631a13298c8885d3578fd",
+        "fetchedAt": "2026-10-14T01:03:49Z",
+        "runId": "353a710b-9b2a-456a-aae9-9f4d46ec3051"
+      }
     }
   ]
 }
