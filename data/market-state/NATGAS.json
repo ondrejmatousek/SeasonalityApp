@@ -84,6 +84,39 @@
         "fetchedAt": "2026-10-14T01:03:49Z",
         "runId": "353a710b-9b2a-456a-aae9-9f4d46ec3051"
       }
+    },
+    {
+      "timestamp": 1791928800,
+      "providerTimestamp": "2026-10-13T22:00:00.000Z",
+      "providerUtcDate": "2026-10-13",
+      "date": "2026-10-13",
+      "open": 3.321,
+      "high": 3.334,
+      "low": 3.157,
+      "close": 3.198,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "NG Globex18-17 Eastern equals17-16 Chicago. Trade date 2026-10-14 is a normal 2026-10-14 session; original timestamp 1791928800 aligns with documented opening/date contract. At 2026-10-15T01:03:46Z, local 2026-10-14 20:03:46 is after conservative 17:00:00 completion acceptance boundary. This is not exact provider time_close.",
+        "checkedAt": "2026-10-15T01:03:46Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/cn-s/markets/energy/natural-gas/natural-gas.contractSpecs.html",
+            "finding": "NG Globex18-17 Eastern equals17-16 Chicago."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "2026 calendar checked; October14 normal session, no listed holiday shortening. TimesCT."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "b46350841d4ca800a2326d6460f9b58b69d502e2e31eecaa1c7626176ca78e72",
+        "fetchedAt": "2026-10-15T01:03:46Z",
+        "runId": "246354d2-f70b-4c11-b48b-21d2da573158"
+      }
     }
   ]
 }

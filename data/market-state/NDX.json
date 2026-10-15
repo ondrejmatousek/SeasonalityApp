@@ -79,6 +79,39 @@
         "fetchedAt": "2026-10-14T01:03:49Z",
         "runId": "353a710b-9b2a-456a-aae9-9f4d46ec3051"
       }
+    },
+    {
+      "timestamp": 1791984600,
+      "providerTimestamp": "2026-10-14T13:30:00.000Z",
+      "providerUtcDate": "2026-10-14",
+      "date": "2026-10-14",
+      "open": 30316.0246,
+      "high": 30436.5984,
+      "low": 29861.0614,
+      "close": 29950.8159,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Cash index correction/distribution after16 ET ends before18 ET; exact TV time_close unavailable. Trade date 2026-10-14 is a normal 2026-10-14 session; original timestamp 1791984600 aligns with documented opening/date contract. At 2026-10-15T01:03:46Z, local 2026-10-14 21:03:46 is after conservative 18:00:00 completion acceptance boundary. This is not exact provider time_close.",
+        "checkedAt": "2026-10-15T01:03:46Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "url": "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
+            "finding": "Cash index correction/distribution after16 ET ends before18 ET; exact TV time_close unavailable."
+          },
+          {
+            "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+            "finding": "October14 2026 normal cash market day."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "b46350841d4ca800a2326d6460f9b58b69d502e2e31eecaa1c7626176ca78e72",
+        "fetchedAt": "2026-10-15T01:03:46Z",
+        "runId": "246354d2-f70b-4c11-b48b-21d2da573158"
+      }
     }
   ]
 }
