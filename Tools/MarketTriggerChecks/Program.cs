@@ -5,6 +5,10 @@ using System.Text.Json;
 using SeasonalityApp.Services;
 
 // Generated ephemeral key + intercepted HTTP only. No GitHub, SQL, or production credentials.
+var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
+while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "SeasonalityApp.csproj"))) repository = repository.Parent;
+if (repository is null) throw new InvalidOperationException("Run from the SeasonalityApp repository.");
+Directory.SetCurrentDirectory(repository.FullName);
 using var rsa = RSA.Create(2048);
 var values = new Dictionary<string, string?> {
     ["MarketDailyGitHubTrigger:Enabled"] = "true",
