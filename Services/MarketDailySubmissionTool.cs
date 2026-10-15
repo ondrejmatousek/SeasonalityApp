@@ -7,10 +7,11 @@ using ModelContextProtocol.Server;
 namespace SeasonalityApp.Services;
 
 [McpServerToolType]
-public sealed class MarketDailySubmissionTool(IConfiguration config,IWebHostEnvironment environment,MarketDailySqlInbox inbox)
+public sealed class MarketDailySubmissionTool(IConfiguration config,IWebHostEnvironment environment,MarketDailySqlInbox inbox,
+    MarketDailyGitHubTrigger trigger)
 {
     [McpServerTool(Name="submit_market_daily",ReadOnly=false,Destructive=false,Idempotent=true,OpenWorld=false)]
-    [Description("Store the unchanged 39-instrument daily JSON AND its shared completion audit in a durable SQL quarantine inbox. Requires market.ingest. This is a write and a pending receipt, NOT acceptance into price history, independent session validation, analytics, or publication. Never pass credentials. Do not replace GitHub collection until an explicit production cutover.")]
+    [Description("Store the unchanged 39-instrument daily JSON AND its shared completion audit in durable SQL quarantine. Requires market.ingest. After SQL commit, the configured server may request the fixed Morning analytics workflow. A pending receipt or requested workflow is NOT history acceptance, independent session validation, completed analytics, or publication. Never pass credentials.")]
     public async Task<CallToolResult> SubmitMarketDaily(
         [Description("Exact unchanged UTF-8 text of market-daily/latest.json (all 39 instruments), at most 256 KiB.")] string dailyJson,
         [Description("Exact unchanged UTF-8 text of the matching shared completion audit, at most 256 KiB. Not a URL.")] string completionAuditJson,
@@ -39,9 +40,11 @@ public sealed class MarketDailySubmissionTool(IConfiguration config,IWebHostEnvi
             using var timeout=CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(30));
             var receipt=await inbox.ReceiveAsync(submission,timeout.Token);
+            var wakeup=await trigger.RequestAsync(receipt.Status,cancellationToken);
             return MarketDailyMcp.ToolResult(new { mode="sql-quarantine",receipt.ReceiptId,receipt.PayloadSha256,
                 receipt.AuditSha256,receipt.Status,receipt.Duplicate,receivedBars=39,receipt.Persisted,
-                receipt.HistoryAccepted,receipt.AnalyticsTriggered,receipt.CompletionValidated,productionChanged=false });
+                receipt.HistoryAccepted,receipt.AnalyticsTriggered,receipt.CompletionValidated,productionChanged=false,
+                workflowTrigger=wakeup.Status,workflowRequested=wakeup.Requested });
         }
         catch(Exception e)when(e is SqlException or InvalidOperationException or InvalidDataException or OperationCanceledException)
         {

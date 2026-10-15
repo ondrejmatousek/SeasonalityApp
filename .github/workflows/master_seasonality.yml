@@ -62,6 +62,9 @@ jobs:
       - name: Isolated Auth0 MCP resource regression (no SQL or external requests)
         run: dotnet run --project Tools/MarketMcpChecks/MarketMcpChecks.csproj -c Release -- --auth0
 
+      - name: SQL wake-up GitHub App regression (ephemeral key, intercepted HTTP, no SQL)
+        run: dotnet run --project Tools/MarketTriggerChecks/MarketTriggerChecks.csproj -c Release
+
       - name: dotnet publish
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 

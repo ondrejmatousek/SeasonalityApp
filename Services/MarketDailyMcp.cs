@@ -74,6 +74,9 @@ public static class MarketDailyMcp
         if(inbox)
         {
             services.AddSingleton(new MarketDailySqlInbox(config.GetConnectionString("DefaultConnection")!));
+            services.AddHttpClient(MarketDailyGitHubTrigger.ClientName)
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+            services.AddTransient<MarketDailyGitHubTrigger>();
             tools.Add(CreateTool<MarketDailySubmissionTool>(nameof(MarketDailySubmissionTool.SubmitMarketDaily),IngestScope));
         }
         services.AddMcpServer().WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools(tools);
