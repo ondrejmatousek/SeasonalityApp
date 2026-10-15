@@ -1,5 +1,10 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),Z=require('../wwwroot/js/trade-zones.js');
 const date=i=>new Date(Date.UTC(2026,0,1+i)).toISOString().slice(0,10);
+assert.equal(Z.distancePercent(100,90,95),5,'Distance from price above zone uses nearest upper boundary / close');
+assert.ok(Math.abs(Z.distancePercent(90,100,104)-1000/90)<1e-12,'Distance below zone uses nearest lower boundary / close');
+for(const close of [100,102,104])assert.equal(Z.distancePercent(close,100,104),0,'Inside/on edge is zero, not distance to midpoint');
+for(const close of [null,undefined,NaN,Infinity,0])assert.equal(Z.distancePercent(close,100,104),null,'Missing/zero price is unknown, never zero distance');
+assert.equal(Z.distancePercent(100,104,100),null,'Invalid bounds do not fabricate proximity');
 const bars=Array.from({length:30},(_,i)=>({date:date(i),open:100,high:i===20?105:101,low:99,close:100,volume:100}));
 bars.push({date:date(30),open:100.2,high:100.5,low:99.5,close:99.8,volume:300},{date:date(31),open:100,high:110,low:100,close:104.5,volume:100});
 const price={bars,latestClose:104.5},before=JSON.stringify(price),asOf=date(32);

@@ -2,6 +2,10 @@
  'use strict';
  const defaults=Object.freeze({version:'trade-zones-v2-experimental',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
  const day=s=>Date.parse(s+'T00:00:00Z'),ms=86400000;
+ function distancePercent(close,lower,upper){
+  return [close,lower,upper].every(Number.isFinite)&&close!==0&&lower<upper
+   ?Math.max(lower-close,close-upper,0)/Math.abs(close)*100:null;
+ }
  const median=a=>{const s=[...a].sort((a,b)=>a-b);return s.length%2?s[(s.length-1)/2]:(s[s.length/2-1]+s[s.length/2])/2;};
  // Per source instrument; don't round or merge nearby but different price bands.
  function deduplicate(zones){
@@ -106,5 +110,5 @@
   const cot=aligned?Htf.cotState(c):'insufficient';
   return {seasonal:sufficient?(aligned?'supports':'against'):'unknown',cot,macro:'unknown',candidate:c};
  }
- return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate,lifecycle};
+ return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate,lifecycle,distancePercent};
 });

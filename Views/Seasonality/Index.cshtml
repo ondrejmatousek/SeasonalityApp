@@ -28,7 +28,7 @@
             <p>Nejdřív původ impulzu nebo pokračovací základna. BOS, objem a session jsou kvalita; COT, sezonalita a makro jsou oddělený kontext. Nejde o pravděpodobnost úspěchu ani pokyn ke vstupu.</p>
             <details><summary>Pravidla a parametry prototypu</summary>
                 <p>Impulz = close alespoň zvolený násobek ATR(14) za celým rozpětím zóny během 1–3 následujících svíček. Původ = poslední protisměrná svíčka přímo před odchodem. Základna = 1–3 malé svíčky, rozpětí do 1 ATR, každé tělo nejvýše polovina svíčky. Tyto číselné prahy jsou návrh k ověření, ne schválená obchodní metodika.</p>
-                <p>BOS = close během impulzu za posledním předem potvrzeným swingem (2 svíčky vlevo i vpravo). Knot nestačí; BOS není podmínkou vzniku zóny. Invalidation = pozdější D1 close za vzdálenější hranicí, návraty evidujeme. W1 používá pouze dokončené týdny.</p>
+                <p>BOS = close během impulzu za posledním předem potvrzeným swingem (2 svíčky vlevo i vpravo). Knot nestačí; BOS není podmínkou vzniku zóny. Platnost zóny končí prvním pozdějším zásahem alespoň 25 % její výšky včetně knotu; návraty evidujeme. W1 používá pouze dokončené týdny a pozdější zásahy ověřuje z dokončených D1 svíček.</p>
                 <p>Objem = průměr 1–3 výchozích a bezprostředně předchozích svíček / medián 20 svíček před nimi. FX objem není centralizovaný obchodovaný objem; typ poskytovatele může být tick/proxy. Chybějící objem je neověřený. D1/W1 data nepotvrzují London/NY session, makro zatím nemá datový zdroj.</p>
                 <p>Doložené body: BOS 2, nadprůměrný objem 1, ověřená session 1. Zde session zůstává neověřena. Body nemění existence zón a nejsou procenta; současně ukazujeme pokrytí důkazů. Kontext se vztahuje k datu snapshotu, nikoli historickému vzniku zóny.</p>
             </details>
@@ -39,6 +39,13 @@
                 <label>Typ<select id="tz-kind"><option value="all">Oba typy</option><option value="origin">Původ impulzu</option><option value="base">Konsolidační základna</option></select></label>
                 <label>Směr<select id="tz-side"><option value="all">Oba</option><option value="demand">Demand</option><option value="supply">Supply</option></select></label>
                 <label>BOS<select id="tz-bos"><option value="all">I bez BOS</option><option value="yes">Pouze potvrzený BOS</option></select></label>
+                <label>Max. vzdálenost ceny (%)<input id="tz-max-distance" type="number" min="0" step="any" placeholder="Bez omezení" /></label>
+                <label>Min. body kvality<select id="tz-quality"><option value="0">Bez omezení</option><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+                <label>Objem zóny<select id="tz-volume"><option value="all">Vše</option><option value="high">Vysoké volume</option><option value="normal">Běžné volume</option><option value="unknown">Neověřeno</option></select></label>
+                <label>Sezónní kontext<select id="tz-seasonal"><option value="all">Vše</option><option value="supports">Podporuje</option><option value="against">Proti směru</option><option value="unknown">Neověřeno</option></select></label>
+                <label>COT kontext<select id="tz-cot"><option value="all">Vše</option><option value="confirms">Potvrzuje</option><option value="neutral">Neutrální</option><option value="against">Proti směru</option><option value="insufficient">Málo dat</option></select></label>
+                <label>Řazení<select id="tz-sort"><option value="quality">Kvalita zóny</option><option value="distance">Cena nejblíž zóně (%)</option><option value="newest">Nejnovější potvrzení</option></select></label>
+                <button id="tz-clear-filters" type="button">Vymazat filtry</button>
                 <label>Impulz / ATR<select id="tz-impulse"><option>1</option><option selected>1.5</option><option>2</option><option>3</option></select></label>
                 <label>Hranice<select id="tz-bounds"><option value="full">Celé rozpětí</option><option value="body-wick">Tělo → vnější knot</option></select></label>
                 <label>Výchozí volume svíčky<select id="tz-volume-window"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
@@ -56,7 +63,8 @@
                 <div class="zone-chart-toolbar"><button id="tz-open-seasonality" type="button">Otevřít sezónní interval</button><button id="tz-open-cot" type="button">Otevřít COT páru</button></div>
                 <div id="tz-context" class="zone-metrics"></div>
             </section>
-            <div class="zone-table-wrap"><table class="zone-table"><thead><tr><th>Instrument / zóna</th><th>Vznik / cena</th><th>Kvalita / důkazy</th><th>Sezonalita</th><th>Historická COT shoda</th><th></th></tr></thead><tbody id="tz-results"></tbody></table></div>
+            <p>Vzdálenost ceny (%) = vzdálenost posledního dokončeného close k nejbližší hraně zóny / absolutní hodnota close × 100. Uvnitř zóny je 0 %. Nejde o procento zásahu zóny ani o živou cenu. Filtry se kombinují; chybějící kontext není automaticky potvrzení.</p>
+            <div class="zone-table-wrap"><table class="zone-table"><thead><tr><th>Instrument / zóna</th><th>Vznik / cena</th><th>Cena od zóny (%)</th><th>Kvalita / důkazy</th><th>Sezonalita</th><th>Historická COT shoda</th><th></th></tr></thead><tbody id="tz-results"></tbody></table></div>
             <details><summary>Pokrytí a omezení</summary><div id="tz-coverage"></div><p>Počítáme z dostupných D1/W1 snapshotů, nikoli z živých cen. Sezonalita není podmínkou zobrazení. Zóny stejného impulzu se mohou překrývat a nejsou nezávislé obchody. W1 lze zpřesnit jen existující D1 zónou uvnitř původní zóny, známou nejpozději při jejím potvrzení; D1 → H4 zatím nelze bez H4 dat.</p></details>
         </section>
         <section id="market-seasonality-view" class="market-seasonality-view" role="tabpanel" aria-labelledby="market-tab-seasonality">

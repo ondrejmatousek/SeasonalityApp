@@ -54,6 +54,15 @@ means no seasonal navigation. Year-crossing windows are explicitly disabled beca
 the existing within-year curve must not silently invert them. Unsupported instruments
 are never replaced with another pair. Returning to zones retains the selection.
 
+The proximity column is the nonnegative distance from the last completed snapshot
+close to the nearest zone boundary, divided by abs(close), times 100. Inside/on-edge
+is zero; missing/zero/nonfinite close is unknown, never a fabricated zero. It is not
+penetration as a fraction of zone height and is not a live quote. Max-distance,
+minimum-quality, source-volume, seasonality and COT filters intersect the existing
+instrument/scope/timeframe/type/side/BOS filters. Unknown context remains explicit.
+Sorting can use quality (default), smallest percentage distance, or newest confirmation.
+Clearing filters does not reset zone-definition parameters or alter the 25% rule.
+
 Core and research/review candidates are separated by an explicit scope selector;
 default is core, research never enters its list. Neither list is validated performance.
 This is a read-only browser analysis over existing immutable static snapshots. It

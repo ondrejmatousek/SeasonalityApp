@@ -8,6 +8,20 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  assert.ok(await page.locator('#tz-chart').getAttribute('data-candle-count'));assert.match(await page.locator('#tz-status').textContent(),/Session a makro neověřeny/);
  for(const row of await page.locator('#tz-results tr').allTextContents())assert.ok(!row.includes('Research / review'),'Core/research separation');
  const rowKeys=await page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>r.dataset.symbol+'|'+r.dataset.zoneId));assert.equal(new Set(rowKeys).size,rowKeys.length,'Unique rendered zones');
+ const datasets=()=>page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>({...r.dataset})));
+ const unfiltered=await datasets();assert.equal(await page.locator('#tz-results tr[data-zone-id]').first().locator('td').count(),7,'New proximity column');
+ const expectedDistances=await page.evaluate(async()=>{const h=await StaticMarketData.zonePrices(),cache=new Map();return [...document.querySelectorAll('#tz-results tr[data-zone-id]')].map(r=>{const key=r.dataset.symbol,p=h.prices[key];if(!cache.has(key))cache.set(key,[...TradeZones.detect(p,'D1',h.asOf),...TradeZones.detect(p,'W1',h.asOf)]);const z=cache.get(key).find(z=>z.id===r.dataset.zoneId);return Math.max(z.lower-p.latestClose,p.latestClose-z.upper,0)/Math.abs(p.latestClose)*100;});});
+ unfiltered.forEach((r,i)=>assert.ok(Math.abs(Number(r.distancePct)-expectedDistances[i])<1e-10,'Rendered percentage uses correct source price and boundaries'));
+ await page.locator('#tz-sort').selectOption('distance');const nearest=await datasets();assert.ok(nearest.every((r,i)=>!i||Number(nearest[i-1].distancePct)<=Number(r.distancePct)),'Nearest first is numeric, not alphabetical');
+ await page.locator('#tz-max-distance').fill('1');assert.equal((await datasets()).length,unfiltered.filter(r=>Number(r.distancePct)<=1).length,'Exact max percentage filter');
+ await page.locator('#tz-max-distance').fill('0');assert.equal((await datasets()).length,unfiltered.filter(r=>Number(r.distancePct)===0).length,'Zero limit means inside zone only');
+ await page.locator('#tz-clear-filters').click();
+ for(const [id,field,value]of [['tz-quality','quality','2'],['tz-volume','volume','high'],['tz-volume','volume','unknown'],['tz-seasonal','seasonal','supports'],['tz-seasonal','seasonal','against'],['tz-seasonal','seasonal','unknown'],['tz-cot','cot','confirms'],['tz-cot','cot','insufficient']]){
+  await page.locator('#'+id).selectOption(value);assert.equal((await datasets()).length,unfiltered.filter(r=>field==='quality'?Number(r[field])>=Number(value):r[field]===value).length,`${id} preserves exact matching set, including unknown states`);await page.locator('#tz-clear-filters').click();
+ }
+ await page.locator('#tz-quality').selectOption('2');await page.locator('#tz-volume').selectOption('high');await page.locator('#tz-seasonal').selectOption('supports');
+ assert.equal((await datasets()).length,unfiltered.filter(r=>Number(r.quality)>=2&&r.volume==='high'&&r.seasonal==='supports').length,'Filters intersect, not union');await page.locator('#tz-clear-filters').click();
+ await page.locator('#tz-sort').selectOption('newest');const newest=await datasets();assert.ok(newest.every((r,i)=>!i||newest[i-1].confirmedAt>=r.confirmedAt));await page.locator('#tz-clear-filters').click();assert.equal((await datasets()).length,unfiltered.length,'Reset restores all core results');
  await page.locator('#tz-search').fill('CADJPY');
  const cad=page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'});assert.equal(await cad.count(),0,'Mitigated CADJPY screenshot zone is hidden');
  await page.locator('#tz-kind').selectOption('base');assert.equal(await page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'}).count(),0);await page.locator('#tz-search').fill('');
