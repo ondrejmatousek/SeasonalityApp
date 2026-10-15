@@ -9,14 +9,25 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  for(const row of await page.locator('#tz-results tr').allTextContents())assert.ok(!row.includes('Research / review'),'Core/research separation');
  const rowKeys=await page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>r.dataset.symbol+'|'+r.dataset.zoneId));assert.equal(new Set(rowKeys).size,rowKeys.length,'Unique rendered zones');
  await page.locator('#tz-search').fill('CADJPY');
- const cad=page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'});assert.equal(await cad.count(),1);assert.match(await cad.textContent(),/Původ impulzu \+ Konsolidační základna/);
- await page.locator('#tz-kind').selectOption('base');assert.equal(await page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'}).count(),1,'Merged zone still matches base filter');await page.locator('#tz-search').fill('');
+ const cad=page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'});assert.equal(await cad.count(),0,'Mitigated CADJPY screenshot zone is hidden');
+ await page.locator('#tz-kind').selectOption('base');assert.equal(await page.locator('#tz-results tr').filter({hasText:'2025-12-04'}).filter({hasText:'2025-12-09'}).count(),0);await page.locator('#tz-search').fill('');
  await page.locator('#tz-kind').selectOption('origin');for(const r of await page.locator('#tz-results tr').allTextContents())assert.match(r,/Původ impulzu/);
  await page.locator('#tz-bos').selectOption('yes');for(const r of await page.locator('#tz-results tr').allTextContents())assert.match(r,/BOS close potvrzen/);
- await page.locator('#tz-bos').selectOption('all');await page.locator('#tz-search').fill('GBPAUD');assert.ok(await page.locator('#tz-results button').count()>0);
+ await page.locator('#tz-bos').selectOption('all');await page.locator('#tz-kind').selectOption('all');await page.locator('#tz-search').fill('');assert.ok(await page.locator('#tz-results button').count()>0);
+ // Find a real surviving zone with supported seasonal context, not a hardcoded invalidated instrument.
+ const target=await page.evaluate(async()=>{const h=await StaticMarketData.zonePrices(),o=await StaticMarketData.opportunities();for(const a of o.assets){if(a.mapping?.scope!=='core'||!h.prices[a.key])continue;for(const z of TradeZones.detect(h.prices[a.key],'D1',h.asOf)){const c=TradeZones.context(z,a,h.asOf).candidate;if(c&&c.startDate.slice(0,4)===c.endDate.slice(0,4))return {key:a.key,id:z.id};}}});assert.ok(target);
+ await page.locator('#tz-search').fill(target.key);await page.locator('tr[data-zone-id]').filter({has:page.locator('button')}).evaluateAll((rows,id)=>rows.find(r=>r.dataset.zoneId===id).querySelector('button').click(),target.id);
  await page.waitForFunction(()=>Number.isFinite(Number(document.getElementById('tz-chart').dataset.seasonalStart))&&document.getElementById('tz-chart').dataset.seasonalStart!=='null');
  assert.match(await page.locator('#tz-caption').textContent(),/Svislé sezonní okno/);
  await page.locator('#tz-resolution').selectOption('W1');await page.waitForFunction(()=>Number.isFinite(Number(document.getElementById('tz-chart').dataset.seasonalEnd))&&document.getElementById('tz-chart').dataset.seasonalEnd!=='null');await page.locator('#tz-resolution').selectOption('D1');
+ const interval=await page.locator('#tz-open-seasonality').evaluate(b=>({...b.dataset}));
+ await page.locator('#tz-open-seasonality').click();assert.equal(await page.locator('#market-seasonality-view').isVisible(),true);
+ assert.equal(await page.locator('#seasonality-start-date').inputValue(),interval.startDate);assert.equal(await page.locator('#seasonality-end-date').inputValue(),interval.endDate);
+ await page.waitForFunction(key=>document.querySelector('.seasonality-page').dataset.assetKey===key,target.key);assert.equal(await page.locator('#seasonality-years').inputValue(),'20');
+ await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();await page.locator('#tz-open-cot').click();assert.equal(await page.locator('#market-cot-view').isVisible(),true);
+ await page.waitForFunction(key=>document.getElementById('cot-asset-title').textContent.includes(key.replace(/(.{3})(.{3})/,'$1/$2'))||document.querySelector('.seasonality-page').dataset.assetKey===key,target.key);
+ assert.equal(await page.locator('.seasonality-page').getAttribute('data-asset-key'),target.key);
+ await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();
  await page.locator('#tz-search').fill('');await page.locator('#tz-volume-window').selectOption('3');await page.locator('#tz-bounds').selectOption('body-wick');assert.ok(await page.locator('#tz-results button').count()>0);
  await page.locator('#tz-search').fill('NO_SUCH_SYMBOL');assert.match(await page.locator('#tz-results').textContent(),/Žádná platná zóna/);assert.equal(await page.locator('#tz-detail').isVisible(),false);
  await page.locator('#tz-search').fill('');await page.screenshot({path:path.join(root,'trade-zones-desktop.png'),fullPage:true});
@@ -25,6 +36,7 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  await page.locator('#tz-reload').click();await page.waitForFunction(()=>document.getElementById('tz-caption').textContent.includes('Sezonní okno není dostupné'));
  assert.ok(await page.locator('#tz-results button').count()>0,'Missing seasonality never hides zones');
  await page.waitForFunction(()=>document.getElementById('tz-chart').dataset.seasonalStart==='null');
+ assert.equal(await page.locator('#tz-open-seasonality').isDisabled(),true,'No fabricated seasonal interval without context');
  assert.equal(await page.getByRole('tab',{name:'HTF shoda',exact:true}).count(),0);assert.equal(await page.locator('#market-htf-view').count(),0);
  const resources=await page.locator('script[src],link[rel=stylesheet]').evaluateAll(nodes=>nodes.map(n=>n.src||n.href));assert.ok(!resources.some(s=>/\/(htf-ui|htf-chart|htf-zones|htf)\.(js|css)/.test(s)),'Retired resources not loaded');
  await page.getByRole('tab',{name:'Seasonality',exact:true}).click();assert.equal(await page.locator('#market-seasonality-view').isVisible(),true);assert.deepEqual(errors,[]);

@@ -48,10 +48,13 @@
             <p id="tz-status" role="status">Načtení při otevření záložky.</p>
             <section id="tz-detail" class="zone-card" hidden>
                 <h3 id="tz-title"></h3><p id="tz-evidence"></p>
+                <p>Platnost: první pozdější zásah alespoň 25 % výšky zóny ji trvale vyřadí. Počítá se i knot; u demand od horní hrany dolů, u supply od dolní hrany nahoru.</p>
                 <div class="zone-chart-toolbar"><label>Svíčky<select id="tz-resolution"><option>D1</option><option>W1</option></select></label><button id="tz-reset" type="button">Reset pohledu</button><label>Zpřesnění<select id="tz-refinement"><option value="parent">Původní HTF zóna</option></select></label></div>
                 <p id="tz-refine-note"></p>
                 <div class="zone-chart-wrap"><div id="tz-chart" tabindex="0" aria-label="Cenový graf obchodní zóny"></div><div id="tz-tip" class="zone-tooltip" hidden></div></div>
-                <p id="tz-caption"></p><div id="tz-context" class="zone-metrics"></div>
+                <p id="tz-caption"></p>
+                <div class="zone-chart-toolbar"><button id="tz-open-seasonality" type="button">Otevřít sezónní interval</button><button id="tz-open-cot" type="button">Otevřít COT páru</button></div>
+                <div id="tz-context" class="zone-metrics"></div>
             </section>
             <div class="zone-table-wrap"><table class="zone-table"><thead><tr><th>Instrument / zóna</th><th>Vznik / cena</th><th>Kvalita / důkazy</th><th>Sezonalita</th><th>Historická COT shoda</th><th></th></tr></thead><tbody id="tz-results"></tbody></table></div>
             <details><summary>Pokrytí a omezení</summary><div id="tz-coverage"></div><p>Počítáme z dostupných D1/W1 snapshotů, nikoli z živých cen. Sezonalita není podmínkou zobrazení. Zóny stejného impulzu se mohou překrývat a nejsou nezávislé obchody. W1 lze zpřesnit jen existující D1 zónou uvnitř původní zóny, známou nejpozději při jejím potvrzení; D1 → H4 zatím nelze bez H4 dat.</p></details>

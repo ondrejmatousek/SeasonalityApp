@@ -895,6 +895,18 @@
         if (screenerYears && rows().length) rebuild();
         if (!interval) document.querySelector('#seasonality-sync-status').textContent = 'Screener období překračuje konec roku. Zobrazen je celý rok; statistiky přes přelom roku jsou ve Screeneru.';
     });
+    root.addEventListener('zones-context-open', event => {
+        const {key,target,startDate,endDate}=event.detail||{};
+        const next=assets.find(a=>a.key===key);
+        if(!next||!['seasonality','cot'].includes(target))return;
+        if(target==='seasonality'&&(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||!/^\d{4}-\d{2}-\d{2}$/.test(endDate)||startDate>endDate||startDate.slice(0,4)!==endDate.slice(0,4)))return;
+        trend=null;cycle=null;election=null;screenerYears=null;years.value='20';
+        startDateInput.value=startDate||'';endDateInput.value=endDate||'';
+        interval=startDate&&endDate&&startDate.slice(0,4)===endDate.slice(0,4)?inputInterval():null;
+        selectAsset(next);rebuild();
+        document.querySelector('[data-seasonality-tab="curve"]').click();
+        document.querySelector('#market-tab-'+target).click();
+    });
     root.addEventListener('seasonality-visible', () => {
         draw();
         if (!document.querySelector('#seasonality-monthly-view').hidden) drawMonthly();

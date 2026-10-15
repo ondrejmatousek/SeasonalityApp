@@ -1,6 +1,6 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./market-candles.js'));else root.TradeZones=factory(root.MarketCandles);})(typeof globalThis==='object'?globalThis:this,function(Htf){
  'use strict';
- const defaults=Object.freeze({version:'trade-zones-v1-experimental',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
+ const defaults=Object.freeze({version:'trade-zones-v2-experimental',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
  const day=s=>Date.parse(s+'T00:00:00Z'),ms=86400000;
  const median=a=>{const s=[...a].sort((a,b)=>a-b);return s.length%2?s[(s.length-1)/2]:(s[s.length/2-1]+s[s.length/2])/2;};
  // Per source instrument; don't round or merge nearby but different price bands.
@@ -46,6 +46,20 @@
    if(bars.slice(j-c.swing,j+c.swing+1).every((b,k)=>k===c.swing||(up?b.high<v:b.low>v)))return {date:bars[j].date,price:v};
   }return null;
  }
+ function lifecycle(bars,type,lower,upper,confirmedAt){
+  const height=upper-lower,up=type==='demand',threshold=up?upper-height*.25:lower+height*.25;
+  const epsilon=Number.EPSILON*Math.max(1,Math.abs(lower),Math.abs(upper))*8;
+  let visits=0,inside=false,maxPenetration=0;
+  for(const b of bars){
+   if(b.date<=confirmedAt)continue; // Formation/confirmation candles are not a later retest.
+   const penetration=Math.max(0,Math.min(1,(up?upper-b.low:b.high-lower)/height));
+   maxPenetration=Math.max(maxPenetration,penetration);
+   const touch=b.high>=lower&&b.low<=upper;if(touch&&!inside)visits++;inside=touch;
+   if(up?b.low<=threshold+epsilon:b.high>=threshold-epsilon)
+    return {invalid:true,invalidatedAt:b.date,visits,maxPenetration};
+  }
+  return {invalid:false,invalidatedAt:null,visits,maxPenetration};
+ }
  function detect(price,tf,asOf,options={}){
   const c=settings(options),bars=sourceBars(price,tf,asOf),out=[],seen=new Set(),daily=(price.bars||[]).filter(b=>b.date<asOf&&Htf.valid(b)).sort((a,b)=>a.date.localeCompare(b.date));
   for(let start=Math.max(c.atr,c.volumeLookback);start<bars.length-1;start++){
@@ -69,12 +83,12 @@
       if(!(upper>lower))break;
       const swing=swingAt(bars,start,up,c),applicable=swing&&(up?swing.price>hi:swing.price<lo);
       const bos=applicable?{state:departure.some(d=>up?d.close>swing.price:d.close<swing.price)?'yes':'no',...swing}:{state:'unknown',note:'Před základnou není potvrzený relevantní swing před směrem pohybu.'};
-      let invalid=false,visits=0,inside=false;for(const later of daily.filter(d=>d.date>knownAt)){
-       if(up?later.close<lower:later.close>upper){invalid=true;break;}const touch=later.high>=lower&&later.low<=upper;if(touch&&!inside)visits++;inside=touch;
-      }if(invalid)break;
+      const life=lifecycle(daily,up?'demand':'supply',lower,upper,knownAt);
+      if(life.invalid)break;
+      const {visits,maxPenetration}=life;
       const id=[tf,kind,up?'demand':'supply',base[0].date,base.at(-1).date].join(':');if(seen.has(id))break;seen.add(id);
       const volume=volumeAt(bars,start,start+count-1,c),distance=Math.max(lower-price.latestClose,price.latestClose-upper,0);
-      out.push({id,timeframe:tf,kind,type:up?'demand':'supply',lower,upper,baseDate:base[0].date,baseEnd:base.at(-1).endDate||base.at(-1).date,confirmedAt:knownAt,atr,impulseAtr:displacement,departureCount:departure.length,bos,volume,session:{state:'unknown',note:'D1/W1 neurčuje intradenní čas odchodu; timestamp začátku svíčky není session impulzu.'},visits,fresh:visits===0,distanceAtr:distance/atr,priceState:distance===0?'inside':distance<=.5*atr?'near':'far',qualityPoints:(bos.state==='yes'?2:0)+(volume.state==='high'?1:0),knownCriteria:Number(bos.state!=='unknown')+Number(volume.state!=='unknown')});break;
+      out.push({id,timeframe:tf,kind,type:up?'demand':'supply',lower,upper,baseDate:base[0].date,baseEnd:base.at(-1).endDate||base.at(-1).date,confirmedAt:knownAt,atr,impulseAtr:displacement,departureCount:departure.length,bos,volume,session:{state:'unknown',note:'D1/W1 neurčuje intradenní čas odchodu; timestamp začátku svíčky není session impulzu.'},visits,maxPenetration,fresh:visits===0,distanceAtr:distance/atr,priceState:distance===0?'inside':distance<=.5*atr?'near':'far',qualityPoints:(bos.state==='yes'?2:0)+(volume.state==='high'?1:0),knownCriteria:Number(bos.state!=='unknown')+Number(volume.state!=='unknown')});break;
      }
     }
    }
@@ -92,5 +106,5 @@
   const cot=aligned?Htf.cotState(c):'insufficient';
   return {seasonal:sufficient?(aligned?'supports':'against'):'unknown',cot,macro:'unknown',candidate:c};
  }
- return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate};
+ return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate,lifecycle};
 });

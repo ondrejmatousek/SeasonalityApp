@@ -4,6 +4,7 @@
  const by=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=String(text);return n;};
  const num=v=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:5}).format(v),labels={yes:'BOS close potvrzen',no:'Bez BOS',unknown:'Neověřeno',high:'Vysoké volume',normal:'Běžné volume',supports:'Podporuje',against:'Proti směru',confirms:'Potvrzuje',neutral:'Neutrální',insufficient:'Málo dat'},kind=z=>(z.kinds||[z.kind]).map(k=>k==='origin'?'Původ impulzu':'Konsolidační základna').join(' + ');
  const badge=s=>{const b=el('span',labels[s]||'Neověřeno');b.className='tz-badge '+s;return b;};
+ const navigable=new Set(JSON.parse(by('seasonality-assets').textContent).map(a=>a.key));
  let snapshot,opps,all=[],list=[],selected,chart,loading=false;
  const config=()=>({impulseAtr:Number(by('tz-impulse').value),volumeWindow:Number(by('tz-volume-window').value),volumeRatio:Number(by('tz-volume-ratio').value),bounds:by('tz-bounds').value});
  function calculate(){
@@ -35,11 +36,17 @@
  function select(r){
   selected=r;const z=r.zone;by('tz-detail').hidden=false;by('tz-title').textContent=`${r.key} · ${z.timeframe} ${z.type} · ${kind(z)}`;
   by('tz-evidence').textContent=`${z.qualityPoints} doložených bodů kvality; ${z.knownCriteria}/3 ukazatelů ověřeno. ${labels[z.bos.state]}${z.bos.price?' za swingem '+z.bos.date+' / '+num(z.bos.price):''}. Volume: ${labels[z.volume.state]||'Neověřeno'}${z.volume.ratio!=null?' · '+num(z.volume.ratio)+'× medián':''} · vzorek ${z.volume.sample.join(', ')}. Session: neověřeno.`;
+  by('tz-evidence').textContent+=` Nejhlubší pozdější zásah: ${num(z.maxPenetration*100)} % výšky zóny (limit neplatnosti ≥ 25 % včetně knotu).`;
   const refinement=by('tz-refinement');refinement.replaceChildren();const parent=el('option','Původní HTF zóna');parent.value='parent';refinement.append(parent);r.children.forEach((child,i)=>{const o=el('option',`D1 ${child.baseDate} · ${num(child.lower)}–${num(child.upper)}`);o.value=String(i);refinement.append(o);});
   by('tz-refine-note').textContent=z.timeframe==='D1'?'D1 → H4: chybí intradenní OHLC, zpřesnění neprovádíme.':r.children.length?`${r.children.length} D1 zón uvnitř W1, známých nejpozději při jejím potvrzení. Žádná nová umělá hranice.`:'Uvnitř této W1 zóny není doložená platná D1 zóna v dostupné historii.';
   by('tz-resolution').value=z.timeframe;
   if(z.detections?.length>1)by('tz-evidence').textContent+=` Sloučeno ${z.detections.length} nálezů stejné zóny. Body se nesčítají; důkazy jsou z ${z.kind==='origin'?'původu impulzu':'nejkratší poslední základny'}.`;
   const seasonal=r.context.candidate;
+  const seasonButton=by('tz-open-seasonality'),cotButton=by('tz-open-cot');
+  seasonButton.disabled=!navigable.has(r.key)||!seasonal||seasonal.startDate.slice(0,4)!==seasonal.endDate.slice(0,4);
+  seasonButton.title=!seasonal?'Sezónní interval není dostupný.':seasonal.startDate.slice(0,4)!==seasonal.endDate.slice(0,4)?'Roční sezónní graf zatím neumí interval přes přelom roku.':'';
+  seasonButton.dataset.startDate=seasonal?.startDate||'';seasonButton.dataset.endDate=seasonal?.endDate||'';seasonButton.dataset.symbol=r.key;
+  cotButton.disabled=!navigable.has(r.key);
   by('tz-caption').textContent=`${r.price.provider} ${r.price.symbol} · ${r.price.timezone} · poslední dokončený close ${num(r.price.latestClose)} (${r.price.latestDate}). Objem: provider volume${r.asset?.mapping?.exposureFamily==='FX'?' / spot FX — není centralizovaný obchodovaný objem':''}. Vodorovné pásmo = vybraná zóna. ${seasonal?`Svislé sezonní okno ${seasonal.startDate}–${seasonal.endDate}: ${seasonal.direction==='up'?'zelené pro růst':'červené pro pokles'}, i pokud jde proti směru zóny. Je to kontext, ne předpověď.`:'Sezonní okno není dostupné; žádné nevytváříme.'} Cena není živá.`;
   const context=by('tz-context');context.replaceChildren();const c=r.context.candidate,s=c?.histories?.[20]?.seasonal;
   for(const [name,value,note]of [['Sezonalita',labels[r.context.seasonal],c?`${c.direction==='up'?'Růst':'Pokles'} ${c.startDate}–${c.endDate}; ${s?.count??'—'} historických období; rate ${s?.rate??'—'} %, medián ${s?.median??'—'} %. Nejde o úspěšnost obchodu ze zóny.`:'Bez sezonního intervalu v příštích 30 dnech.'],['Historická COT shoda',labels[r.context.cot],c?.cotReference?'Převzato z historického COT kontextu existujícího snapshotu; není to validovaný výsledek strategie zón.':'Nedostatek odpovídajících dat.'],['Makro','Neintegrováno','Zatím bez ověřeného makro zdroje; nepřidává body.']]){const box=el('div');box.append(el('small',name),el('strong',value||'Neověřeno'),el('small',note));context.append(box);}
@@ -50,5 +57,11 @@
  for(const id of ['tz-tf','tz-kind','tz-side','tz-bos','tz-scope'])by(id).onchange=()=>snapshot&&render();by('tz-search').oninput=()=>snapshot&&render();
  for(const id of ['tz-impulse','tz-bounds','tz-volume-window','tz-volume-ratio'])by(id).onchange=()=>snapshot&&calculate();
  by('tz-resolution').onchange=draw;by('tz-refinement').onchange=()=>{if(by('tz-refinement').value!=='parent')by('tz-resolution').value='D1';draw();};by('tz-reset').onclick=()=>chart?.reset();by('tz-reload').onclick=load;
+ for(const [id,target]of [['tz-open-seasonality','seasonality'],['tz-open-cot','cot']])by(id).onclick=()=>{
+  if(!selected||by(id).disabled)return;
+  const c=selected.context.candidate;
+  root.dispatchEvent(new CustomEvent('zones-context-open',{detail:{key:selected.key,target,startDate:c?.startDate,endDate:c?.endDate}}));
+  root.querySelector('[data-market-tab="'+target+'"]').scrollIntoView({block:'start'});
+ };
  root.addEventListener('zones-visible',()=>snapshot?render():load());
 })();
