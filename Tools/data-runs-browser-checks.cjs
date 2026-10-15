@@ -23,6 +23,23 @@ const server=http.createServer((req,res)=>{
  await page.getByRole('link',{name:'Denní běhy',exact:true}).waitFor();
  if(await page.locator('.run-day').count()>1){const button=page.locator('.run-day').nth(1),day=await button.getAttribute('data-day');await button.click();assert.equal(await page.locator('#runs-detail h3').first().textContent(),day);}
  await page.screenshot({path:path.join(root,'runs-desktop.png'),fullPage:true});
+ for(const route of ['/','/runs/']){
+  await page.goto('http://127.0.0.1:'+server.address().port+route);
+  for(const width of [320,390,600,768,991]){
+   await page.setViewportSize({width,height:844});
+   const geometry=await page.evaluate(()=>{
+    const box=s=>{const r=document.querySelector(s).getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height};};
+    return {sidebar:box('.app-sidebar'),main:box('.app-workspace-main'),links:[...document.querySelectorAll('.sidebar-link')].map(e=>e.getBoundingClientRect().height),position:getComputedStyle(document.querySelector('.app-sidebar')).position};
+   });
+   assert.ok(geometry.sidebar.height<=140,`${route} ${width}: compact mobile navigation`);
+   assert.ok(geometry.links.every(h=>h>=44&&h<=80),`${route} ${width}: touch-sized links without vertical stretching`);
+   assert.ok(geometry.main.top>=geometry.sidebar.bottom-1,`${route} ${width}: navigation does not overlap content`);
+   assert.equal(geometry.position,'static',`${route} ${width}: mobile navigation scrolls with the page`);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),`${route} ${width}: no horizontal overflow`);
+  }
+ }
+ await page.goto('http://127.0.0.1:'+server.address().port+'/runs/');
+ await page.locator('.run-day').first().waitFor();
  await page.setViewportSize({width:390,height:844});
  assert.equal(await page.getByRole('link',{name:'Denní běhy',exact:true}).isVisible(),true,'Sidebar navigation remains reachable on mobile');
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile horizontal overflow');
