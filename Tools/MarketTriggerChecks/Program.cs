@@ -62,7 +62,7 @@ foreach(var status in new[]{"ShadowAccepted","Blocked","Processing"}){
 }
 var disabled=new Dictionary<string,string?>(values){["MarketDailyGitHubTrigger:Enabled"]="false"};
 Check((await Run(disabled)).Calls==0,"Disabled makes no requests");
-foreach(var name in new[]{"AppId","InstallationId","PrivateKeyPemBase64"}){
+foreach(var name in new[]{"Enabled","AppId","InstallationId","PrivateKeyPemBase64"}){
     var bad=new Dictionary<string,string?>(values){["MarketDailyGitHubTrigger:"+name]="invalid/../"};
     var r=await Run(bad);Check(!r.Result.Requested&&r.Calls==0,"Invalid config fails closed without dispatch");
 }

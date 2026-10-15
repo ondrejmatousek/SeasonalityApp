@@ -16,11 +16,11 @@ public sealed class MarketDailyGitHubTrigger(IConfiguration config, IHttpClientF
 
     public async Task<Result> RequestAsync(string receiptStatus, CancellationToken cancellationToken)
     {
-        if (!config.GetValue<bool>("MarketDailyGitHubTrigger:Enabled")) return new("Disabled");
         // An identical retry can re-attempt the wake-up, but never reopen a blocked/accepted receipt.
-        if (receiptStatus != "PendingValidation") return new("NotPending");
         try
         {
+            if (!config.GetValue<bool>("MarketDailyGitHubTrigger:Enabled")) return new("Disabled");
+            if (receiptStatus != "PendingValidation") return new("NotPending");
             var appId = config["MarketDailyGitHubTrigger:AppId"];
             var installationId = config["MarketDailyGitHubTrigger:InstallationId"];
             if (!PositiveId(appId) || !PositiveId(installationId)) return new("ConfigurationRequired");
