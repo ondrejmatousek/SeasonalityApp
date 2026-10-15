@@ -47,6 +47,24 @@
         "fetchedAt": "2026-10-14T01:03:49Z",
         "runId": "353a710b-9b2a-456a-aae9-9f4d46ec3051"
       }
+    },
+    {
+      "timestamp": 1791925200,
+      "providerTimestamp": "2026-10-13T21:00:00.000Z",
+      "providerUtcDate": "2026-10-13",
+      "date": "2026-10-14",
+      "open": 0.84502,
+      "high": 0.84624,
+      "low": 0.84268,
+      "close": 0.84557,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-14T21:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "b46350841d4ca800a2326d6460f9b58b69d502e2e31eecaa1c7626176ca78e72",
+        "fetchedAt": "2026-10-15T01:03:46Z",
+        "runId": "246354d2-f70b-4c11-b48b-21d2da573158"
+      }
     }
   ]
 }
