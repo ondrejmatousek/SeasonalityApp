@@ -5,5 +5,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../SeasonalityApp.csproj" /></ItemGroup>
+  <!-- Compile the actual trigger without unrelated SQL/EF dependencies or any database host. -->
+  <ItemGroup><Compile Include="../../Services/MarketDailyGitHubTrigger.cs" Link="MarketDailyGitHubTrigger.cs" /></ItemGroup>
 </Project>
