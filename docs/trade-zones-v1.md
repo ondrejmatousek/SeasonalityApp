@@ -34,11 +34,25 @@ The chart shades that same contextual interval using the existing HTF renderer:
 green for seasonal up, red for seasonal down, including counter-zone direction.
 No context means no seasonal window. Refinement preserves the parent's context.
 
-Close-invalidated zones are omitted. Visits and age displayed. W1 excludes incomplete
+Version `trade-zones-v2-experimental` invalidates a zone permanently on its first
+post-confirmation penetration of >=25% of its height, including a wick. Demand is
+measured down from the upper boundary; supply up from the lower boundary. The deepest
+single penetration counts, not the sum of separate shallow visits. Formation and
+confirmation bars are excluded. Both D1 and W1 zones are checked against completed
+D1 highs/lows, not just weekly closes; the current unfinished day remains excluded.
+CADJPY demand 110.604–111.401 from 2025-12-04, confirmed 2025-12-09, is invalidated
+by the 2026-08-03 wick. Invalid zones are omitted; valid zones show deepest penetration.
+Visits and age are displayed. W1 excludes incomplete
 weeks. Existing truncated OHLC limits coverage; full historical scanning and intraday
 session validation are NOT implemented. Refinement only selects a contained same-side
 D1 zone whose base lies in the W1 base and is confirmed no later than W1 confirmation.
 D1->H4 is unknown without data. Parent boundaries are not rewritten.
+
+Detail buttons open the same pair in Seasonality (exact contextual start/end dates,
+last 20 completed years, reset unrelated year filters) or COT. No seasonal context
+means no seasonal navigation. Year-crossing windows are explicitly disabled because
+the existing within-year curve must not silently invert them. Unsupported instruments
+are never replaced with another pair. Returning to zones retains the selection.
 
 Core and research/review candidates are separated by an explicit scope selector;
 default is core, research never enters its list. Neither list is validated performance.

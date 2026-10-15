@@ -14,8 +14,8 @@ for(const change of [{timeframe:'W1'},{type:'supply'},{confirmedAt:date(34)},{up
 assert.deepEqual(Z.deduplicate([...wick.detections].reverse()),Z.deduplicate(wick.detections),'Input order cannot choose stronger evidence');
 const close={...price,bars:bars.map((b,i)=>i===31?{...b,close:106}:b),latestClose:106};assert.equal(origin(close).bos.state,'yes','Close beyond swing qualifies');assert.equal(origin(close).bos.date,date(20));
 const mirrored={bars:bars.map(b=>({...b,open:200-b.open,high:200-b.low,low:200-b.high,close:200-b.close})),latestClose:95.5};assert.ok(Z.detect(mirrored,'D1',asOf).some(z=>z.kind==='origin'&&z.type==='supply'&&z.baseDate===date(30)));
-for(const [type,extreme]of [['demand','low'],['supply','high']]){
- const check=(depth,when=date(32))=>Z.lifecycle([{date:when,open:105,high:type==='supply'?100+depth:106,low:type==='demand'?104-depth:98,close:105}],type,100,104,date(31));
+for(const type of ['demand','supply']){
+ const check=(depth,when=date(32))=>Z.lifecycle([{date:when,open:type==='demand'?105:99,high:type==='supply'?100+depth:106,low:type==='demand'?104-depth:98,close:type==='demand'?105:99}],type,100,104,date(31));
  assert.equal(check(.9999).invalid,false,'Less than 25 percent remains valid');
  assert.equal(check(1).invalid,true,'Exactly 25 percent wick invalidates, regardless of close');
  assert.equal(check(2).invalid,true,'Deeper wick invalidates');
@@ -24,6 +24,7 @@ for(const [type,extreme]of [['demand','low'],['supply','high']]){
  assert.equal(check(2,date(30)).invalid,false,'Formation candle is not a retest');
  assert.equal(check(0).maxPenetration,0,'Edge touch alone has no depth');
 }
+assert.equal(Z.lifecycle([{date:date(32),low:103.2,high:105},{date:date(33),low:103.2,high:105}],'demand',100,104,date(31)).invalid,false,'Separate shallow retests are not added together');
 const retest=depth=>({...price,bars:[...bars,{date:date(32),open:104,high:106,low:100.5-depth,close:105,volume:100}]});
 assert.ok(origin(retest(.24999),date(33)),'Demand retest less than 25 percent');
 assert.ok(!origin(retest(.25),date(33)),'Demand exact 25 percent wick with close outside zone');
@@ -51,7 +52,7 @@ for(const p of Object.values(h.prices).filter(p=>p.status==='ready'))for(const t
  const found=Z.detect(p,tf,h.asOf,options),keys=found.map(z=>JSON.stringify([z.timeframe,z.type,z.lower,z.upper,z.confirmedAt]));assert.equal(new Set(keys).size,keys.length,'No duplicate physical zones for any instrument/timeframe/parameter variant');
 }
 const cad=Z.detect(h.prices.CADJPY,'D1',h.asOf).filter(z=>z.baseDate==='2025-12-04'&&z.confirmedAt==='2025-12-09'&&z.type==='demand');assert.equal(cad.length,0,'CADJPY screenshot zone already mitigated by a wick must be absent');
-const cadLife=Z.lifecycle(h.prices.CADJPY.bars,'demand',110.604,111.401,'2025-12-09');assert.equal(cadLife.invalid,true);assert.ok(cadLife.invalidatedAt<h.asOf);
+const cadLife=Z.lifecycle(h.prices.CADJPY.bars,'demand',110.604,111.401,'2025-12-09');assert.equal(cadLife.invalid,true);assert.equal(cadLife.invalidatedAt,'2026-08-03','First invalidating wick in the screenshot is on August 3');
 for(const r of rows)assert.ok(r.maxPenetration<.25,'Every returned D1/W1 zone survives the daily-wick threshold');
 assert.ok(rows.length>0);assert.ok(rows.every(r=>r.lower<r.upper&&r.confirmedAt<h.asOf&&r.session.state==='unknown'));assert.equal(JSON.stringify(h),pristine);
 console.log('PASS: zone-first origins/bases, optional close-only BOS, confirmed past pivots, source-volume averaging, missing data, no lookahead, W1 completeness, refinement containment and unchanged HTF snapshot. '+rows.length+' live-snapshot candidates.');

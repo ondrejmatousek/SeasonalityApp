@@ -25,7 +25,7 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  assert.equal(await page.locator('#seasonality-start-date').inputValue(),interval.startDate);assert.equal(await page.locator('#seasonality-end-date').inputValue(),interval.endDate);
  await page.waitForFunction(key=>document.querySelector('.seasonality-page').dataset.assetKey===key,target.key);assert.equal(await page.locator('#seasonality-years').inputValue(),'20');
  await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();await page.locator('#tz-open-cot').click();assert.equal(await page.locator('#market-cot-view').isVisible(),true);
- await page.waitForFunction(key=>document.getElementById('cot-asset-title').textContent.includes(key.replace(/(.{3})(.{3})/,'$1/$2'))||document.querySelector('.seasonality-page').dataset.assetKey===key,target.key);
+ await page.waitForFunction(()=>document.getElementById('cot-asset-title').textContent==='COT · '+document.getElementById('seasonality-asset-search').value);
  assert.equal(await page.locator('.seasonality-page').getAttribute('data-asset-key'),target.key);
  await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();
  await page.locator('#tz-search').fill('');await page.locator('#tz-volume-window').selectOption('3');await page.locator('#tz-bounds').selectOption('body-wick');assert.ok(await page.locator('#tz-results button').count()>0);
