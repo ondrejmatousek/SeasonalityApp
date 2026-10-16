@@ -80,6 +80,39 @@
         "fetchedAt": "2026-10-15T01:03:46Z",
         "runId": "246354d2-f70b-4c11-b48b-21d2da573158"
       }
+    },
+    {
+      "timestamp": 1792071000,
+      "providerTimestamp": "2026-10-15T13:30:00.000Z",
+      "providerUtcDate": "2026-10-15",
+      "date": "2026-10-15",
+      "open": 7687.31,
+      "high": 7754.15,
+      "low": 7669.66,
+      "close": 7744.06,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Cash underlying session09:30-16:00 Eastern; October15 no holiday. Original timestamp 1792071000 identifies trade date 2026-10-15. At 2026-10-16T19:17:08.258Z / 2026-10-16 15:17:08 local, conservative 18:00:00 acceptance boundary for that date has elapsed. This is documented session completion evidence, NOT exact provider time_close. Cited calendar verifies ordinary October15 session. Later bars are not sole completion evidence.",
+        "checkedAt": "2026-10-16T19:17:08.258Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "url": "https://www.nyse.com/trade/hours-calendars",
+            "finding": "Cash underlying session09:30-16:00 Eastern; October15 no holiday."
+          },
+          {
+            "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+            "finding": "US calendar corroborates ordinary October15 cash session."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "e1712c85254d83c63476783c087edc1e65411ebc4fc85ad820cf79e6a45e81d7",
+        "fetchedAt": "2026-10-16T19:17:08.258Z",
+        "runId": "4501c500-9a2e-457b-b50a-e1c3719b550e"
+      }
     }
   ]
 }

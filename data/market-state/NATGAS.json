@@ -117,6 +117,39 @@
         "fetchedAt": "2026-10-15T01:03:46Z",
         "runId": "246354d2-f70b-4c11-b48b-21d2da573158"
       }
+    },
+    {
+      "timestamp": 1792015200,
+      "providerTimestamp": "2026-10-14T22:00:00.000Z",
+      "providerUtcDate": "2026-10-14",
+      "date": "2026-10-14",
+      "open": 3.274,
+      "high": 3.323,
+      "low": 3.195,
+      "close": 3.236,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "NG18:00-17:00 Eastern, equivalent17:00-16:00 Chicago. Original timestamp 1792015200 identifies trade date 2026-10-15. At 2026-10-16T19:17:08.258Z / 2026-10-16 14:17:08 local, conservative 17:00:00 acceptance boundary for that date has elapsed. This is documented session completion evidence, NOT exact provider time_close. Cited calendar verifies ordinary October15 session. Later bars are not sole completion evidence.",
+        "checkedAt": "2026-10-16T19:17:08.258Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/cn-s/markets/energy/natural-gas/natural-gas.contractSpecs.html",
+            "finding": "NG18:00-17:00 Eastern, equivalent17:00-16:00 Chicago."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "2026 calendar checked: October15 normal Thursday; no listed shortening. Times America/Chicago."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "e1712c85254d83c63476783c087edc1e65411ebc4fc85ad820cf79e6a45e81d7",
+        "fetchedAt": "2026-10-16T19:17:08.258Z",
+        "runId": "4501c500-9a2e-457b-b50a-e1c3719b550e"
+      }
     }
   ]
 }

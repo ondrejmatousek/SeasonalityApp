@@ -80,6 +80,39 @@
         "fetchedAt": "2026-10-15T01:03:46Z",
         "runId": "246354d2-f70b-4c11-b48b-21d2da573158"
       }
+    },
+    {
+      "timestamp": 1792022400,
+      "providerTimestamp": "2026-10-15T00:00:00.000Z",
+      "providerUtcDate": "2026-10-15",
+      "date": "2026-10-15",
+      "open": 105.76,
+      "high": 106.4,
+      "low": 103.37,
+      "close": 105.92,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "BRN01:00-23:00 Europe/London; timestamp00UTC aligns01BST. Original timestamp 1792022400 identifies trade date 2026-10-15. At 2026-10-16T19:17:08.258Z / 2026-10-16 20:17:08 local, conservative 23:00:00 acceptance boundary for that date has elapsed. This is documented session completion evidence, NOT exact provider time_close. Cited calendar verifies ordinary October15 session. Later bars are not sole completion evidence.",
+        "checkedAt": "2026-10-16T19:17:08.258Z",
+        "timezone": "Europe/London",
+        "sources": [
+          {
+            "url": "https://www.ice.com/products/219/Brent-Crude-Futures",
+            "finding": "BRN01:00-23:00 Europe/London; timestamp00UTC aligns01BST."
+          },
+          {
+            "url": "https://www.ice.com/publicdocs/Trading_Schedule.pdf",
+            "finding": "2026 IFEU calendar: October15 no special exception."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "e1712c85254d83c63476783c087edc1e65411ebc4fc85ad820cf79e6a45e81d7",
+        "fetchedAt": "2026-10-16T19:17:08.258Z",
+        "runId": "4501c500-9a2e-457b-b50a-e1c3719b550e"
+      }
     }
   ]
 }
