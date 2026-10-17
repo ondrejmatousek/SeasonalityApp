@@ -81,7 +81,9 @@ public static class MarketH4Ingestion
 
 public sealed class MarketH4Store(string connectionString)
 {
-    public sealed record Receipt(string ReceiptId,string Status,bool Duplicate,int InsertedBars,int DuplicateBars,int ExcludedBars,bool Persisted=true);
+    public const string Policy="ohlc-exact-volume-audit-v1";
+    public sealed record VolumeDifference(string Symbol,long StartUnix,string Source,decimal? StoredVolume,decimal? ObservedVolume);
+    public sealed record Receipt(string ReceiptId,string Status,bool Duplicate,int InsertedBars,int DuplicateBars,int ExcludedBars,bool Persisted=true,string? ComparisonPolicy=null,VolumeDifference[]? VolumeDifferences=null);
     public async Task<Receipt> Receive(MarketH4Ingestion.Batch batch,CancellationToken ct)
     {
         await using var db=new SqlConnection(connectionString);await db.OpenAsync(ct);using var tx=db.BeginTransaction(IsolationLevel.Serializable);
@@ -89,24 +91,33 @@ public sealed class MarketH4Store(string connectionString)
         SqlParameter Id()=>new("@id",SqlDbType.Char,64){Value=batch.Id};
         try
         {
-            await using(var c=new SqlCommand("SELECT Status,InsertedBars,DuplicateBars,ExcludedBars FROM market_h4.LiveReceipts WITH(UPDLOCK,HOLDLOCK) WHERE ReceiptId=@id",db,tx)){c.Parameters.Add(Id());await using var r=await c.ExecuteReaderAsync(ct);if(await r.ReadAsync(ct)){var found=new Receipt(batch.Id,r.GetString(0),true,r.GetInt32(1),r.GetInt32(2),r.GetInt32(3));await r.DisposeAsync();tx.Commit();return found;}}
-            var insert=new List<MarketH4Ingestion.Bar>();var duplicates=0;var conflict=false;
+            await using(var c=new SqlCommand("SELECT Status,InsertedBars,DuplicateBars,ExcludedBars,ComparisonPolicy,VolumeDifferencesJson FROM market_h4.LiveReceipts WITH(UPDLOCK,HOLDLOCK) WHERE ReceiptId=@id",db,tx)){c.Parameters.Add(Id());await using var r=await c.ExecuteReaderAsync(ct);if(await r.ReadAsync(ct)){var found=new Receipt(batch.Id,r.GetString(0),true,r.GetInt32(1),r.GetInt32(2),r.GetInt32(3),true,r.IsDBNull(4)?null:r.GetString(4),r.IsDBNull(5)?null:JsonSerializer.Deserialize<VolumeDifference[]>(r.GetString(5)));await r.DisposeAsync();tx.Commit();return found;}}
+            var insert=new List<MarketH4Ingestion.Bar>();var duplicates=0;var conflict=false;var volumeDifferences=new List<VolumeDifference>();
             foreach(var b in batch.Bars)
             {
-                var query="SELECT [Open],[High],[Low],[Close],Volume FROM market_h4.LiveBars WHERE Symbol=@s AND StartUnix=@t UNION ALL SELECT [Open],[High],[Low],[Close],Volume FROM market_h4.Bars WHERE Provider='OANDA' AND Timeframe='H4' AND Symbol=@s AND StartUnix=@t";
+                var query="SELECT [Open],[High],[Low],[Close],Volume,'live' AS Source FROM market_h4.LiveBars WHERE Symbol=@s AND StartUnix=@t UNION ALL SELECT [Open],[High],[Low],[Close],Volume,'historical' FROM market_h4.Bars WHERE Provider='OANDA' AND Timeframe='H4' AND Symbol=@s AND StartUnix=@t";
                 await using var cmd=new SqlCommand(query,db,tx);cmd.Parameters.AddWithValue("@s",b.Symbol);cmd.Parameters.AddWithValue("@t",b.Start);await using var r=await cmd.ExecuteReaderAsync(ct);var exists=false;
-                while(await r.ReadAsync(ct)){exists=true;if(r.GetDecimal(0)!=b.Open||r.GetDecimal(1)!=b.High||r.GetDecimal(2)!=b.Low||r.GetDecimal(3)!=b.Close||(r.IsDBNull(4)?(decimal?)null:r.GetDecimal(4))!=b.Volume)conflict=true;}
+                while(await r.ReadAsync(ct))
+                {
+                    exists=true;
+                    var sameOhlc=r.GetDecimal(0)==b.Open&&r.GetDecimal(1)==b.High&&r.GetDecimal(2)==b.Low&&r.GetDecimal(3)==b.Close;
+                    if(!sameOhlc)conflict=true;
+                    var storedVolume=r.IsDBNull(4)?(decimal?)null:r.GetDecimal(4);
+                    if(sameOhlc&&storedVolume!=b.Volume)volumeDifferences.Add(new(b.Symbol,b.Start,r.GetString(5),storedVolume,b.Volume));
+                }
                 if(exists)duplicates++;else insert.Add(b);
             }
             var status=conflict?"Conflict":"Accepted";var inserted=conflict?0:insert.Count;
-            await Scalar("INSERT market_h4.LiveReceipts(ReceiptId,PayloadUtf8,ReceivedAt,InsertedBars,DuplicateBars,ExcludedBars,Status) VALUES(@id,@raw,@at,@n,@d,@e,@status)",Id(),new("@raw",SqlDbType.VarBinary,-1){Value=batch.Utf8},new("@at",SqlDbType.DateTimeOffset){Value=batch.At},new("@n",SqlDbType.Int){Value=inserted},new("@d",SqlDbType.Int){Value=duplicates},new("@e",SqlDbType.Int){Value=batch.Excluded.Count},new("@status",SqlDbType.VarChar,24){Value=status});
+            var volumeAudit=JsonSerializer.Serialize(volumeDifferences);
+            await Scalar("INSERT market_h4.LiveReceipts(ReceiptId,PayloadUtf8,ReceivedAt,InsertedBars,DuplicateBars,ExcludedBars,Status,ComparisonPolicy,VolumeDifferencesJson) VALUES(@id,@raw,@at,@n,@d,@e,@status,@policy,@volume)",Id(),new("@raw",SqlDbType.VarBinary,-1){Value=batch.Utf8},new("@at",SqlDbType.DateTimeOffset){Value=batch.At},new("@n",SqlDbType.Int){Value=inserted},new("@d",SqlDbType.Int){Value=duplicates},new("@e",SqlDbType.Int){Value=batch.Excluded.Count},new("@status",SqlDbType.VarChar,24){Value=status},new("@policy",SqlDbType.VarChar,48){Value=Policy},new("@volume",SqlDbType.NVarChar,-1){Value=volumeAudit});
             if(!conflict)foreach(var b in insert)
             {
                 SqlParameter Dec(string name,decimal? value)=>new(name,SqlDbType.Decimal){Precision=28,Scale=10,Value=(object?)value??DBNull.Value};
                 await Scalar("INSERT market_h4.LiveBars(Symbol,StartUnix,[Open],[High],[Low],[Close],Volume,ReceiptId) VALUES(@s,@t,@o,@h,@l,@c,@v,@id)",new("@s",SqlDbType.VarChar,32){Value=b.Symbol},new("@t",SqlDbType.BigInt){Value=b.Start},Dec("@o",b.Open),Dec("@h",b.High),Dec("@l",b.Low),Dec("@c",b.Close),Dec("@v",b.Volume),Id());
             }
             if(await Scalar("SELECT HASHBYTES('SHA2_256',PayloadUtf8) FROM market_h4.LiveReceipts WHERE ReceiptId=@id",Id()) is not byte[] saved||Convert.ToHexString(saved).ToLowerInvariant()!=batch.Id)throw new InvalidDataException("H4 SQL hash mismatch.");
-            tx.Commit();return new(batch.Id,status,false,inserted,duplicates,batch.Excluded.Count);
+            if((string?)await Scalar("SELECT VolumeDifferencesJson FROM market_h4.LiveReceipts WHERE ReceiptId=@id",Id())!=volumeAudit)throw new InvalidDataException("H4 volume audit readback mismatch.");
+            tx.Commit();return new(batch.Id,status,false,inserted,duplicates,batch.Excluded.Count,true,Policy,volumeDifferences.ToArray());
         }catch{try{tx.Rollback();}catch{}throw;}
     }
 }
@@ -124,13 +135,13 @@ public sealed class MarketH4Tool(IConfiguration config,IWebHostEnvironment envir
             var allowed=await MarketH4Ingestion.Allowed(config,environment,cancellationToken);await using var db=new SqlConnection(config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);
             var watermarks=new List<object>();await using(var c=new SqlCommand("SELECT Symbol,MAX(StartUnix) FROM (SELECT Symbol,StartUnix FROM market_h4.LiveBars UNION ALL SELECT Symbol,StartUnix FROM market_h4.Bars WHERE Provider='OANDA' AND Timeframe='H4') b GROUP BY Symbol ORDER BY Symbol",db))
             {await using var r=await c.ExecuteReaderAsync(cancellationToken);while(await r.ReadAsync(cancellationToken))watermarks.Add(new{symbol=r.GetString(0),storedThrough=DateTimeOffset.FromUnixTimeSeconds(r.GetInt64(1)),note="Storage watermark, not a claim of complete coverage"});}
-            var receipts=new List<object>();await using(var c=new SqlCommand("SELECT TOP(12) ReceiptId,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars FROM market_h4.LiveReceipts ORDER BY ReceivedAt DESC,ReceiptId",db))
-            {await using var r=await c.ExecuteReaderAsync(cancellationToken);while(await r.ReadAsync(cancellationToken))receipts.Add(new{receiptId=r.GetString(0),receivedAt=r.GetDateTimeOffset(1),status=r.GetString(2),inserted=r.GetInt32(3),duplicates=r.GetInt32(4),excluded=r.GetInt32(5)});}
+            var receipts=new List<object>();await using(var c=new SqlCommand("SELECT TOP(12) ReceiptId,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars,ComparisonPolicy,VolumeDifferencesJson FROM market_h4.LiveReceipts ORDER BY ReceivedAt DESC,ReceiptId",db))
+            {await using var r=await c.ExecuteReaderAsync(cancellationToken);while(await r.ReadAsync(cancellationToken))receipts.Add(new{receiptId=r.GetString(0),receivedAt=r.GetDateTimeOffset(1),status=r.GetString(2),inserted=r.GetInt32(3),duplicates=r.GetInt32(4),excluded=r.GetInt32(5),comparisonPolicy=r.IsDBNull(6)?null:r.GetString(6),volumeDifferenceRows=r.IsDBNull(7)?(int?)null:JsonSerializer.Deserialize<MarketH4Store.VolumeDifference[]>(r.GetString(7))!.Length});}
             return MarketDailyMcp.ToolResult(new{ready=true,rule=MarketH4Ingestion.Rule,allowedSymbols=allowed.Order().ToArray(),watermarks,receipts,exchangeCalendarValidated=false,admission="Elapsed aligned OANDA NY17 4h slot AND adjacent observed provider bar, OR documented regular Friday close (13:00 NY slot, received after 17:01 NY). Open/nonadjacent/Dec24-Jan2 bars excluded otherwise. No synthetic bars. This is provider-boundary evidence, not a complete holiday calendar. Whole-D1 parity remains a separate historical gate."});
         }catch(Exception e)when(e is SqlException or IOException or JsonException or InvalidDataException or OperationCanceledException or InvalidOperationException){return MarketDailyMcp.ToolResult(new{ready=false,code="H4_STATUS_UNAVAILABLE"},true);}
     }
     [McpServerTool(Name="submit_market_h4",ReadOnly=false,Destructive=false,Idempotent=true,OpenWorld=false)]
-    [Description("Store original OANDA FX H4 provider captures with immutable audit, deduplication and conflict rejection. Requires market.ingest. H4-only: no daily, COT or seasonality analytics. Provider-boundary validation is not independent exchange-calendar certification. Never pass credentials.")]
+    [Description("Store original OANDA FX H4 provider captures with immutable audit, deduplication and exact OHLC conflict rejection. Volume-only differences on existing identical OHLC are audited; stored volume is never overwritten. Requires market.ingest. H4-only: no daily, COT or seasonality analytics. Provider-boundary validation is not independent exchange-calendar certification. Never pass credentials.")]
     public async Task<CallToolResult> SubmitMarketH4([Description("Exact JSON text: {schemaVersion:1,fetchedAt:UTC ISO,captures:[{capturedAt:UTC ISO,rawJson:EXACT original TradingView success/4h response JSON string, format rows OR columns}]}. Rows are original [{t,o,h,l,c,v}], columns are original arrays t/o/h/l/c/v. 1-28 registered OANDA FX symbols, 2-96 bars each, max 256 KiB. Keep open/last bars in original raw response; SERVER excludes them. Never rewrite prices or convert raw format. Capture within 30 minutes; preserve exact payload for retry.")]string h4Json,RequestContext<CallToolRequestParams> context,CancellationToken cancellationToken)
     {
         if(!MarketDailyMcp.HasScope(context.User,config,MarketDailyMcp.IngestScope))return MarketDailyMcp.ScopeRequired(MarketDailyMcp.IngestScope);

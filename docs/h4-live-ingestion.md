@@ -21,9 +21,15 @@ za úspěšně načtené symboly. Částečný submit je možný a počet captur
 `market_h4.LiveReceipts`: přesné UTF-8 bajty, SHA-256 ID, serverový čas,
 výsledek včetně cenového konfliktu. `market_h4.LiveBars`: jedinečný
 symbol+UTC start; provider OANDA a timeframe H4 jsou pevné v tomto kontraktu.
-Existující historické ceny i nové hodnoty se při překryvu porovnávají přesně,
-včetně volume. Konflikt odmítá celý přírůstek, ale jeho raw evidence zůstává.
-Duplicitní hodnoty se nepřepisují. D1/COT tabulek se tok nedotýká.
+Existující historické i průběžné OHLC se při překryvu porovnávají přesně.
+Rozdílné OHLC odmítá celý přírůstek, ale raw evidence zůstává. Při shodném
+OHLC není odlišné volume (včetně null ↔ číslo) cenovým konfliktem: uloží se
+do `VolumeDifferencesJson` v receiptu včetně symbolu, UTC startu, zdroje a obou
+objemů. `ComparisonPolicy=ohlc-exact-volume-audit-v1`. Původní uložené volume
+se NIKDY nepřepisuje ani nepoužije nový objem ke zpětné změně skóre zóny.
+Nové svíčky se ukládají s původním volume odpovědi. Duplicitní ceny ani objemy
+se nepřepisují. D1/COT tabulek se tok nedotýká. Přesný retry vrací původní
+rozhodnutí a uložený audit; staré Conflict receipts se nepřeklasifikují.
 
 ## Výslovná hranice validace
 
@@ -86,5 +92,6 @@ byl uložen jako Conflict; žádné ceny ani objemy nepřepsal. Read-only SQL au
 ověřil SHA: všech 12 OHLC se shoduje, 10 celých OHLCV řádků je identických.
 EURUSD 15. 10. 17:00 UTC má volume 14786 v historii / 14787 v novém raw;
 16. 10. 01:00 UTC má 21833 / 21831. Původ rozdílu samotný audit neprokazuje.
-Dosavadní přísné pravidlo odmítá i změnu volume. H4 plán zůstal vypnutý;
-změna této politiky vyžaduje výslovné rozhodnutí, nikoli přepsání historie.
+Tehdejší přísné pravidlo odmítlo i změnu volume a H4 plán zůstal vypnutý.
+Uživatel následně výslovně schválil výše uvedené auditování rozdílů volume
+bez přepisu historie. Tento původní Conflict receipt zůstává nezměněný.

@@ -9,6 +9,11 @@ CREATE TABLE market_h4.LiveReceipts(
  DuplicateBars int NOT NULL,
  ExcludedBars int NOT NULL,
  Status varchar(24) NOT NULL CHECK(Status IN ('Accepted','Conflict')));
+-- Nullable additions preserve legacy receipts and their original decisions.
+IF COL_LENGTH('market_h4.LiveReceipts','ComparisonPolicy') IS NULL
+ ALTER TABLE market_h4.LiveReceipts ADD ComparisonPolicy varchar(48) NULL;
+IF COL_LENGTH('market_h4.LiveReceipts','VolumeDifferencesJson') IS NULL
+ ALTER TABLE market_h4.LiveReceipts ADD VolumeDifferencesJson nvarchar(max) NULL;
 IF OBJECT_ID('market_h4.LiveBars','U') IS NULL
 CREATE TABLE market_h4.LiveBars(
  Symbol varchar(32) NOT NULL, StartUnix bigint NOT NULL,
