@@ -52,17 +52,19 @@ public static class MarketH4Ingestion
         {
             var at=Fresh(c.GetProperty("capturedAt"));if(at>fetched.AddMinutes(1))throw new InvalidDataException("Capture after envelope.");
             using var raw=JsonDocument.Parse(c.GetProperty("rawJson").GetString()!,new JsonDocumentOptions{MaxDepth=12});var r=raw.RootElement;var symbol=r.GetProperty("symbol").GetString()!;
-            if(!allowed.Contains(symbol)||!seen.Add(symbol)||!r.GetProperty("success").GetBoolean()||r.GetProperty("interval").GetString()!="4h"||r.GetProperty("format").GetString()!="columns")throw new InvalidDataException("H4 provider identity.");
-            var b=r.GetProperty("bars");var n=b.GetProperty("t").GetArrayLength();if(n is <2 or >96||r.GetProperty("count").GetInt32()!=n)throw new InvalidDataException("H4 count.");
-            foreach(var key in new[]{"o","h","l","c","v"})if(b.GetProperty(key).GetArrayLength()!=n)throw new InvalidDataException("H4 columns.");
+            var format=r.GetProperty("format").GetString();
+            if(!allowed.Contains(symbol)||!seen.Add(symbol)||!r.GetProperty("success").GetBoolean()||r.GetProperty("interval").GetString()!="4h"||format is not ("columns" or "rows"))throw new InvalidDataException("H4 provider identity.");
+            var b=r.GetProperty("bars");var n=format=="rows"?b.GetArrayLength():b.GetProperty("t").GetArrayLength();if(n is <2 or >96||r.GetProperty("count").GetInt32()!=n)throw new InvalidDataException("H4 count.");
+            if(format=="columns")foreach(var key in new[]{"o","h","l","c","v"})if(b.GetProperty(key).GetArrayLength()!=n)throw new InvalidDataException("H4 columns.");
+            JsonElement Cell(string key,int index)=>format=="rows"?b[index].GetProperty(key):b.GetProperty(key)[index];
             long previous=0;
             for(var i=0;i<n;i++)
             {
-                var t=b.GetProperty("t")[i].GetInt64();if(t<=previous||t>at.ToUnixTimeSeconds())throw new InvalidDataException("H4 chronology.");previous=t;
-                decimal Number(string k){var v=b.GetProperty(k)[i].GetDecimal();if(decimal.Round(v,10)!=v)throw new InvalidDataException("H4 decimal precision.");return v;}
-                var o=Number("o");var h=Number("h");var l=Number("l");var close=Number("c");decimal? v=b.GetProperty("v")[i].ValueKind==JsonValueKind.Null?null:Number("v");
+                var t=Cell("t",i).GetInt64();if(t<=previous||t>at.ToUnixTimeSeconds())throw new InvalidDataException("H4 chronology.");previous=t;
+                decimal Number(string k){var v=Cell(k,i).GetDecimal();if(decimal.Round(v,10)!=v)throw new InvalidDataException("H4 decimal precision.");return v;}
+                var o=Number("o");var h=Number("h");var l=Number("l");var close=Number("c");decimal? v=Cell("v",i).ValueKind==JsonValueKind.Null?null:Number("v");
                 if(o<=0||close<=0||l<=0||h<Math.Max(o,close)||l>Math.Min(o,close)||v<0)throw new InvalidDataException("H4 OHLCV bounds.");
-                var reason=Completion(t,i+1<n?b.GetProperty("t")[i+1].GetInt64():null,at);
+                var reason=Completion(t,i+1<n?Cell("t",i+1).GetInt64():null,at);
                 if(reason is null)bars.Add(new(symbol,t,o,h,l,close,v));else excluded.Add(new(symbol,t,reason));
             }
         }
@@ -129,7 +131,7 @@ public sealed class MarketH4Tool(IConfiguration config,IWebHostEnvironment envir
     }
     [McpServerTool(Name="submit_market_h4",ReadOnly=false,Destructive=false,Idempotent=true,OpenWorld=false)]
     [Description("Store original OANDA FX H4 provider captures with immutable audit, deduplication and conflict rejection. Requires market.ingest. H4-only: no daily, COT or seasonality analytics. Provider-boundary validation is not independent exchange-calendar certification. Never pass credentials.")]
-    public async Task<CallToolResult> SubmitMarketH4([Description("Exact JSON text: {schemaVersion:1,fetchedAt:UTC ISO,captures:[{capturedAt:UTC ISO,rawJson:EXACT original TradingView success/4h/columns response JSON string}]}. 1-28 registered OANDA FX symbols, 2-96 bars each, max 256 KiB. Keep open/last bars in original raw response; SERVER excludes them. Never rewrite prices. Capture within 30 minutes; preserve exact payload for retry.")]string h4Json,RequestContext<CallToolRequestParams> context,CancellationToken cancellationToken)
+    public async Task<CallToolResult> SubmitMarketH4([Description("Exact JSON text: {schemaVersion:1,fetchedAt:UTC ISO,captures:[{capturedAt:UTC ISO,rawJson:EXACT original TradingView success/4h response JSON string, format rows OR columns}]}. Rows are original [{t,o,h,l,c,v}], columns are original arrays t/o/h/l/c/v. 1-28 registered OANDA FX symbols, 2-96 bars each, max 256 KiB. Keep open/last bars in original raw response; SERVER excludes them. Never rewrite prices or convert raw format. Capture within 30 minutes; preserve exact payload for retry.")]string h4Json,RequestContext<CallToolRequestParams> context,CancellationToken cancellationToken)
     {
         if(!MarketDailyMcp.HasScope(context.User,config,MarketDailyMcp.IngestScope))return MarketDailyMcp.ScopeRequired(MarketDailyMcp.IngestScope);
         if(!MarketDailyMcp.InboxConfigured(config))return MarketDailyMcp.ToolResult(new{code="H4_INBOX_DISABLED",persisted=false},true);

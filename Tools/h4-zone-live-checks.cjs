@@ -11,4 +11,10 @@ const prices=()=>({EURUSD:{symbol:raw.symbol,bars:[],validatedBarCount:0}});cons
 assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,close:1.6}]}),/mismatch/);
 assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,payloadText:payloadText+' '}]}),/equal/);
 assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,timestamp:t+14400}]}),/boundary/);
+const rowRaw={...raw,format:'rows',bars:raw.bars.t.map((_,i)=>Object.fromEntries(Object.keys(raw.bars).map(k=>[k,raw.bars[k][i]])))},original=JSON.stringify(rowRaw);
+assert.deepEqual(V.columns(rowRaw),raw.bars);assert.equal(JSON.stringify(rowRaw),original,'Raw rows never modified');
+const rowsPayload=JSON.stringify({schemaVersion:1,fetchedAt:new Date(at).toISOString(),captures:[{capturedAt:new Date(at).toISOString(),rawJson:original}]}),rowsId=crypto.createHash('sha256').update(rowsPayload).digest('hex'),rowsLive={...live,rows:[{...row,receiptId:rowsId}],receipts:[{receiptId:rowsId,payloadText:rowsPayload,receivedAt:new Date(at).toISOString()}]};
+const rowsPrices=prices();V.merge(rowsPrices,rowsLive);assert.equal(rowsPrices.EURUSD.latestClose,p.EURUSD.latestClose);assert.equal(rowsPrices.EURUSD.bars[0].volume,null);
+assert.throws(()=>V.merge(prices(),{...rowsLive,rows:[{...rowsLive.rows[0],close:1.6}]}),/mismatch/);
+assert.throws(()=>V.columns({...rowRaw,format:'other'}),/format/);assert.throws(()=>V.columns({...rowRaw,count:3}));assert.throws(()=>V.columns({...rowRaw,bars:rowRaw.bars.map(({v,...rest})=>rest)}),/field/);
 console.log('PASS: live SQL/raw hash and price parity, UTC/DST/holiday/open boundaries, invalid evidence rejected.');

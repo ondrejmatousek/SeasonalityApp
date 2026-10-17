@@ -9,7 +9,10 @@ Stávající `submit_market_daily` ani jeho plán se nemění.
 H4 JSON je přesný text `{schemaVersion:1,fetchedAt:UTC ISO,captures:[
 {capturedAt:UTC ISO,rawJson:EXACT PROVIDER JSON STRING}]}`. Capture obsahuje
 úplnou původní odpověď `success`, `symbol=OANDA:<FX>`, `interval=4h`,
-`format=columns`, `count`, `bars.t/o/h/l/c/v`. Zachovat i dosud otevřené bary;
+`format=columns`, `count`, `bars.t/o/h/l/c/v`, nebo původní `format=rows`
+a `bars:[{t,o,h,l,c,v}]`. Původní text se nikdy nepřevádí mezi formáty;
+obě reprezentace mají stejné přesné cenové a časové kontroly v příjmu i exportu.
+Zachovat i dosud otevřené bary;
 server je vyřadí. 1–28 jedinečných registrovaných FX symbolů, 2–96 barů/symbol,
 256 KiB celkem, capture nejvýše 30 minut starý. Chybějící volume zůstává null.
 Chyby jednotlivých sběrů lze přidat do envelope `errors`; nesmí být vydávány
