@@ -1,4 +1,8 @@
 const assert=require('node:assert/strict'),Z=require('../wwwroot/js/trade-zones.js'),H=require('../wwwroot/js/market-candles.js'),V=require('./h4-zone-snapshot.cjs');
+const report={accepted:2,instruments:[{symbol:'OANDA:CHFJPY',accepted:1,rawSha256:'a'},{symbol:'OANDA:EURGBP',accepted:1,rawSha256:'b'}]};
+V.assertEvidenceMatches(report,{...report,instruments:[...report.instruments].reverse()});
+assert.throws(()=>V.assertEvidenceMatches(report,{...report,instruments:[{...report.instruments[0],rawSha256:'changed'},report.instruments[1]]}),/evidence/);
+assert.throws(()=>V.assertEvidenceMatches(report,{...report,accepted:3}),/evidence/);
 const first=Date.parse('2026-10-05T21:00:00Z')/1000;
 const session=Array.from({length:6},(_,i)=>({timestamp:first+i*14400,open:100,high:102,low:99,close:i===5?101:100}));
 const d={timestamp:first,open:100,high:102,low:99,close:101,completionEvidence:'Verified test NY17 session'};

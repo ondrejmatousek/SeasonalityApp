@@ -1,6 +1,8 @@
 // H4 is a zone-only SQL sidecar. Never changes D1 dates, seasonality or COT.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),zlib=require('node:zlib'),assert=require('node:assert/strict');
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex'),read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const symbolOrder=(a,b)=>a.symbol<b.symbol?-1:a.symbol>b.symbol?1:0;
+function assertEvidenceMatches(stored,computed){const ordered=r=>({...r,instruments:[...r.instruments].sort(symbolOrder)});assert.deepEqual(ordered(stored),ordered(computed),'SQL eligibility evidence/D1 parity changed');}
 const ny=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'});
 function sessionDate(t){const local=ny.format(new Date(t*1000)),date=new Date(local.slice(0,10)+'T00:00:00Z');if(Number(local.slice(-2))>=17)date.setUTCDate(date.getUTCDate()+1);return date.toISOString().slice(0,10);}
 function validateGroup(rows,daily,capturedAt){
@@ -18,7 +20,7 @@ function validate(source,repository='.'){
  const seed=JSON.parse(zlib.gunzipSync(seedBytes)),registry=JSON.parse(seed.files['test-source-registry.json']),fx=registry.entries.filter(e=>e.assetClass==='forex');
  assert.equal(fx.length,28);assert.equal(source.captures.length,28);
  const prices={},instruments=[],seen=new Set();
- for(const capture of [...source.captures].sort((a,b)=>a.symbol.localeCompare(b.symbol))){
+ for(const capture of [...source.captures].sort(symbolOrder)){
   const key=capture.symbol.replace(/^OANDA:/,''),entry=fx.find(e=>e.logicalSymbol===key);assert.ok(entry&&!seen.has(key));seen.add(key);
   assert.equal(sha(Buffer.from(capture.rawText,'utf8')),capture.rawSha256);
   const raw=JSON.parse(capture.rawText),b=raw.bars;assert.equal(raw.success,true);assert.equal(raw.symbol,entry.providerSymbol);assert.equal(raw.interval,'4h');assert.equal(raw.format,'columns');
@@ -49,7 +51,7 @@ function validate(source,repository='.'){
  return {report,prices};
 }
 function overlay(site,source,repository='.'){
- const checked=validate(source,repository);assert.ok(source.zoneValidationText,'SQL zone eligibility evidence missing');assert.equal(sha(source.zoneValidationText),source.zoneValidationSha256);assert.deepEqual(JSON.parse(source.zoneValidationText),checked.report,'SQL eligibility evidence/D1 parity changed');
+ const checked=validate(source,repository);assert.ok(source.zoneValidationText,'SQL zone eligibility evidence missing');assert.equal(sha(source.zoneValidationText),source.zoneValidationSha256);assertEvidenceMatches(JSON.parse(source.zoneValidationText),checked.report);
  const manifest=read(path.join(site,'data/manifest.json')),snapshot=read(path.join(site,manifest.zonePrices.path.slice(1)));
  for(const [key,h4]of Object.entries(checked.prices)){const p=snapshot.prices[key];assert.ok(p?.status==='ready'&&p.symbol===h4.symbol&&p.provider==='OANDA','H4/D1 provider mismatch');p.h4=h4;}
  snapshot.h4={schemaVersion:1,source:'Azure SQL market_h4',batchId:source.batchId,validationRule:checked.report.ruleVersion,validationSha256:source.zoneValidationSha256,accepted:checked.report.accepted,rejected:checked.report.rejected,scope:'Obchodní zóny only; no seasonality/COT input'};
@@ -57,5 +59,5 @@ function overlay(site,source,repository='.'){
  manifest.zonePrices={...manifest.zonePrices,path:url,h4:snapshot.h4};require('./apply-market-sources.cjs').saveManifest(site,manifest);
  return snapshot.h4;
 }
-module.exports={sessionDate,validateGroup,validate,overlay};
+module.exports={sessionDate,validateGroup,validate,overlay,assertEvidenceMatches};
 if(require.main===module){try{const [mode,input,output]=process.argv.slice(2),source=read(input);if(mode==='validate'){const {report}=validate(source);fs.writeFileSync(output,JSON.stringify(report));console.log(JSON.stringify({accepted:report.accepted,rejected:report.rejected,sha256:sha(JSON.stringify(report))}));}else if(mode==='overlay')console.log(JSON.stringify(overlay(output,source)));else throw Error('Expected validate/overlay <SQL-source> <output>');}catch(e){console.error(e.message);process.exitCode=1;}}
