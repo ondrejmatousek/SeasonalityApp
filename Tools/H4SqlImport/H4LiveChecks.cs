@@ -38,6 +38,7 @@ static class H4LiveChecks
    var rowsReceipt=await store.Receive(rows,default);Check(rowsReceipt.Status=="Accepted"&&rowsReceipt.InsertedBars==0&&rowsReceipt.DuplicateBars==2,"Rows SQL exact cross-format duplicates");
    var duplicate=await store.Receive(MarketH4Ingestion.Parse(Payload(stamp:1),at,allowed),default);Check(duplicate.InsertedBars==0&&duplicate.DuplicateBars==2,"Cross-payload duplicates");
    var conflict=await store.Receive(MarketH4Ingestion.Parse(Payload(1.11m),at,allowed),default);Check(conflict.Status=="Conflict"&&conflict.InsertedBars==0,"Conflict preserved, no overwrite");
+   await H4ReceiptAudit.Run(db,conflict.ReceiptId); // Read-only audit must leave all counts and D1 unchanged below.
    await using var count=new SqlCommand("SELECT (SELECT COUNT(*) FROM market_h4.LiveBars),(SELECT COUNT(*) FROM market_h4.LiveReceipts),(SELECT SUM(Value) FROM dbo.D1Sentinel),(SELECT COUNT(*) FROM market_h4.LiveBars WHERE Volume IS NULL)",db);await using var r=await count.ExecuteReaderAsync();await r.ReadAsync();Check(r.GetInt32(0)==2&&r.GetInt32(1)==4&&r.GetInt32(2)==39&&r.GetInt32(3)==1,"SQL isolation/idempotency/null volume");
   }
   finally{await Exec(admin,$"ALTER DATABASE [{name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{name}]");}

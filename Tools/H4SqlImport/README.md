@@ -41,6 +41,9 @@ Run the resulting DLL with:
   that exact generated test database. Does not read production credentials.
 - `--validate --config-root <repo> --input <capture-dir>`: offline checks only.
 - `--inspect --config-root <repo>`: read-only production target check.
+- `--inspect-live-receipt <sha256> --config-root <repo>`: read-only comparison
+  of one retained live receipt against existing H4 rows, including per-field
+  differences and stored raw SHA verification. No data corrections or jobs.
 - `--import --confirm-database free-sql-db-2426953 --config-root <repo> --input <capture-dir>`:
   explicit production storage import, no analytical activation.
 - `--verify --config-root <repo> --input <capture-dir>`: read-only committed check.

@@ -39,6 +39,7 @@ try
         Console.WriteLine(JsonSerializer.Serialize(new{database=reader.GetString(0),updateability=reader.GetString(1),d1TablePresent=!reader.IsDBNull(2),h4TablePresent=!reader.IsDBNull(3)}));
     }
     if(args.Contains("--inspect"))return;
+    if(args.Contains("--inspect-live-receipt")){await H4ReceiptAudit.Run(db,Arg("--inspect-live-receipt"));return;}
     if(args.Contains("--install-h4-live-schema"))
     {
         if(Arg("--confirm-database")!="free-sql-db-2426953")throw new InvalidOperationException("Explicit database confirmation required.");

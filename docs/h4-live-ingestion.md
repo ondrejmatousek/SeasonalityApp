@@ -78,3 +78,13 @@ vytvoří a odstraní. `--h4-live-validation`: stejné časové/identitní testy
 MarketMcpChecks `--h4-discovery`: skutečný SDK host, discovery a scope před SQL.
 MarketTriggerChecks: H4 dispatch nemá daily analytics inputs.
 `h4-zone-live-checks.cjs`: SQL/raw hash, cenová shoda a časové hranice.
+
+## Kontrolní Work submit 17. 10. 2026
+
+Receipt `28b56c60f541be6fd0e50aa1803e3c04d4c3f2bfb39c235891d8881fb6c9f09d`
+byl uložen jako Conflict; žádné ceny ani objemy nepřepsal. Read-only SQL audit
+ověřil SHA: všech 12 OHLC se shoduje, 10 celých OHLCV řádků je identických.
+EURUSD 15. 10. 17:00 UTC má volume 14786 v historii / 14787 v novém raw;
+16. 10. 01:00 UTC má 21833 / 21831. Původ rozdílu samotný audit neprokazuje.
+Dosavadní přísné pravidlo odmítá i změnu volume. H4 plán zůstal vypnutý;
+změna této politiky vyžaduje výslovné rozhodnutí, nikoli přepsání historie.
