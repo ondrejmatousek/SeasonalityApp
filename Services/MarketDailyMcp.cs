@@ -78,6 +78,8 @@ public static class MarketDailyMcp
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
             services.AddTransient<MarketDailyGitHubTrigger>();
             tools.Add(CreateTool<MarketDailySubmissionTool>(nameof(MarketDailySubmissionTool.SubmitMarketDaily),IngestScope));
+            tools.Add(CreateTool<MarketH4Tool>(nameof(MarketH4Tool.SubmitMarketH4),IngestScope));
+            tools.Add(CreateTool<MarketH4Tool>(nameof(MarketH4Tool.GetMarketH4Status),IngestScope));
         }
         services.AddMcpServer().WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools(tools);
         return true;

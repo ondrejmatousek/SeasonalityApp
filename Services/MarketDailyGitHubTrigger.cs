@@ -14,7 +14,9 @@ public sealed class MarketDailyGitHubTrigger(IConfiguration config, IHttpClientF
     public const string DispatchUrl = "https://api.github.com/repos/ondrejmatousek/SeasonalityApp/actions/workflows/seasonality-update.yml/dispatches";
     public sealed record Result(string Status, bool Requested = false);
 
-    public async Task<Result> RequestAsync(string receiptStatus, CancellationToken cancellationToken)
+    public Task<Result> RequestAsync(string receiptStatus, CancellationToken cancellationToken)=>Dispatch(receiptStatus,false,cancellationToken);
+    public Task<Result> RequestH4Async(CancellationToken cancellationToken)=>Dispatch("PendingValidation",true,cancellationToken);
+    private async Task<Result> Dispatch(string receiptStatus,bool h4,CancellationToken cancellationToken)
     {
         // An identical retry can re-attempt the wake-up, but never reopen a blocked/accepted receipt.
         try
@@ -44,8 +46,8 @@ public sealed class MarketDailyGitHubTrigger(IConfiguration config, IHttpClientF
             using var tokenJson = JsonDocument.Parse(await tokenResponse.Content.ReadAsStringAsync(timeout.Token));
             var token = tokenJson.RootElement.GetProperty("token").GetString();
             if (string.IsNullOrWhiteSpace(token)) return new("Unavailable");
-            using var dispatch = Request(DispatchUrl, token,
-                new { @ref = "master", inputs = new { sql_publish = true, sql_inbox_shadow = false } });
+            using var dispatch = Request(h4?"https://api.github.com/repos/ondrejmatousek/SeasonalityApp/actions/workflows/static-hosting.yml/dispatches":DispatchUrl, token,
+                h4?(object)new { @ref = "master" }:new { @ref = "master", inputs = new { sql_publish = true, sql_inbox_shadow = false } });
             using var response = await client.SendAsync(dispatch, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
             // Accepted dispatch is NOT a completed run, SQL history acceptance, or successful deployment.
             return response.StatusCode is HttpStatusCode.OK or HttpStatusCode.NoContent

@@ -20,7 +20,7 @@ void Check(bool condition, string message) { if (!condition) throw new Exception
 byte[] Decode(string s) => Convert.FromBase64String(s.Replace('-', '+').Replace('_', '/') + new string('=', (4 - s.Length % 4) % 4));
 async Task<(MarketDailyGitHubTrigger.Result Result,int Calls)> Run(Dictionary<string,string?> settings,
     string receipt="PendingValidation", HttpStatusCode dispatchStatus=HttpStatusCode.NoContent,
-    HttpStatusCode tokenStatus=HttpStatusCode.Created, string tokenBody="{\"token\":\"ephemeral-test-token\"}", bool cancel=false)
+    HttpStatusCode tokenStatus=HttpStatusCode.Created, string tokenBody="{\"token\":\"ephemeral-test-token\"}", bool cancel=false,bool h4=false)
 {
     var count = 0;
     using var handler = new Intercept(async (request,ct) => {
@@ -42,16 +42,16 @@ async Task<(MarketDailyGitHubTrigger.Result Result,int Calls)> Run(Dictionary<st
             Check(body.RootElement.GetProperty("permissions").EnumerateObject().Single().Name=="actions" && body.RootElement.GetProperty("permissions").GetProperty("actions").GetString()=="write","Actions-only token");
             return new HttpResponseMessage(tokenStatus){Content=new StringContent(tokenBody)};
         }
-        Check(count==2 && request.RequestUri!.AbsoluteUri==MarketDailyGitHubTrigger.DispatchUrl,"Exactly one fixed workflow dispatch");
+        Check(count==2 && request.RequestUri!.AbsoluteUri==(h4?"https://api.github.com/repos/ondrejmatousek/SeasonalityApp/actions/workflows/static-hosting.yml/dispatches":MarketDailyGitHubTrigger.DispatchUrl),"Exactly one fixed workflow dispatch");
         Check(request.Headers.Authorization!.Parameter=="ephemeral-test-token","Installation token, not app JWT");
         Check(body.RootElement.GetProperty("ref").GetString()=="master","Fixed default branch");
-        var inputs=body.RootElement.GetProperty("inputs");
-        Check(inputs.GetProperty("sql_publish").GetBoolean() && !inputs.GetProperty("sql_inbox_shadow").GetBoolean() && inputs.EnumerateObject().Count()==2,"Existing fenced SQL publication path only");
+        if(h4)Check(!body.RootElement.TryGetProperty("inputs",out _),"H4 only publishes existing static outputs, no daily analytics inputs");
+        else {var inputs=body.RootElement.GetProperty("inputs");Check(inputs.GetProperty("sql_publish").GetBoolean() && !inputs.GetProperty("sql_inbox_shadow").GetBoolean() && inputs.EnumerateObject().Count()==2,"Existing fenced SQL publication path only");}
         return new HttpResponseMessage(dispatchStatus);
     });
     using var client=new HttpClient(handler);
     var config=new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
-    var result=await new MarketDailyGitHubTrigger(config,new Factory(client)).RequestAsync(receipt,CancellationToken.None);
+    var trigger=new MarketDailyGitHubTrigger(config,new Factory(client));var result=h4?await trigger.RequestH4Async(CancellationToken.None):await trigger.RequestAsync(receipt,CancellationToken.None);
     return (result,count);
 }
 foreach(var status in new[]{HttpStatusCode.OK,HttpStatusCode.NoContent}){
@@ -61,6 +61,8 @@ foreach(var status in new[]{"ShadowAccepted","Blocked","Processing"}){
     var r=await Run(values,status);Check(!r.Result.Requested&&r.Calls==0,"Nonpending receipts do not dispatch");
 }
 var disabled=new Dictionary<string,string?>(values){["MarketDailyGitHubTrigger:Enabled"]="false"};
+Check((await Run(values,h4:true)).Result.Requested,"H4-only fixed static publication dispatch");
+Check(!(await Run(values,h4:true,dispatchStatus:HttpStatusCode.Forbidden)).Result.Requested,"H4 dispatch failure is not success");
 Check((await Run(disabled)).Calls==0,"Disabled makes no requests");
 foreach(var name in new[]{"Enabled","AppId","InstallationId","PrivateKeyPemBase64"}){
     var bad=new Dictionary<string,string?>(values){["MarketDailyGitHubTrigger:"+name]="invalid/../"};

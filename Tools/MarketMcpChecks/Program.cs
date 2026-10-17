@@ -24,7 +24,8 @@ const string tenant = "10000000-0000-0000-0000-000000000001";
 const string audience = "10000000-0000-0000-0000-000000000002";
 const string owner = "10000000-0000-0000-0000-000000000003";
 const string clientId = "10000000-0000-0000-0000-000000000004";
-var useAuth0 = args.Contains("--auth0", StringComparer.Ordinal);
+var h4Discovery=args.Contains("--h4-discovery",StringComparer.Ordinal);
+var useAuth0 = args.Contains("--auth0", StringComparer.Ordinal)||h4Discovery;
 var issuer = useAuth0 ? "https://isolated-regression.eu.auth0.com/" : $"https://login.microsoftonline.com/{tenant}/v2.0";
 var expectedAudience = useAuth0 ? MarketDailyMcp.Resource : audience;
 var expectedOwner = useAuth0 ? "auth0|isolated-owner" : owner;
@@ -59,7 +60,9 @@ async Task<(WebApplication App, HttpClient Http)> Start(bool enabled, bool confi
         ["MarketDailyMcp:Audience"] = expectedAudience, ["MarketDailyMcp:AllowedObjectId"] = owner,
         ["MarketDailyMcp:AllowedSubject"] = expectedOwner,
         ["MarketDailyMcp:AllowedClientId"] = expectedClient, ["MarketData:BundlePath"] = bundle,
-        ["MarketDailyProbe:AllowLocalHttp"] = "true"
+        ["MarketDailyProbe:AllowLocalHttp"] = "true",
+        ["MarketDailyInbox:Enabled"] = h4Discovery?"true":"false",["MarketDailyInbox:Mode"]="shadow",
+        ["ConnectionStrings:DefaultConnection"] = "Server=127.0.0.1;Initial Catalog=never_accessed;User ID=unused;Password=unused;Encrypt=false;Connect Timeout=1"
     });
     MarketDailyProbe.Register(b.Services);
     var ready = MarketDailyMcp.Register(b.Services, b.Configuration);
@@ -139,7 +142,14 @@ try
     using (var r = await Rpc(h, new { jsonrpc = "2.0", id = 2, method = "tools/list" }, auth))
     {
         var tools = (await Json(r)).GetProperty("result").GetProperty("tools");
-        Check(tools.GetArrayLength() == 1 && tools[0].GetProperty("name").GetString() == "validate_market_daily", "Exactly one validation tool; no writes exposed");
+        Check(tools.GetArrayLength() == (h4Discovery?4:1) && tools.EnumerateArray().Any(t=>t.GetProperty("name").GetString()=="validate_market_daily"), "Only configured tools exposed");
+        if(h4Discovery){var names=tools.EnumerateArray().Select(t=>t.GetProperty("name").GetString()).ToHashSet();Check(names.Contains("submit_market_h4")&&names.Contains("get_market_h4_status"),"H4 discovery");}
+    }
+    if(h4Discovery)
+    {
+        using var denied=await Rpc(h,new{jsonrpc="2.0",id=40,method="tools/call",@params=new{name="submit_market_h4",arguments=new{h4Json="not json"}}},auth);
+        var body=(await Json(denied)).GetProperty("result");Check(body.GetProperty("isError").GetBoolean()&&body.GetProperty("content")[0].GetProperty("text").GetString()!.Contains("market.ingest"),"H4 scope checked before parse/SQL");
+        Console.WriteLine("PASS: real H4 MCP discovery and scope-before-parse/SQL. No external requests or database access.");return;
     }
     // Test fixture changes envelope time only, not any provider bar or stored source file.
     var payload = JsonNode.Parse(input)!; payload["fetchedAt"] = DateTimeOffset.UtcNow.ToString("O");

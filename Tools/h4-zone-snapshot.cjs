@@ -52,9 +52,13 @@ function validate(source,repository='.'){
 }
 function overlay(site,source,repository='.'){
  const checked=validate(source,repository);assert.ok(source.zoneValidationText,'SQL zone eligibility evidence missing');assert.equal(sha(source.zoneValidationText),source.zoneValidationSha256);assertEvidenceMatches(JSON.parse(source.zoneValidationText),checked.report);
+ const live=require('./h4-zone-live.cjs').merge(checked.prices,source.live);
  const manifest=read(path.join(site,'data/manifest.json')),snapshot=read(path.join(site,manifest.zonePrices.path.slice(1)));
- for(const [key,h4]of Object.entries(checked.prices)){const p=snapshot.prices[key];assert.ok(p?.status==='ready'&&p.symbol===h4.symbol&&p.provider==='OANDA','H4/D1 provider mismatch');p.h4=h4;}
+ for(const [key,h4]of Object.entries(checked.prices)){const p=snapshot.prices[key];assert.ok(p?.status==='ready'&&p.symbol===h4.symbol&&p.provider==='OANDA','H4/D1 provider mismatch');
+  if(h4.liveRule)h4.dailyLifecycleBars=p.bars.filter(d=>Number.isSafeInteger(d.timestamp)&&(d.timestamp+86400)*1000<=Date.parse(h4.asOfUtc)).slice(-400).map(d=>({date:new Date(d.timestamp*1000).toISOString(),endDate:new Date((d.timestamp+86400)*1000).toISOString(),open:d.open,high:d.high,low:d.low,close:d.close}));
+  p.h4=h4;}
  snapshot.h4={schemaVersion:1,source:'Azure SQL market_h4',batchId:source.batchId,validationRule:checked.report.ruleVersion,validationSha256:source.zoneValidationSha256,accepted:checked.report.accepted,rejected:checked.report.rejected,scope:'Obchodní zóny only; no seasonality/COT input'};
+ snapshot.h4.live=live;
  const json=JSON.stringify(snapshot),url='/data/screener/zone-prices.'+sha(json).slice(0,20)+'.json';fs.writeFileSync(path.join(site,url.slice(1)),json);
  manifest.zonePrices={...manifest.zonePrices,path:url,h4:snapshot.h4};require('./apply-market-sources.cjs').saveManifest(site,manifest);
  return snapshot.h4;

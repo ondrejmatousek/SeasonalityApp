@@ -11,6 +11,8 @@ try
 {
     string Arg(string key) { var i=Array.IndexOf(args,key); return i>=0&&i+1<args.Length ? args[i+1] : throw new ArgumentException("Missing "+key); }
     if(args.Contains("--self-test-localdb")) { await Importer.SelfTest(); return; }
+    if(args.Contains("--h4-live-checks")) { await H4LiveChecks.Run(); return; }
+    if(args.Contains("--h4-live-validation")) { await H4LiveChecks.Run(false); return; }
     var configRoot=Path.GetFullPath(Arg("--config-root"));
     if(!File.Exists(Path.Combine(configRoot,"SeasonalityApp.csproj")))throw new InvalidDataException("Configuration root is not SeasonalityApp.");
     if(args.Contains("--validate"))
@@ -28,7 +30,8 @@ try
     if(connection.InitialCatalog!="free-sql-db-2426953" || !new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(connection.DataSource,StringComparer.OrdinalIgnoreCase))
         throw new InvalidOperationException("Refusing unexpected production SQL target.");
     Console.WriteLine(JsonSerializer.Serialize(new{configuredDatabase=connection.InitialCatalog,authentication=connection.Authentication.ToString(),integratedSecurity=connection.IntegratedSecurity,sqlUserConfigured=!string.IsNullOrWhiteSpace(connection.UserID),passwordConfigured=!string.IsNullOrWhiteSpace(connection.Password)}));
-    await using var db=new SqlConnection(connection.ConnectionString);await db.OpenAsync();
+    await using var db=new SqlConnection(connection.ConnectionString);
+    for(var attempt=0;;attempt++){try{await db.OpenAsync();break;}catch(SqlException e)when(e.Number==40613&&attempt<2){Console.WriteLine("SQL waking; retrying the connection only.");await Task.Delay(TimeSpan.FromSeconds(5));}}
     await using(var inspect=new SqlCommand("SELECT DB_NAME(), CAST(DATABASEPROPERTYEX(DB_NAME(),'Updateability') AS nvarchar(60)), OBJECT_ID('dbo.SeasonalityPrices'), OBJECT_ID('market_h4.Bars');",db))
     await using(var reader=await inspect.ExecuteReaderAsync())
     {
@@ -36,6 +39,12 @@ try
         Console.WriteLine(JsonSerializer.Serialize(new{database=reader.GetString(0),updateability=reader.GetString(1),d1TablePresent=!reader.IsDBNull(2),h4TablePresent=!reader.IsDBNull(3)}));
     }
     if(args.Contains("--inspect"))return;
+    if(args.Contains("--install-h4-live-schema"))
+    {
+        if(Arg("--confirm-database")!="free-sql-db-2426953")throw new InvalidOperationException("Explicit database confirmation required.");
+        await using var schema=new SqlCommand(File.ReadAllText(Path.Combine(configRoot,"Data/MarketH4Live.sql")),db){CommandTimeout=120};await schema.ExecuteNonQueryAsync();
+        Console.WriteLine("H4 live schema installed additively; no D1/COT writes.");return;
+    }
     if(args.Contains("--export-zone-source")){await ZoneEvidence.Export(db,Arg("--output"));return;}
     if(args.Contains("--record-zone-validation")){await ZoneEvidence.Record(db,File.ReadAllBytes(Arg("--input")));return;}
     var source=Batch.Read(Arg("--input"),configRoot);
@@ -98,7 +107,12 @@ static class ZoneEvidence
         string? validation=null,validationSha=null;
         await using(var cmd=new SqlCommand("IF OBJECT_ID('market_h4.ZoneValidation','U') IS NOT NULL SELECT ReportUtf8,ReportSha256 FROM market_h4.ZoneValidation WHERE BatchId=@id AND RuleVersion='h4-d1-parity-v1';",db))
         {cmd.Parameters.Add("@id",SqlDbType.Char,64).Value=batch;await using var r=await cmd.ExecuteReaderAsync();if(await r.ReadAsync()){var bytes=(byte[])r[0];validationSha=r.GetString(1);if(Batch.Sha(bytes)!=validationSha)throw new InvalidDataException("H4 eligibility SHA mismatch.");validation=Encoding.UTF8.GetString(bytes);}}
-        Directory.CreateDirectory(Path.GetDirectoryName(file)!);await File.WriteAllTextAsync(file,JsonSerializer.Serialize(new{schemaVersion=1,source="Azure SQL market_h4",batchId=batch,captures,zoneValidationText=validation,zoneValidationSha256=validationSha}),new UTF8Encoding(false));
+        var liveRows=new List<object>();var ids=new HashSet<string>(StringComparer.Ordinal);
+        await using(var cmd=new SqlCommand("IF OBJECT_ID('market_h4.LiveBars','U') IS NOT NULL SELECT Symbol,StartUnix,[Open],[High],[Low],[Close],Volume,ReceiptId FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY Symbol ORDER BY StartUnix DESC) AS rn FROM market_h4.LiveBars) b WHERE rn<=2200 ORDER BY Symbol,StartUnix",db){CommandTimeout=180})
+        {await using var r=await cmd.ExecuteReaderAsync();while(await r.ReadAsync()){ids.Add(r.GetString(7));liveRows.Add(new{symbol=r.GetString(0),timestamp=r.GetInt64(1),open=r.GetDecimal(2),high=r.GetDecimal(3),low=r.GetDecimal(4),close=r.GetDecimal(5),volume=r.IsDBNull(6)?(decimal?)null:r.GetDecimal(6),receiptId=r.GetString(7)});}}
+        var receipts=new List<object>();foreach(var id in ids.Order())
+        {await using var cmd=new SqlCommand("SELECT PayloadUtf8,ReceivedAt FROM market_h4.LiveReceipts WHERE ReceiptId=@id AND Status='Accepted'",db);cmd.Parameters.AddWithValue("@id",id);await using var r=await cmd.ExecuteReaderAsync();if(!await r.ReadAsync())throw new InvalidDataException("H4 accepted receipt missing.");var bytes=(byte[])r[0];if(Batch.Sha(bytes)!=id)throw new InvalidDataException("H4 live receipt SHA mismatch.");receipts.Add(new{receiptId=id,receivedAt=r.GetDateTimeOffset(1).ToUniversalTime().ToString("O"),payloadText=Encoding.UTF8.GetString(bytes)});}
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);await File.WriteAllTextAsync(file,JsonSerializer.Serialize(new{schemaVersion=1,source="Azure SQL market_h4",batchId=batch,captures,zoneValidationText=validation,zoneValidationSha256=validationSha,live=new{rule=SeasonalityApp.Services.MarketH4Ingestion.Rule,rows=liveRows,receipts}}),new UTF8Encoding(false));
         Console.WriteLine(JsonSerializer.Serialize(new{batchId=batch,captures=captures.Count,hasZoneValidation=validation is not null,readOnly=true,output=file}));
     }
 }

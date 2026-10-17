@@ -76,6 +76,7 @@ jobs:
           SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
         run: |
           node Tools/h4-zone-checks.cjs
+          node Tools/h4-zone-live-checks.cjs
           dotnet build Tools/H4SqlImport/H4SqlImport.csproj -c Release
           dotnet Tools/H4SqlImport/bin/Release/net10.0/H4SqlImport.dll --export-zone-source --config-root . --output artifacts/h4-hosting-source.json
           node Tools/h4-zone-snapshot.cjs overlay artifacts/h4-hosting-source.json artifacts/public-site

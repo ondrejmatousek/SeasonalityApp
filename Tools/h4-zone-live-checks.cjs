@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),crypto=require('node:crypto'),V=require('./h4-zone-live.cjs');
+const t=Date.parse('2026-10-19T01:00Z')/1000,at=Date.parse('2026-10-19T10:00Z');
+assert.ok(V.complete(t,t+14400,at));assert.ok(!V.complete(t,t+28800,at));assert.ok(!V.complete(t,null,at));assert.ok(!V.complete(t,t+14400,t*1000+14400000));
+assert.ok(V.complete(Date.parse('2026-10-16T17:00Z')/1000,null,at));assert.ok(!V.complete(Date.parse('2026-10-15T17:00Z')/1000,null,at));
+assert.ok(V.complete(Date.parse('2026-01-05T02:00Z')/1000,Date.parse('2026-01-05T06:00Z')/1000,Date.parse('2026-01-05T10:00Z')));
+assert.ok(!V.complete(Date.parse('2026-12-25T02:00Z')/1000,Date.parse('2026-12-25T06:00Z')/1000,Date.parse('2026-12-25T10:00Z')));
+const raw={success:true,symbol:'OANDA:EURUSD',interval:'4h',format:'columns',count:2,bars:{t:[t,t+14400],o:[1,1],h:[2,2],l:[.5,.5],c:[1.5,1.5],v:[null,null]}};
+const payloadText=JSON.stringify({schemaVersion:1,fetchedAt:new Date(at).toISOString(),captures:[{capturedAt:new Date(at).toISOString(),rawJson:JSON.stringify(raw)}]}),receiptId=crypto.createHash('sha256').update(payloadText).digest('hex');
+const receipt={receiptId,payloadText,receivedAt:new Date(at).toISOString()},row={receiptId,symbol:raw.symbol,timestamp:t,open:1,high:2,low:.5,close:1.5,volume:null},live={rule:'oanda-h4-boundary-v1',rows:[row],receipts:[receipt]};
+const prices=()=>({EURUSD:{symbol:raw.symbol,bars:[],validatedBarCount:0}});const p=prices();V.merge(p,live);assert.equal(p.EURUSD.bars.length,1);assert.equal(p.EURUSD.liveRule,live.rule);assert.equal(p.EURUSD.latestClose,1.5);
+assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,close:1.6}]}),/mismatch/);
+assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,payloadText:payloadText+' '}]}),/equal/);
+assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,timestamp:t+14400}]}),/boundary/);
+console.log('PASS: live SQL/raw hash and price parity, UTC/DST/holiday/open boundaries, invalid evidence rejected.');
