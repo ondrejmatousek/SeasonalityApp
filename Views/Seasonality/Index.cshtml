@@ -31,6 +31,7 @@
                 <p>BOS = close během impulzu za posledním předem potvrzeným swingem (2 svíčky vlevo i vpravo). Knot nestačí; BOS není podmínkou vzniku zóny. Platnost zóny končí prvním pozdějším zásahem alespoň 25 % její výšky včetně knotu; návraty evidujeme. W1 používá pouze dokončené týdny a pozdější zásahy ověřuje z dokončených D1 svíček.</p>
                 <p>Objem = průměr 1–3 výchozích a bezprostředně předchozích svíček / medián 20 svíček před nimi. FX objem není centralizovaný obchodovaný objem; typ poskytovatele může být tick/proxy. Chybějící objem je neověřený. D1/W1 data nepotvrzují London/NY session, makro zatím nemá datový zdroj.</p>
                 <p>Doložené body: BOS 2, nadprůměrný objem 1, ověřená session 1. Zde session zůstává neověřena. Body nemění existence zón a nejsou procenta; současně ukazujeme pokrytí důkazů. Kontext se vztahuje k datu snapshotu, nikoli historickému vzniku zóny.</p>
+                <p>Setup „Range + likvidita před OB“: původní order block včetně knotů, předchozí range široká 2–12 ATR se dvěma potvrzenými swingovými dotyky u každé hrany, close impulzu za range během nejvýše tří svíček a alespoň dva pozdější potvrzené swingy mezi aktuální cenou a OB. Shluk nesmí být mezitím proražen. Swingy mají dvě svíčky vlevo i vpravo a jsou oddělené alespoň pěti svíčkami. Délka okna a ATR tolerance níže jsou pracovní parametry, nikoli schválená nebo otestovaná pravděpodobnost. Jde o cenovou proxy likvidity, ne změřené čekající příkazy. Setup nepřidává body; při řazení podle kvality má přednost.</p>
             </details>
             <div class="zone-controls">
                 <label>Instrument<input id="tz-search" type="search" placeholder="Např. GBPAUD" /></label>
@@ -39,6 +40,10 @@
                 <label>Typ<select id="tz-kind"><option value="all">Oba typy</option><option value="origin">Původ impulzu</option><option value="base">Konsolidační základna</option></select></label>
                 <label>Směr<select id="tz-side"><option value="all">Oba</option><option value="demand">Demand</option><option value="supply">Supply</option></select></label>
                 <label>BOS<select id="tz-bos"><option value="all">I bez BOS</option><option value="yes">Pouze potvrzený BOS</option></select></label>
+                <label>Strukturní setup<select id="tz-setup"><option value="all">Všechny platné zóny</option><option value="ready">Range + likvidita před OB</option><option value="not_met">Setup nepotvrzen</option></select></label>
+                <label>Range – předchozí svíčky<select id="tz-range-bars"><option>24</option><option>48</option><option selected>96</option></select></label>
+                <label>Tolerance swingů / ATR<select id="tz-liquidity-tolerance"><option value="0.25">0,25</option><option value="0.5" selected>0,5</option><option value="1">1</option></select></label>
+                <label>Max. likvidita od OB / ATR<select id="tz-liquidity-gap"><option>1</option><option selected>2</option><option>3</option></select></label>
                 <label>Max. vzdálenost ceny (%)<input id="tz-max-distance" type="number" min="0" step="any" placeholder="Bez omezení" /></label>
                 <label>Min. body kvality<select id="tz-quality"><option value="0">Bez omezení</option><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
                 <label>Objem zóny<select id="tz-volume"><option value="all">Vše</option><option value="high">Vysoké volume</option><option value="normal">Běžné volume</option><option value="unknown">Neověřeno</option></select></label>
@@ -54,7 +59,7 @@
             </div>
             <p id="tz-status" role="status">Načtení při otevření záložky.</p>
             <section id="tz-detail" class="zone-card" hidden>
-                <h3 id="tz-title"></h3><p id="tz-evidence"></p>
+                <h3 id="tz-title"></h3><p id="tz-evidence"></p><p id="tz-structure"></p>
                 <p>Platnost: první pozdější zásah alespoň 25 % výšky zóny ji trvale vyřadí. Počítá se i knot; u demand od horní hrany dolů, u supply od dolní hrany nahoru.</p>
                 <div class="zone-chart-toolbar"><label>Svíčky<select id="tz-resolution"><option>H4</option><option>D1</option><option>W1</option></select></label><button id="tz-reset" type="button">Reset pohledu</button><label>Zpřesnění<select id="tz-refinement"><option value="parent">Původní HTF zóna</option></select></label></div>
                 <p id="tz-refine-note"></p>
@@ -65,7 +70,7 @@
             </section>
             <p>Vzdálenost ceny (%) = vzdálenost posledního dokončeného close k nejbližší hraně zóny / absolutní hodnota close × 100. Uvnitř zóny je 0 %. Nejde o procento zásahu zóny ani o živou cenu. Filtry se kombinují; chybějící kontext není automaticky potvrzení.</p>
             <div class="zone-table-wrap"><table class="zone-table"><thead><tr><th>Instrument / zóna</th><th>Vznik / cena</th><th>Cena od zóny (%)</th><th>Kvalita / důkazy</th><th>Sezonalita</th><th>Historická COT shoda</th><th></th></tr></thead><tbody id="tz-results"></tbody></table></div>
-            <details><summary>Pokrytí a omezení</summary><div id="tz-coverage"></div><p>Počítáme z dostupných H4/D1/W1 snapshotů, nikoli z živých cen. H4 je pouze pro obchodní zóny: šest dokončených slotů musí přesně odpovídat ověřené NY17 D1 session stejného OANDA zdroje; neúplné sessions nepoužíváme. H4 má samostatné UTC timestampy a potvrzení až na konci svíčky. Sezonalita a COT zůstávají denním kontextem. Zóny nejsou nezávislé obchody. W1 lze zpřesnit existující D1 zónou; automatické vnořené D1 → H4 zpřesnění zatím neprovádíme.</p></details>
+            <details><summary>Pokrytí a omezení</summary><div id="tz-coverage"></div><p>Počítáme z dostupných H4/D1/W1 snapshotů, nikoli z živých cen. H4 je pouze pro obchodní zóny: historický import vyžaduje přesnou shodu šesti slotů s ověřenou NY17 D1 session stejného OANDA zdroje. Případné průběžné přírůstky mají vlastní kontrolu hranic providera, nikoli úplný nezávislý sváteční kalendář; detail obě evidence odlišuje. H4 má samostatné UTC timestampy a potvrzení až na konci svíčky. Sezonalita a COT zůstávají denním kontextem. Zóny nejsou nezávislé obchody. W1 lze zpřesnit existující D1 zónou; automatické vnořené D1 → H4 zpřesnění zatím neprovádíme.</p></details>
         </section>
         <section id="market-seasonality-view" class="market-seasonality-view" role="tabpanel" aria-labelledby="market-tab-seasonality">
         <nav class="seasonality-tabs" aria-label="Seasonality views">

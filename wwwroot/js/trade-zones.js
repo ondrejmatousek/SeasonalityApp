@@ -121,6 +121,46 @@
   if(parent.timeframe!=='W1')return [];
   return dailyZones.filter(z=>z.timeframe==='D1'&&z.type===parent.type&&z.lower>=parent.lower&&z.upper<=parent.upper&&z.baseDate>=parent.baseDate&&z.baseEnd<=parent.baseEnd&&z.confirmedAt<=parent.confirmedAt);
  }
+ // Separate structural setup; never changes physical zone bounds/validity or
+ // turns liquidity inferred from OHLC into measured orders/probabilities.
+ const liquidityDefaults=Object.freeze({rangeBars:96,minBars:24,swing:2,toleranceAtr:.5,maxGapAtr:2,minRangeAtr:2,maxRangeAtr:12});
+ function rangeLiquidity(zone,bars,options={}){
+  const c={...liquidityDefaults,...options},up=zone.type==='demand',none=reason=>({state:'not_met',reason,parameters:c});
+  if(![24,48,96].includes(c.rangeBars)||![.25,.5,1].includes(c.toleranceAtr)||![1,2,3].includes(c.maxGapAtr))throw Error('Neplatné parametry range/likvidity');
+  if(zone.kind!=='origin')return none('Není původ impulzu; pokračovací základna sama nestačí.');
+  if(zone.maxPenetration>=.25)return none('Zóna již byla zasažena alespoň z 25 %.');
+  const start=bars.findIndex(b=>b.date===zone.baseDate),src=bars[start];
+  if(!src||zone.lower!==src.low||zone.upper!==src.high)return none('Tento setup vyžaduje celé high–low výchozí svíčky včetně knotů.');
+  const first=Math.max(0,start-c.rangeBars),history=bars.slice(first,start);
+  if(history.length<c.minBars)return none('Nedostatek předchozích svíček pro range.');
+  const lo=Math.min(...history.map(b=>b.low)),hi=Math.max(...history.map(b=>b.high)),tol=zone.atr*c.toleranceAtr,width=(hi-lo)/zone.atr;
+  if(width<c.minRangeAtr||width>c.maxRangeAtr)return none('Rozpětí předchozího okna není 2–12 ATR.');
+  if(zone.lower<lo-tol||zone.upper>hi+tol)return none('Původ neleží u předchozí range.');
+  function pivots(from,to,high){const out=[];for(let j=Math.max(c.swing,from);j+c.swing<=to;j++){const value=high?bars[j].high:bars[j].low;if(bars.slice(j-c.swing,j+c.swing+1).every((b,k)=>k===c.swing||(high?b.high<value:b.low>value)))out.push({index:j,date:bars[j].date,price:value,knownAt:bars[j+c.swing].endDate||bars[j+c.swing].date});}return out;}
+  const highs=pivots(first,start-1,true).filter(p=>hi-p.price<=tol),lows=pivots(first,start-1,false).filter(p=>p.price-lo<=tol);
+  if(highs.length<2||lows.length<2)return none('Range nemá alespoň dva předem potvrzené swingové dotyky u obou hran.');
+  const range={start:history[0].date,end:history.at(-1).date,lower:lo,upper:hi,highs,lows};
+  let breakout=null;
+  for(let i=start+1;i<=Math.min(start+3,bars.length-1);i++){
+   if(opposing(bars[i],up)||day(bars[i].date)-day(bars[i-1].date)>(zone.timeframe==='H4'?14400000:(zone.timeframe==='W1'?10:7)*ms))break;
+   if(up?bars[i].close>hi:bars[i].close<lo){breakout={index:i,date:bars[i].date,knownAt:bars[i].endDate||bars[i].date,price:bars[i].close};break;}
+  }
+  if(!breakout)return {...none('Impulz nezavřel za celou předchozí range během tří svíček.'),range};
+  const candidates=pivots(breakout.index+1,bars.length-1,!up).filter(p=>up?p.price>zone.upper&&p.price-zone.upper<=c.maxGapAtr*zone.atr:p.price<zone.lower&&zone.lower-p.price<=c.maxGapAtr*zone.atr);
+  let selected=null,swept=false;
+  for(const seed of [...candidates].sort((a,b)=>a.price-b.price)){
+   const group=candidates.filter(p=>p.price>=seed.price&&p.price<=seed.price+tol).sort((a,b)=>a.index-b.index);
+   if(group.length<2||group.at(-1).index-group[0].index<c.swing*2+1)continue;
+   const level=up?Math.min(...group.map(p=>p.price)):Math.max(...group.map(p=>p.price));
+   const taken=bars.slice(group[0].index+1).some(b=>up?b.low<level:b.high>level);
+   if(taken){swept=true;continue;}
+   const last=bars.at(-1).close;if(up?last<=Math.max(...group.map(p=>p.price)):last>=Math.min(...group.map(p=>p.price)))continue;
+   const pool={level,lower:Math.min(...group.map(p=>p.price)),upper:Math.max(...group.map(p=>p.price)),swings:group,knownAt:group.at(-1).knownAt,gapAtr:(up?level-zone.upper:zone.lower-level)/zone.atr};
+   if(!selected||pool.knownAt>selected.knownAt)selected=pool;
+  }
+  if(!selected)return {...none(swept?'Swingový shluk už byl proražen; nečeká na budoucí výběr.':'Chybí alespoň dva potvrzené swingy mezi cenou a order blockem.'),range,breakout};
+  return {state:'ready',reason:'Průraz range zavřením + dosud neproražená swingová likvidita před order blockem.',range,breakout,pool:selected,knownAt:[zone.confirmedAt,breakout.knownAt,selected.knownAt].sort().at(-1),parameters:c};
+ }
  function context(zone,asset,asOf){
   asOf=asOf.slice(0,10); // Seasonal/COT windows remain daily context, including H4 zones.
   const candidates=(asset?.candidates||[]).filter(c=>c.endDate>=asOf&&day(c.startDate)<=day(asOf)+30*ms).sort((a,b)=>Math.max(0,day(a.startDate)-day(asOf))-Math.max(0,day(b.startDate)-day(asOf))||a.startDate.localeCompare(b.startDate)||a.direction.localeCompare(b.direction));
@@ -130,5 +170,5 @@
   const cot=aligned?Htf.cotState(c):'insufficient';
   return {seasonal:sufficient?(aligned?'supports':'against'):'unknown',cot,macro:'unknown',candidate:c};
  }
- return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate,lifecycle,distancePercent};
+ return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate,lifecycle,distancePercent,rangeLiquidity,liquidityDefaults};
 });

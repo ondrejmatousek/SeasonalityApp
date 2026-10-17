@@ -81,6 +81,7 @@ jobs:
           dotnet Tools/H4SqlImport/bin/Release/net10.0/H4SqlImport.dll --export-zone-source --config-root . --output artifacts/h4-hosting-source.json
           node Tools/h4-zone-snapshot.cjs overlay artifacts/h4-hosting-source.json artifacts/public-site
           node Tools/h4-zone-snapshot-checks.cjs artifacts/public-site
+          node Tools/liquidity-setup-checks.cjs artifacts/public-site
       - name: Overlay this morning's report including failed runs (keep last good analytics)
         if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
         env:

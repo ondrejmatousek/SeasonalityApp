@@ -24,6 +24,9 @@
         });
         const series=chart.addSeries(L.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350',borderVisible:false,priceFormat:{type:'price',precision,minMove:10**-precision}});
         const data=bars.map(b=>({time:intraday?b.timestamp:b.date,open:b.open,high:b.high,low:b.low,close:b.close}));
+        const setup=zone.liquiditySetup?.state==='ready'?zone.liquiditySetup:null;
+        for(const key of ['rangeStart','rangeEnd','liquidityLevel'])delete container.dataset[key];
+        container.dataset.structure=setup?'range-liquidity':'none';
         // Future whitespace locates the seasonal interval; never invent future candles.
         const cursor=new Date(day(bars.at(-1).date));let extra=0;
         while(extra<8||cursor.toISOString().slice(0,10)<(candidate?.endDate||bars.at(-1).date)){
@@ -48,12 +51,23 @@
             ctx.save();ctx.beginPath();ctx.rect(0,0,width,height);ctx.clip();
             if(start!==null&&end!==null){ctx.fillStyle=seasonal.fill;ctx.fillRect(start,0,end-start,height);ctx.strokeStyle=seasonal.line;ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=seasonal.text;ctx.font='11px sans-serif';ctx.fillText(seasonal.label,Math.max(6,start+6),height-12);}
             if(upper!==null&&lower!==null){const left=Math.max(0,base??0);ctx.fillStyle=zone.type==='demand'?'#26a69a30':'#ef535025';ctx.strokeStyle=zone.type==='demand'?'#26a69a99':'#ef535099';ctx.fillRect(left,upper,width-left,lower-upper);ctx.strokeRect(left,upper,width-left,lower-upper);ctx.fillStyle='#aebbc3';ctx.font='11px sans-serif';ctx.fillText(`${zone.timeframe} ${zone.type}`,left+6,upper-6);}
+            if(setup){
+                ctx.font='11px sans-serif';
+                const left=x(setup.range.start),right=x(setup.range.end),top=series.priceToCoordinate(setup.range.upper),bottom=series.priceToCoordinate(setup.range.lower);
+                container.dataset.rangeStart=String(left);container.dataset.rangeEnd=String(right);
+                if([left,right,top,bottom].every(v=>v!==null)){ctx.strokeStyle='#b2bec9aa';ctx.fillStyle='#b2bec90b';ctx.setLineDash([6,4]);ctx.fillRect(left,top,right-left,bottom-top);ctx.strokeRect(left,top,right-left,bottom-top);ctx.setLineDash([]);ctx.fillStyle='#c5ced6';ctx.fillText('Předchozí range',Math.max(6,left+6),top-7);}
+                const poolX=x(setup.pool.swings[0].date),poolY=series.priceToCoordinate(setup.pool.level);
+                container.dataset.liquidityLevel=String(setup.pool.level);
+                if(poolX!==null&&poolY!==null){ctx.strokeStyle='#e8b85d';ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(poolX,poolY);ctx.lineTo(width,poolY);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#e8b85d';ctx.fillText(`${zone.type==='demand'?'Swing lows':'Swing highs'} · likvidita (proxy)`,Math.max(6,poolX+6),poolY-7);}
+                for(const p of setup.pool.swings){const xx=x(p.date),yy=series.priceToCoordinate(p.price);if(xx!==null&&yy!==null){ctx.fillStyle='#e8b85d';ctx.beginPath();ctx.arc(xx,yy,3,0,Math.PI*2);ctx.fill();}}
+                const bx=x(setup.breakout.date),by=series.priceToCoordinate(setup.breakout.price);if(bx!==null&&by!==null){ctx.strokeStyle='#d5e7ef';ctx.beginPath();ctx.arc(bx,by,5,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#d5e7ef';ctx.fillText('Průraz close',bx+7,by-8);}
+            }
             ctx.restore();
         });}};
         series.attachPrimitive({paneViews:()=>[{zOrder:()=> 'bottom',renderer:()=>renderer}]});
         function recordRange(){const r=chart.timeScale().getVisibleLogicalRange();if(r){container.dataset.visibleFrom=r.from;container.dataset.visibleTo=r.to;}}
         chart.timeScale().subscribeVisibleLogicalRangeChange(recordRange);
-        const reset=()=>{chart.priceScale('right').applyOptions({autoScale:true});chart.timeScale().setVisibleLogicalRange({from:Math.max(0,bars.length-(resolution==='W1'?65:130)),to:data.length-1});tip.hidden=true;};
+        const reset=()=>{chart.priceScale('right').applyOptions({autoScale:true});const rangeIndex=setup?bars.findIndex(b=>b.date>=setup.range.start):-1;chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rangeIndex>=0?rangeIndex-5:bars.length-(resolution==='W1'?65:130)),to:data.length-1});tip.hidden=true;};
         const zoom=factor=>{const r=chart.timeScale().getVisibleLogicalRange();if(r){const mid=(r.from+r.to)/2,half=Math.max(6,(r.to-r.from)*factor/2);chart.timeScale().setVisibleLogicalRange({from:mid-half,to:mid+half});}};
         chart.subscribeCrosshairMove(p=>{
             if(!p.point||!p.time||p.point.x<0||p.point.y<0){tip.hidden=true;return;}

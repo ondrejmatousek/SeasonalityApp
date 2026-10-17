@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),Z=require('../wwwroot/js/trade-zones');
+const date=i=>new Date(Date.UTC(2026,0,1+i)).toISOString().slice(0,10);
+const bars=Array.from({length:45},(_,i)=>({date:date(i),open:108,high:116,low:105,close:110,volume:100}));
+for(let i=0;i<30;i++)bars[i]={date:date(i),open:100,high:[5,15].includes(i)?110:106,low:[9,23].includes(i)?90:94,close:100,volume:100};
+bars[30]={date:date(30),open:100.8,high:101,low:99,close:100.2,volume:100};bars[31]={date:date(31),open:100.2,high:115,low:100,close:114,volume:100};bars[35].low=102;bars[41].low=102.2;
+const zone={kind:'origin',timeframe:'D1',type:'demand',baseDate:date(30),confirmedAt:date(31),lower:99,upper:101,atr:2,maxPenetration:0};
+const before=JSON.stringify({zone,bars}),ready=Z.rangeLiquidity(zone,bars);
+assert.equal(ready.state,'ready');assert.equal(ready.range.upper,110);assert.equal(ready.range.lower,90);assert.equal(ready.breakout.date,date(31));assert.equal(ready.pool.level,102);assert.equal(ready.knownAt,date(43));assert.equal(ready.pool.swings.length,2);
+assert.equal(Z.rangeLiquidity(zone,bars.slice(0,43)).state,'not_met','Second swing not known before two right bars complete');
+assert.equal(Z.rangeLiquidity({...zone,kind:'base'},bars).state,'not_met');
+assert.equal(Z.rangeLiquidity({...zone,maxPenetration:.25},bars).state,'not_met','25 percent invalidation always wins');
+assert.equal(Z.rangeLiquidity({...zone,lower:100.2},bars).state,'not_met','Whole wick bounds required');
+const wick=bars.map((b,i)=>i===31?{...b,close:109}:b);assert.equal(Z.rangeLiquidity(zone,wick).state,'not_met','Wick through range is not close breakout');
+const swept=bars.map((b,i)=>i===44?{...b,low:101.9}:b);assert.equal(Z.rangeLiquidity(zone,swept).state,'not_met','Already swept pool is not future liquidity');
+const mirror=b=>({...b,open:200-b.open,high:200-b.low,low:200-b.high,close:200-b.close});
+const supply=Z.rangeLiquidity({...zone,type:'supply',lower:99,upper:101},bars.map(mirror));assert.equal(supply.state,'ready');assert.equal(supply.pool.level,98);assert.equal(supply.knownAt,date(43));
+assert.equal(Z.rangeLiquidity(zone,bars,{maxGapAtr:1}).state,'ready');assert.throws(()=>Z.rangeLiquidity(zone,bars,{rangeBars:100}),/Neplatné/);
+assert.equal(JSON.stringify({zone,bars}),before,'No mutation of prices or zone evidence');
+const root=process.argv[2]||'artifacts/h4-zones-preview',m=JSON.parse(fs.readFileSync(root+'/data/manifest.json')),s=JSON.parse(fs.readFileSync(root+m.zonePrices.path));let matches=0;
+for(const p of Object.values(s.prices))if(p.status==='ready')for(const tf of ['D1','W1',...(p.h4?['H4']:[])]){const price=tf==='H4'?p.h4:p,at=tf==='H4'?price.asOfUtc:s.asOf,bars=Z.sourceBars(price,tf,at);for(const zone of Z.detect(price,tf,at)){const setup=Z.rangeLiquidity(zone,bars);if(setup.state==='ready'){matches++;assert.ok(setup.knownAt<=at);assert.ok(zone.maxPenetration<.25);assert.ok(setup.pool.swings.every(p=>p.date>setup.breakout.date));}}}
+const gbp=s.prices.GBPCAD?.h4,source=gbp?.bars.find(b=>b.date==='2026-09-25T17:00:00.000Z');if(source)assert.equal(Z.lifecycle(gbp.bars,'demand',source.low,source.high,'2026-09-28T09:00:00.000Z',true).invalid,true,'Screenshot OB remains excluded with full wicks while present in rolling history');
+console.log(JSON.stringify({passed:true,setupMatches:matches,checks:'range frozen before origin, close-only break, confirmed later swings, unswept pool, mirrored supply, immutable inputs, 25% wick rule'}));
