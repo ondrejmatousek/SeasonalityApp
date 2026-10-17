@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),dates=require('../wwwroot/js/market-candles.js');
+const price={provider:'NYMEX',symbol:'NYMEX:CL1!',latestDate:'2026-10-15'},bar={date:'2026-10-15',timestamp:1792101600,open:96.14,high:99.34,low:95.29,close:99.02};
+const before=JSON.stringify({price,bar});
+assert.equal(dates.dateInfo(price,bar).sessionDate,'2026-10-16');
+assert.match(dates.dateInfo(price,bar).sessionDateBasis,/sváteční výjimky/);
+assert.equal(dates.dateInfo(price,bar).barDate,'2026-10-15');
+assert.equal(dates.dateInfo(price,{date:'2026-01-05',timestamp:Date.parse('2026-01-05T23:00:00Z')/1000}).sessionDate,'2026-01-06','DST-aware 17:00 Chicago in winter');
+assert.equal(dates.dateInfo(price,{date:'2026-10-18',timestamp:Date.parse('2026-10-18T22:00:00Z')/1000}).sessionDate,'2026-10-19','Sunday start is Monday session');
+for(const other of [{...price,provider:'Yahoo'},{...price,symbol:'NYMEX:NG1!'}])assert.equal(dates.dateInfo(other,bar).sessionDate,null,'Never infer another instrument');
+for(const other of [{...bar,date:'2026-10-16'},{...bar,timestamp:undefined},{...bar,timestamp:bar.timestamp+3600}])assert.equal(dates.dateInfo(price,other).sessionDate,null,'No guessed missing/mismatched/exceptional timestamps');
+assert.equal(dates.dateInfo(price,{date:'2026-10-16',timestamp:Date.parse('2026-10-16T22:00:00Z')/1000}).sessionDate,null,'Friday evening is not a normal CL session start');
+assert.match(dates.latestDateLabel({...price,bars:[bar]}),/datum svíčky 2026-10-15.*session 2026-10-16/);
+assert.equal(JSON.stringify({price,bar}),before,'Presentation metadata cannot mutate prices or date keys');
+console.log('PASS: WTI UTC candle start vs derived session day, DST, Sunday, unknown/exceptional dates and immutable analytics keys.');

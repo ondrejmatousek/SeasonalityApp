@@ -57,6 +57,7 @@
             if(!p.point||!p.time||p.point.x<0||p.point.y<0){tip.hidden=true;return;}
             const b=p.seriesData.get(series),value=series.coordinateToPrice(p.point.y);
             tip.textContent=`${fmt(iso(p.time))} · cena ${number(value)}${b?.open!==undefined?`\nO ${number(b.open)} · H ${number(b.high)}\nL ${number(b.low)} · C ${number(b.close)}`:'\nBez svíčky · budoucí sezonní období'}`;
+            if(resolution!=='W1'&&b?.open!==undefined){const original=price.bars.find(bar=>bar.date===iso(p.time)),dates=window.MarketCandles.dateInfo(price,original);if(dates.sessionDate)tip.textContent+=`\nDen session ${dates.sessionDate} (odvozený)\nZačátek UTC ${dates.providerTimestamp}`;}
             tip.hidden=false;
             const box=container.getBoundingClientRect(),pos=window.MarketChartUi.tooltipPosition(p.point.x,p.point.y,tip.offsetWidth,tip.offsetHeight,box.width,box.height);
             tip.style.left=pos.left+'px';tip.style.top=pos.top+'px';

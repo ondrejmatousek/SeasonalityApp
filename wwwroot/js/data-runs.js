@@ -39,6 +39,8 @@
   if(h.mode==='safe-rehearsal')detail.append(el('p','Testovací běh — nejde o produkční aktualizaci.','runs-warning'));
   const meta=el('dl',null,'runs-meta');
   for(const [k,v]of [['Začátek',time(h.runStartedAt)],['Dokončení',time(h.runFinishedAt)],['Trvání',h.durationSeconds!=null?h.durationSeconds+' s':'—'],['Režim',h.mode||'Starší report'],['Screener kandidáti',h.screenerRows??'—'],['Obchodní zóny',h.zoneCandidates??'—'],['EURUSD / poslední bar',h.instrumentChecks?.find(x=>x.symbol==='EURUSD')?.lastBarDate||'—'],['AAPL / poslední bar',h.instrumentChecks?.find(x=>x.symbol==='AAPL')?.lastBarDate||'—']])meta.append(el('dt',k),el('dd',v));detail.append(meta);
+  const wti=h.instrumentChecks?.find(x=>x.symbol==='WTI');
+  if(wti){meta.append(el('dt','WTI / datum svíčky (UTC začátek)'),el('dd',wti.lastBarDate||'—'),el('dt','WTI / den session (odvozený)'),el('dd',wti.lastSessionDate||'Ve starším reportu nedoloženo'));if(wti.sessionDateBasis)detail.append(el('p','WTI: '+wti.sessionDateBasis));}
   const list=el('ol',null,'run-steps');
   for(const step of steps(h,manifest)){const item=el('li'),line=el('div',null,'run-step-title');line.append(el('strong',step.label),badge(step.status));item.append(line);if(step.detail)item.append(el('p',step.detail));list.append(item);}detail.append(list);
   for(const [title,items,cls]of [['Chyby',h.errors,'runs-error'],['Upozornění',h.warnings,'runs-warning']])if(items?.length){detail.append(el('h3',title));const ul=el('ul',null,cls);for(const msg of items)ul.append(el('li',msg));detail.append(ul);}

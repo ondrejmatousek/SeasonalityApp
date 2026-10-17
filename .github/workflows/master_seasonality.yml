@@ -44,6 +44,11 @@ jobs:
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
+      - name: Completed Yahoo sessions and WTI display date regressions
+        run: |
+          dotnet run --project Tools/PriceImportChecks/PriceImportChecks.csproj -c Release
+          node Tools/market-date-checks.cjs
+
       - name: Isolated HTTP probe regression (no SQL or external requests)
         run: node Tools/market-daily-probe-checks.cjs
 

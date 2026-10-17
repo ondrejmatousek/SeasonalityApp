@@ -17,6 +17,8 @@ const server=http.createServer((req,res)=>{
  const snapshot=await page.evaluate(async()=>window.StaticMarketData.opportunities());assert.ok(snapshot.assets.filter(a=>a.candidates.length).every(a=>a.candidates.every(c=>c.scoringV1ByHistory&&c.scoringV2)),'Existing automatic V1/V2 scores remain built server-side');
  await page.goto('http://127.0.0.1:'+server.address().port+'/runs/');
  await page.locator('.run-day').first().waitFor();
+ assert.match(await page.locator('#runs-detail').textContent(),/WTI \/ datum svíčky \(UTC začátek\)/);
+ assert.match(await page.locator('#runs-detail').textContent(),/WTI \/ den session \(odvozený\)/);
  assert.ok(await page.locator('.run-steps li').count()>=10);
  assert.equal(await page.locator('#daily-health-toggle').count(),0);
  assert.equal(await page.locator('.app-navbar .nav-link').count(),0,'No duplicate links in the top-right header');

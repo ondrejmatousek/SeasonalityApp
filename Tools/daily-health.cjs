@@ -43,6 +43,7 @@ function checkOutputs(dir,h,now=new Date()){
   const a=m.assets.find(a=>a.key===symbol),s=a?.priceSource||{},p=htf.prices[symbol],research=['XAUUSD','WTI'].includes(symbol);
   const error=!a||s.provider!==provider||(providerSymbol&&s.providerSymbol!==providerSymbol)||!a.prices.count||s.status==='unavailable';
   h.instrumentChecks.push({symbol,historicalSource:s.historicalSource||s.sourceIdentity,dailySource:s.dailySource,lastBarDate:a?.prices.lastDate||null,
+   ...(()=>{if(symbol!=='WTI'||!p)return {};const d=require('../wwwroot/js/market-candles.js').dateInfo(p,p.bars?.find(b=>b.date===p.latestDate));return {lastSessionDate:d.sessionDate,sessionDateBasis:d.sessionDateBasis,lastBarTimestamp:d.providerTimestamp};})(),
    seasonalitySource:s.id||s.sourceIdentity,htfSource:p?.priceSeriesId||p?.provider||null,provider:s.provider,providerSymbol:s.providerSymbol,status:error?'failed':research?'research/review':'ok'});
   if(error)(research?h.warnings:h.errors).push('Source routing failed '+symbol);
  }

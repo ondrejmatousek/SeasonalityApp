@@ -6,6 +6,8 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  const page=await browser.newPage({viewport:{width:1600,height:1000}});page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/');
  await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();await page.locator('#tz-results button').first().waitFor();assert.ok(await page.locator('#tz-results button').count()>0);
  assert.ok(await page.locator('#tz-chart').getAttribute('data-candle-count'));assert.match(await page.locator('#tz-status').textContent(),/Session a makro neověřeny/);
+ const wtiDate=await page.evaluate(async()=>{const s=await StaticMarketData.zonePrices(),p=s.prices.WTI;return MarketCandles.dateInfo(p,p.bars.at(-1));});
+ if(wtiDate.sessionDate){assert.match(await page.locator('#tz-coverage').textContent(),new RegExp('WTI:.*datum svíčky '+wtiDate.barDate+'.*den session '+wtiDate.sessionDate),'Real snapshot coverage distinguishes UTC start and derived session day');}
  for(const row of await page.locator('#tz-results tr').allTextContents())assert.ok(!row.includes('Research / review'),'Core/research separation');
  const rowKeys=await page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>r.dataset.symbol+'|'+r.dataset.zoneId));assert.equal(new Set(rowKeys).size,rowKeys.length,'Unique rendered zones');
  const datasets=()=>page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>({...r.dataset})));

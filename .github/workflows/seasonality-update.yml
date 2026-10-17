@@ -119,6 +119,8 @@ jobs:
           dotnet build SeasonalityApp.slnx --configuration Release
           node Tools/market-daily-sql-publication-checks.cjs
           node Tools/morning-health-checks.cjs
+          node Tools/market-date-checks.cjs
+          dotnet run --project Tools/PriceImportChecks/PriceImportChecks.csproj -c Release
       - name: Select latest accepted SQL generation and skip committed duplicates
         id: gate
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --export-market-inbox
