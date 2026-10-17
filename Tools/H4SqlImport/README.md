@@ -10,6 +10,22 @@ decimal OHLCV, provider/symbol/timeframe/Unix-start identity). Rows stay in
 not establish historical calendar completeness or provider-finality. Nothing is
 automatically activated for zone detection, seasonality or COT.
 
+Zone-only eligibility is now recorded SEPARATELY in `market_h4.ZoneValidation`.
+The trusted `Tools/h4-zone-snapshot.cjs` validator requires exactly six elapsed
+4-hour NY17 slots matching the accepted same-provider D1 OHLC exactly. Missing
+or incomplete sessions are excluded, never filled. The raw storage status stays
+pending for the full unfiltered batch; zone consumers must require the separate
+SQL eligibility evidence and independently revalidate it against immutable D1
+seed/overlays. This does not claim a complete exchange holiday calendar.
+
+`--record-zone-validation --input <validator-report> --config-root <repo>` stores
+an idempotent, hash-checked eligibility report (no raw price edits). Conflicting
+reports cannot overwrite previous evidence. `--export-zone-source --output
+<new artifacts file> --config-root <repo>` reads SQL captures plus eligibility
+evidence, verifies stored hashes and exports private build input. The static
+hosting pipeline uses this read-only operation and overlays H4 ONLY onto the
+zone snapshot; no raw capture texts are copied to public output.
+
 Checks: hashes, all 28 registered FX identities, full column counts, monotonic
 timestamps, elapsed H4, OHLC bounds, no decimal rounding. No gap filling. Import
 uses a single serializable transaction and application lock; identical bars are

@@ -25,7 +25,7 @@ try
         cs=cfg.RootElement.GetProperty("ConnectionStrings").GetProperty("DefaultConnection").GetString();
     }
     var connection=new SqlConnectionStringBuilder(cs) {ConnectTimeout=120};
-    if(connection.InitialCatalog!="free-sql-db-2426953" || !connection.DataSource.Equals("tcp:seasonality.database.windows.net,1433",StringComparison.OrdinalIgnoreCase))
+    if(connection.InitialCatalog!="free-sql-db-2426953" || !new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(connection.DataSource,StringComparer.OrdinalIgnoreCase))
         throw new InvalidOperationException("Refusing unexpected production SQL target.");
     Console.WriteLine(JsonSerializer.Serialize(new{configuredDatabase=connection.InitialCatalog,authentication=connection.Authentication.ToString(),integratedSecurity=connection.IntegratedSecurity,sqlUserConfigured=!string.IsNullOrWhiteSpace(connection.UserID),passwordConfigured=!string.IsNullOrWhiteSpace(connection.Password)}));
     await using var db=new SqlConnection(connection.ConnectionString);await db.OpenAsync();
@@ -36,6 +36,8 @@ try
         Console.WriteLine(JsonSerializer.Serialize(new{database=reader.GetString(0),updateability=reader.GetString(1),d1TablePresent=!reader.IsDBNull(2),h4TablePresent=!reader.IsDBNull(3)}));
     }
     if(args.Contains("--inspect"))return;
+    if(args.Contains("--export-zone-source")){await ZoneEvidence.Export(db,Arg("--output"));return;}
+    if(args.Contains("--record-zone-validation")){await ZoneEvidence.Record(db,File.ReadAllBytes(Arg("--input")));return;}
     var source=Batch.Read(Arg("--input"),configRoot);
     Console.WriteLine(JsonSerializer.Serialize(new{source.BatchId,source.SymbolCount,source.BarCount,validation="Structure and hash verified; session/calendar acceptance PENDING",productionChanged=false}));
     if(args.Contains("--verify")){Console.WriteLine(JsonSerializer.Serialize(await Importer.Verify(db,source)));return;}
@@ -52,6 +54,54 @@ catch(Exception ex)
 
 sealed record Capture(string Symbol,byte[] Raw,string Hash,DateTimeOffset At,int Count);
 sealed record Row(string Symbol,long Start,decimal Open,decimal High,decimal Low,decimal Close,decimal? Volume);
+static class ZoneEvidence
+{
+    public static async Task Record(SqlConnection db,byte[] bytes)
+    {
+        using var json=JsonDocument.Parse(bytes);var report=json.RootElement;
+        if(report.GetProperty("schemaVersion").GetInt32()!=1||report.GetProperty("ruleVersion").GetString()!="h4-d1-parity-v1")throw new InvalidDataException("Unknown H4 validation rule.");
+        var batch=report.GetProperty("batchId").GetString()!;var hash=Batch.Sha(bytes);var accepted=report.GetProperty("accepted").GetInt32();var rejected=report.GetProperty("rejected").GetInt32();
+        using var tx=db.BeginTransaction(IsolationLevel.Serializable);
+        async Task<object?> Scalar(string sql,params SqlParameter[] parameters){await using var cmd=new SqlCommand(sql,db,tx){CommandTimeout=120};cmd.Parameters.AddRange(parameters);return await cmd.ExecuteScalarAsync();}
+        SqlParameter Id()=>new("@id",SqlDbType.Char,64){Value=batch};
+        try
+        {
+            var count=Convert.ToInt32(await Scalar("SELECT Bars FROM market_h4.Batches WHERE BatchId=@id;",Id()));
+            if(accepted<=0||rejected<0||accepted+rejected!=count)throw new InvalidDataException("Zone validation/batch counts mismatch.");
+            var symbols=new HashSet<string>(StringComparer.Ordinal);var a=0;var r=0;
+            foreach(var item in report.GetProperty("instruments").EnumerateArray())
+            {
+                var symbol=item.GetProperty("symbol").GetString()!;if(!symbols.Add(symbol))throw new InvalidDataException("Repeated eligibility identity.");
+                var n=item.GetProperty("accepted").GetInt32()+item.GetProperty("rejected").GetInt32();
+                var found=Convert.ToInt32(await Scalar("SELECT COUNT(*) FROM market_h4.Captures WHERE BatchId=@id AND Symbol=@s AND RawSha256=@h AND BarCount=@n;",Id(),new("@s",SqlDbType.VarChar,32){Value=symbol},new("@h",SqlDbType.Char,64){Value=item.GetProperty("rawSha256").GetString()!},new("@n",SqlDbType.Int){Value=n}));
+                if(found!=1)throw new InvalidDataException("Zone validation raw evidence mismatch.");a+=item.GetProperty("accepted").GetInt32();r+=item.GetProperty("rejected").GetInt32();
+            }
+            if(a!=accepted||r!=rejected||symbols.Count!=Convert.ToInt32(await Scalar("SELECT Symbols FROM market_h4.Batches WHERE BatchId=@id;",Id())))throw new InvalidDataException("Incomplete eligibility report.");
+            await Scalar("IF OBJECT_ID('market_h4.ZoneValidation','U') IS NULL CREATE TABLE market_h4.ZoneValidation(BatchId char(64) NOT NULL REFERENCES market_h4.Batches(BatchId),RuleVersion varchar(32) NOT NULL CHECK(RuleVersion='h4-d1-parity-v1'),ReportUtf8 varbinary(max) NOT NULL,ReportSha256 char(64) NOT NULL,AcceptedBars int NOT NULL,RejectedBars int NOT NULL,ValidatedAt datetimeoffset(7) NOT NULL DEFAULT SYSDATETIMEOFFSET(),PRIMARY KEY(BatchId,RuleVersion));");
+            var previous=await Scalar("SELECT ReportSha256 FROM market_h4.ZoneValidation WHERE BatchId=@id AND RuleVersion='h4-d1-parity-v1';",Id());
+            if(previous is string existing&&existing!=hash)throw new InvalidDataException("Existing validation differs; no overwrite permitted.");
+            if(previous is not string)await Scalar("INSERT market_h4.ZoneValidation(BatchId,RuleVersion,ReportUtf8,ReportSha256,AcceptedBars,RejectedBars) VALUES(@id,'h4-d1-parity-v1',@report,@hash,@a,@r);",Id(),new("@report",SqlDbType.VarBinary,-1){Value=bytes},new("@hash",SqlDbType.Char,64){Value=hash},new("@a",SqlDbType.Int){Value=accepted},new("@r",SqlDbType.Int){Value=rejected});
+            if(await Scalar("SELECT HASHBYTES('SHA2_256',ReportUtf8) FROM market_h4.ZoneValidation WHERE BatchId=@id AND RuleVersion='h4-d1-parity-v1';",Id()) is not byte[] saved||Convert.ToHexString(saved).ToLowerInvariant()!=hash)throw new InvalidDataException("Eligibility SQL hash readback mismatch.");
+            tx.Commit();Console.WriteLine(JsonSerializer.Serialize(new{batchId=batch,accepted,rejected,validationSha256=hash,persisted=true,d1Changed=false}));
+        }catch{try{tx.Rollback();}catch{}throw;}
+    }
+    public static async Task Export(SqlConnection db,string output)
+    {
+        var file=Path.GetFullPath(output);if(!file.StartsWith(Path.GetFullPath("artifacts")+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||File.Exists(file))throw new InvalidOperationException("Use a NEW private artifacts output file.");
+        string batch;await using(var head=new SqlCommand("SELECT TOP(1) BatchId FROM market_h4.Batches ORDER BY ImportedAt DESC,BatchId;",db))batch=(string?)await head.ExecuteScalarAsync()??throw new InvalidDataException("No H4 SQL backfill.");
+        var captures=new List<object>();await using(var cmd=new SqlCommand("SELECT Symbol,RawSha256,RawUtf8,CapturedAt,BarCount FROM market_h4.Captures WHERE BatchId=@id ORDER BY Symbol;",db){CommandTimeout=180})
+        {
+            cmd.Parameters.Add("@id",SqlDbType.Char,64).Value=batch;await using var r=await cmd.ExecuteReaderAsync();
+            while(await r.ReadAsync()){var bytes=(byte[])r[2];if(Batch.Sha(bytes)!=r.GetString(1))throw new InvalidDataException("Stored H4 capture SHA mismatch.");captures.Add(new{symbol=r.GetString(0),rawSha256=r.GetString(1),rawText=Encoding.UTF8.GetString(bytes),capturedAt=r.GetDateTimeOffset(3).ToUniversalTime().ToString("O"),count=r.GetInt32(4)});}
+        }
+        if(captures.Count!=28)throw new InvalidDataException("H4 SQL source is incomplete.");
+        string? validation=null,validationSha=null;
+        await using(var cmd=new SqlCommand("IF OBJECT_ID('market_h4.ZoneValidation','U') IS NOT NULL SELECT ReportUtf8,ReportSha256 FROM market_h4.ZoneValidation WHERE BatchId=@id AND RuleVersion='h4-d1-parity-v1';",db))
+        {cmd.Parameters.Add("@id",SqlDbType.Char,64).Value=batch;await using var r=await cmd.ExecuteReaderAsync();if(await r.ReadAsync()){var bytes=(byte[])r[0];validationSha=r.GetString(1);if(Batch.Sha(bytes)!=validationSha)throw new InvalidDataException("H4 eligibility SHA mismatch.");validation=Encoding.UTF8.GetString(bytes);}}
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);await File.WriteAllTextAsync(file,JsonSerializer.Serialize(new{schemaVersion=1,source="Azure SQL market_h4",batchId=batch,captures,zoneValidationText=validation,zoneValidationSha256=validationSha}),new UTF8Encoding(false));
+        Console.WriteLine(JsonSerializer.Serialize(new{batchId=batch,captures=captures.Count,hasZoneValidation=validation is not null,readOnly=true,output=file}));
+    }
+}
 sealed record Batch(string BatchId,List<Capture> Captures,List<Row> Rows)
 {
     public int SymbolCount=>Captures.Count; public int BarCount=>Rows.Count;
@@ -200,12 +250,14 @@ static class Importer
             var raw=Encoding.UTF8.GetBytes("{\"test\":true}");var c=new Capture("OANDA:EURUSD",raw,Batch.Sha(raw),DateTimeOffset.UtcNow,1);
             var b=new Batch(new string('a',64),[c],[new(c.Symbol,1792170000,1.12205m,1.12404m,1.1217m,1.12387m,16982)]);
             await Run(db,b);await Run(db,b);await Verify(db,b);
+            var eligibility=JsonSerializer.SerializeToUtf8Bytes(new{schemaVersion=1,ruleVersion="h4-d1-parity-v1",batchId=b.BatchId,accepted=1,rejected=0,instruments=new[]{new{symbol=c.Symbol,rawSha256=c.Hash,accepted=1,rejected=0}}});
+            await ZoneEvidence.Record(db,eligibility);await ZoneEvidence.Record(db,eligibility);
             var conflict=b with{Rows=[b.Rows[0] with{Close=1.12388m}]};
             try{await Run(db,conflict);throw new Exception("Conflict accepted");}catch(InvalidDataException){}
             var rollback=b with{BatchId=new string('b',64)};
             try{await Run(db,rollback,true);throw new Exception("Rollback not exercised");}catch(InvalidOperationException){}
-            await using var check=new SqlCommand("SELECT (SELECT COUNT(*) FROM market_h4.Bars),(SELECT COUNT(*) FROM market_h4.Batches),(SELECT COUNT(*) FROM market_h4.Captures);",db);
-            await using var r=await check.ExecuteReaderAsync();await r.ReadAsync();if(r.GetInt32(0)!=1||r.GetInt32(1)!=1||r.GetInt32(2)!=1)throw new Exception("Idempotency/rollback failed");
+            await using var check=new SqlCommand("SELECT (SELECT COUNT(*) FROM market_h4.Bars),(SELECT COUNT(*) FROM market_h4.Batches),(SELECT COUNT(*) FROM market_h4.Captures),(SELECT COUNT(*) FROM market_h4.ZoneValidation);",db);
+            await using var r=await check.ExecuteReaderAsync();await r.ReadAsync();if(r.GetInt32(0)!=1||r.GetInt32(1)!=1||r.GetInt32(2)!=1||r.GetInt32(3)!=1)throw new Exception("Idempotency/rollback failed");
             Console.WriteLine("PASS: real isolated SQL schema, bulk insert, exact decimal/raw SHA readback, idempotency, conflict rejection and rollback. No production data used.");
         }
         finally

@@ -1,7 +1,7 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./market-candles.js'));else root.TradeZones=factory(root.MarketCandles);})(typeof globalThis==='object'?globalThis:this,function(Htf){
  'use strict';
  const defaults=Object.freeze({version:'trade-zones-v2-experimental',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
- const day=s=>Date.parse(s+'T00:00:00Z'),ms=86400000;
+ const day=s=>Date.parse(s.includes('T')?s:s+'T00:00:00Z'),ms=86400000;
  function distancePercent(close,lower,upper){
   return [close,lower,upper].every(Number.isFinite)&&close!==0&&lower<upper
    ?Math.max(lower-close,close-upper,0)/Math.abs(close)*100:null;
@@ -27,6 +27,11 @@
   if(!Number.isInteger(c.departureBars)||!Number.isInteger(c.volumeWindow)||!['full','body-wick'].includes(c.bounds))throw Error('Neplatné hranice nebo počet svíček');return c;
  }
  function sourceBars(price,tf,asOf){
+  if(tf==='H4'){
+   if(price.timeframe!=='H4'||price.validation!=='h4-d1-parity-v1')throw Error('H4 nemá ověřenou D1/session návaznost');
+   const raw=(price.bars||[]).filter(b=>Htf.validH4(b)&&day(b.endDate)<=day(asOf)).sort((a,b)=>a.timestamp-b.timestamp);
+   if(new Set(raw.map(b=>b.timestamp)).size!==raw.length)throw Error('Duplicitní H4 timestamp');return raw;
+  }
   const raw=(price.bars||[]).filter(b=>b.date<asOf&&Htf.valid(b)).sort((a,b)=>a.date.localeCompare(b.date));
   if(new Set(raw.map(b=>b.date)).size!==raw.length)throw Error('Duplicitní OHLC datum');
   if(tf==='D1')return raw;
@@ -50,12 +55,12 @@
    if(bars.slice(j-c.swing,j+c.swing+1).every((b,k)=>k===c.swing||(up?b.high<v:b.low>v)))return {date:bars[j].date,price:v};
   }return null;
  }
- function lifecycle(bars,type,lower,upper,confirmedAt){
+ function lifecycle(bars,type,lower,upper,confirmedAt,includeBoundary=false){
   const height=upper-lower,up=type==='demand',threshold=up?upper-height*.25:lower+height*.25;
   const epsilon=Number.EPSILON*Math.max(1,Math.abs(lower),Math.abs(upper))*8;
   let visits=0,inside=false,maxPenetration=0;
   for(const b of bars){
-   if(b.date<=confirmedAt)continue; // Formation/confirmation candles are not a later retest.
+   if(includeBoundary?b.date<confirmedAt:b.date<=confirmedAt)continue; // H4 next bar starts exactly at confirmation close.
    const penetration=Math.max(0,Math.min(1,(up?upper-b.low:b.high-lower)/height));
    maxPenetration=Math.max(maxPenetration,penetration);
    const touch=b.high>=lower&&b.low<=upper;if(touch&&!inside)visits++;inside=touch;
@@ -65,7 +70,8 @@
   return {invalid:false,invalidatedAt:null,visits,maxPenetration};
  }
  function detect(price,tf,asOf,options={}){
-  const c=settings(options),bars=sourceBars(price,tf,asOf),out=[],seen=new Set(),daily=(price.bars||[]).filter(b=>b.date<asOf&&Htf.valid(b)).sort((a,b)=>a.date.localeCompare(b.date));
+  const c=settings(options),bars=sourceBars(price,tf,asOf),out=[],seen=new Set(),daily=tf==='H4'?bars:(price.bars||[]).filter(b=>b.date<asOf&&Htf.valid(b)).sort((a,b)=>a.date.localeCompare(b.date));
+  const latestClose=tf==='H4'?bars.at(-1)?.close:price.latestClose;
   for(let start=Math.max(c.atr,c.volumeLookback);start<bars.length-1;start++){
    const prior=bars.slice(start-c.atr,start),atr=prior.reduce((n,b,k)=>{const previous=bars[start-c.atr+k-1]?.close??b.open;return n+Math.max(b.high-b.low,Math.abs(b.high-previous),Math.abs(b.low-previous));},0)/c.atr;
    if(!(atr>0))continue;
@@ -78,7 +84,7 @@
      const first=bars[start+count];if(up?first.close<=first.open:first.close>=first.open)continue;
      for(let k=0;k<c.departureBars&&start+count+k<bars.length;k++){
       const index=start+count+k,departure=bars.slice(start+count,index+1),segment=bars.slice(start,index+1);
-      if(segment.some((b,i)=>i&&day(b.date)-day(segment[i-1].date)>(tf==='W1'?10:7)*ms))break;
+      if(segment.some((b,i)=>i&&day(b.date)-day(segment[i-1].date)>(tf==='H4'?4*3600000:(tf==='W1'?10:7)*ms)))break;
       if(departure.some(b=>up?b.close<lo:b.close>hi))break;
       const b=bars[index],displacement=(up?b.close-hi:lo-b.close)/atr;if(displacement<c.impulseAtr)continue;
       const knownAt=b.endDate||b.date;if(day(asOf)-day(knownAt)>c.maxAgeDays*ms)break;
@@ -87,11 +93,17 @@
       if(!(upper>lower))break;
       const swing=swingAt(bars,start,up,c),applicable=swing&&(up?swing.price>hi:swing.price<lo);
       const bos=applicable?{state:departure.some(d=>up?d.close>swing.price:d.close<swing.price)?'yes':'no',...swing}:{state:'unknown',note:'Před základnou není potvrzený relevantní swing před směrem pohybu.'};
-      const life=lifecycle(daily,up?'demand':'supply',lower,upper,knownAt);
+      const life=lifecycle(daily,up?'demand':'supply',lower,upper,knownAt,tf==='H4');
+      if(tf==='H4'){
+       // Accepted D1 wicks after confirmation also protect against H4 coverage
+       // gaps. Never use a daily range containing pre-confirmation price action.
+       const fallback=lifecycle((price.dailyLifecycleBars||[]).filter(d=>day(d.endDate)<=day(asOf)),up?'demand':'supply',lower,upper,knownAt,true);
+       life.invalid ||= fallback.invalid;life.visits=Math.max(life.visits,fallback.visits);life.maxPenetration=Math.max(life.maxPenetration,fallback.maxPenetration);
+      }
       if(life.invalid)break;
       const {visits,maxPenetration}=life;
       const id=[tf,kind,up?'demand':'supply',base[0].date,base.at(-1).date].join(':');if(seen.has(id))break;seen.add(id);
-      const volume=volumeAt(bars,start,start+count-1,c),distance=Math.max(lower-price.latestClose,price.latestClose-upper,0);
+      const volume=volumeAt(bars,start,start+count-1,c),distance=Math.max(lower-latestClose,latestClose-upper,0);
       out.push({id,timeframe:tf,kind,type:up?'demand':'supply',lower,upper,baseDate:base[0].date,baseEnd:base.at(-1).endDate||base.at(-1).date,confirmedAt:knownAt,atr,impulseAtr:displacement,departureCount:departure.length,bos,volume,session:{state:'unknown',note:'D1/W1 neurčuje intradenní čas odchodu; timestamp začátku svíčky není session impulzu.'},visits,maxPenetration,fresh:visits===0,distanceAtr:distance/atr,priceState:distance===0?'inside':distance<=.5*atr?'near':'far',qualityPoints:(bos.state==='yes'?2:0)+(volume.state==='high'?1:0),knownCriteria:Number(bos.state!=='unknown')+Number(volume.state!=='unknown')});break;
      }
     }
@@ -103,6 +115,7 @@
   return dailyZones.filter(z=>z.timeframe==='D1'&&z.type===parent.type&&z.lower>=parent.lower&&z.upper<=parent.upper&&z.baseDate>=parent.baseDate&&z.baseEnd<=parent.baseEnd&&z.confirmedAt<=parent.confirmedAt);
  }
  function context(zone,asset,asOf){
+  asOf=asOf.slice(0,10); // Seasonal/COT windows remain daily context, including H4 zones.
   const candidates=(asset?.candidates||[]).filter(c=>c.endDate>=asOf&&day(c.startDate)<=day(asOf)+30*ms).sort((a,b)=>Math.max(0,day(a.startDate)-day(asOf))-Math.max(0,day(b.startDate)-day(asOf))||a.startDate.localeCompare(b.startDate)||a.direction.localeCompare(b.direction));
   const c=candidates[0];if(!c)return {seasonal:'unknown',cot:'insufficient',macro:'unknown',candidate:null};
   const s=c.histories?.[20]?.seasonal,aligned=(zone.type==='demand')===(c.direction==='up');

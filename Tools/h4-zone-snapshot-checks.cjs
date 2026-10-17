@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto'),H=require('../wwwroot/js/market-candles.js'),Z=require('../wwwroot/js/trade-zones.js');
+const dir=path.resolve(process.argv[2]),m=JSON.parse(fs.readFileSync(path.join(dir,'data/manifest.json'))),bytes=fs.readFileSync(path.join(dir,m.zonePrices.path)),s=JSON.parse(bytes);
+assert.ok(m.zonePrices.path.includes(crypto.createHash('sha256').update(bytes).digest('hex').slice(0,20)),'H4 snapshot path is content-addressed');
+assert.equal(s.h4.validationRule,'h4-d1-parity-v1');assert.equal(s.h4.source,'Azure SQL market_h4');assert.equal(s.h4.scope,'Obchodní zóny only; no seasonality/COT input');
+let pairs=0,zones=0;
+const baseManifest=JSON.parse(fs.readFileSync('data/generated/site/data/manifest.json')),base=JSON.parse(fs.readFileSync('data/generated/site'+baseManifest.zonePrices.path));
+assert.deepEqual(m.assets,baseManifest.assets,'No seasonal price/routing input was changed');assert.deepEqual(m.marketDailySql,baseManifest.marketDailySql,'Daily SQL provenance is not relabeled');
+for(const [key,p]of Object.entries(s.prices)){const {h4,...daily}=p;const {h4:old,...original}=base.prices[key];assert.deepEqual(daily,original,'D1/W1 snapshot unchanged for '+key);}
+for(const [key,p]of Object.entries(s.prices))if(p.h4){pairs++;const h=p.h4;assert.equal(p.symbol,h.symbol);assert.equal(p.provider,h.provider);assert.equal(h.provider,'OANDA');assert.equal(h.validation,s.h4.validationRule);assert.equal(h.sourceBatchId,s.h4.batchId);assert.ok(h.bars.every(H.validH4));assert.ok(h.bars.every((b,i)=>!i||b.timestamp>h.bars[i-1].timestamp));const found=Z.detect(h,'H4',h.asOfUtc);zones+=found.length;assert.ok(found.every(z=>z.maxPenetration<.25&&z.confirmedAt<=h.asOfUtc));assert.equal(new Set(found.map(z=>z.id)).size,found.length);}
+assert.equal(pairs,28);assert.ok(zones>0);console.log(JSON.stringify({passed:true,h4Pairs:pairs,h4Zones:zones,validated:s.h4.accepted,excluded:s.h4.rejected}));

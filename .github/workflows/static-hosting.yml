@@ -16,6 +16,8 @@ on:
       - 'data/generated/site/**'
       - 'artifacts/daily-health/**'
       - '.github/workflows/static-hosting.yml'
+      - 'Tools/h4-zone-*.cjs'
+      - 'Tools/H4SqlImport/**'
   workflow_dispatch:
 permissions:
   contents: read
@@ -68,6 +70,16 @@ jobs:
           dotnet bin/Release/net10.0/SeasonalityApp.dll --render-static-shell --output artifacts/public-site
           node Tools/zone-prices-checks.cjs artifacts/public-site
           cp StaticSite/staticwebapp.config.json artifacts/public-site/staticwebapp.config.json
+      - name: Add SQL-validated H4 sidecar for trading zones only
+        if: steps.publication.outputs.run == 'true'
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+        run: |
+          node Tools/h4-zone-checks.cjs
+          dotnet build Tools/H4SqlImport/H4SqlImport.csproj -c Release
+          dotnet Tools/H4SqlImport/bin/Release/net10.0/H4SqlImport.dll --export-zone-source --config-root . --output artifacts/h4-hosting-source.json
+          node Tools/h4-zone-snapshot.cjs overlay artifacts/h4-hosting-source.json artifacts/public-site
+          node Tools/h4-zone-snapshot-checks.cjs artifacts/public-site
       - name: Overlay this morning's report including failed runs (keep last good analytics)
         if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
         env:

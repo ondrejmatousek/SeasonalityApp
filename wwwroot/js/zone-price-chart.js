@@ -1,10 +1,12 @@
 // Lightweight Charts 5.2.0; rendering only. Provider OHLC and analytical results are immutable.
 (() => {
     const iso=t=>typeof t==='string'?t:typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):`${t.year}-${String(t.month).padStart(2,'0')}-${String(t.day).padStart(2,'0')}`;
-    const day=s=>Date.parse(s+'T00:00:00Z'),fmt=s=>new Date(day(s)).toLocaleDateString('cs-CZ');
+    const day=s=>Date.parse(s.includes('T')?s:s+'T00:00:00Z'),fmt=s=>new Date(day(s)).toLocaleDateString('cs-CZ');
     window.ZonePriceChart={create(container,tip,{price,zone,candidate,resolution}){
         const L=window.LightweightCharts;if(!L)throw Error('Knihovna cenového grafu není dostupná');
-        const bars=resolution==='W1'?price.weekly:price.bars;
+        const bars=resolution==='W1'?price.weekly:price.bars,intraday=resolution==='H4';
+        const axisKey=t=>intraday?(typeof t==='number'?new Date(t*1000).toISOString():t):iso(t);
+        const displayTime=t=>intraday?new Date(day(axisKey(t))).toLocaleString('cs-CZ',{timeZone:'UTC',dateStyle:'short',timeStyle:'short'})+' UTC':fmt(iso(t));
         const precision=price.latestClose<10?5:price.latestClose<1000?3:2;
         const number=v=>new Intl.NumberFormat('cs-CZ',{minimumFractionDigits:precision,maximumFractionDigits:precision}).format(v);
         const seasonal=candidate?.direction==='up'
@@ -14,30 +16,30 @@
             autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#aebbc3',fontSize:12,attributionLogo:true},
             grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},
             rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.12,bottom:.12}},
-            timeScale:{borderColor:'#344047',timeVisible:false,minBarSpacing:2,rightOffset:8},
+            timeScale:{borderColor:'#344047',timeVisible:intraday,secondsVisible:false,minBarSpacing:2,rightOffset:8},
             crosshair:{mode:L.CrosshairMode.Normal,vertLine:{labelBackgroundColor:'#43515a'},horzLine:{labelBackgroundColor:'#43515a'}},
-            localization:{locale:'cs-CZ',priceFormatter:number,timeFormatter:t=>fmt(iso(t))},
+            localization:{locale:'cs-CZ',priceFormatter:number,timeFormatter:displayTime},
             handleScroll:{mouseWheel:false,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
             handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}}
         });
         const series=chart.addSeries(L.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350',borderVisible:false,priceFormat:{type:'price',precision,minMove:10**-precision}});
-        const data=bars.map(b=>({time:b.date,open:b.open,high:b.high,low:b.low,close:b.close}));
+        const data=bars.map(b=>({time:intraday?b.timestamp:b.date,open:b.open,high:b.high,low:b.low,close:b.close}));
         // Future whitespace locates the seasonal interval; never invent future candles.
         const cursor=new Date(day(bars.at(-1).date));let extra=0;
         while(extra<8||cursor.toISOString().slice(0,10)<(candidate?.endDate||bars.at(-1).date)){
-            cursor.setUTCDate(cursor.getUTCDate()+(resolution==='W1'?7:1));
-            if(resolution==='W1'||![0,6].includes(cursor.getUTCDay())){data.push({time:cursor.toISOString().slice(0,10)});extra++;}
+            if(intraday)cursor.setUTCHours(cursor.getUTCHours()+4);else cursor.setUTCDate(cursor.getUTCDate()+(resolution==='W1'?7:1));
+            if(resolution==='W1'||![0,6].includes(cursor.getUTCDay())){data.push({time:intraday?+cursor/1000:cursor.toISOString().slice(0,10)});extra++;}
             if(extra>260)break;
         }
         // Keep our immutable ISO-date axis: the library normalizes data.time internally.
-        const dates=data.map(b=>iso(b.time));
-        series.setData(data);container.dataset.candleCount=bars.length;
+        const dates=data.map(b=>axisKey(b.time));
+        series.setData(data);container.dataset.candleCount=bars.length;container.dataset.resolution=resolution;
         const x=date=>{
             let n=dates.findIndex(d=>d>=date);if(n<0)n=dates.length-1;
             let p=n;if(n>0&&dates[n]!==date)p=n-1+(day(date)-day(dates[n-1]))/(day(dates[n])-day(dates[n-1]));
             // Future whitespace has no price data. Extend the real trading-bar spacing,
             // rather than relying on the library's whitespace-index coordinate lookup.
-            const last=bars.length-1,anchor=chart.timeScale().timeToCoordinate(bars[last].date),previous=chart.timeScale().timeToCoordinate(bars[Math.max(0,last-1)].date);
+            const last=bars.length-1,anchor=chart.timeScale().timeToCoordinate(intraday?bars[last].timestamp:bars[last].date),previous=chart.timeScale().timeToCoordinate(intraday?bars[Math.max(0,last-1)].timestamp:bars[Math.max(0,last-1)].date);
             return anchor===null||previous===null?null:anchor+(p-last)*(anchor-previous);
         };
         const renderer={draw(target){target.useMediaCoordinateSpace(({context:ctx,mediaSize:{width,height}})=>{
@@ -56,7 +58,7 @@
         chart.subscribeCrosshairMove(p=>{
             if(!p.point||!p.time||p.point.x<0||p.point.y<0){tip.hidden=true;return;}
             const b=p.seriesData.get(series),value=series.coordinateToPrice(p.point.y);
-            tip.textContent=`${fmt(iso(p.time))} · cena ${number(value)}${b?.open!==undefined?`\nO ${number(b.open)} · H ${number(b.high)}\nL ${number(b.low)} · C ${number(b.close)}`:'\nBez svíčky · budoucí sezonní období'}`;
+            tip.textContent=`${displayTime(p.time)} · cena ${number(value)}${b?.open!==undefined?`\nO ${number(b.open)} · H ${number(b.high)}\nL ${number(b.low)} · C ${number(b.close)}`:'\nBez svíčky · budoucí sezonní období'}`;
             if(resolution!=='W1'&&b?.open!==undefined){const original=price.bars.find(bar=>bar.date===iso(p.time)),dates=window.MarketCandles.dateInfo(price,original);if(dates.sessionDate)tip.textContent+=`\nDen session ${dates.sessionDate} (odvozený)\nZačátek UTC ${dates.providerTimestamp}`;}
             tip.hidden=false;
             const box=container.getBoundingClientRect(),pos=window.MarketChartUi.tooltipPosition(p.point.x,p.point.y,tip.offsetWidth,tip.offsetHeight,box.width,box.height);

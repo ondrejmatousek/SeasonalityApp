@@ -35,7 +35,7 @@
             <div class="zone-controls">
                 <label>Instrument<input id="tz-search" type="search" placeholder="Např. GBPAUD" /></label>
                 <label>Rozsah<select id="tz-scope"><option value="core">Core instrumenty</option><option value="research">Research / review zvlášť</option></select></label>
-                <label>Timeframe<select id="tz-tf"><option value="all">D1 + W1</option><option>D1</option><option>W1</option></select></label>
+                <label>Timeframe<select id="tz-tf"><option value="all">H4 + D1 + W1</option><option>H4</option><option>D1</option><option>W1</option></select></label>
                 <label>Typ<select id="tz-kind"><option value="all">Oba typy</option><option value="origin">Původ impulzu</option><option value="base">Konsolidační základna</option></select></label>
                 <label>Směr<select id="tz-side"><option value="all">Oba</option><option value="demand">Demand</option><option value="supply">Supply</option></select></label>
                 <label>BOS<select id="tz-bos"><option value="all">I bez BOS</option><option value="yes">Pouze potvrzený BOS</option></select></label>
@@ -56,7 +56,7 @@
             <section id="tz-detail" class="zone-card" hidden>
                 <h3 id="tz-title"></h3><p id="tz-evidence"></p>
                 <p>Platnost: první pozdější zásah alespoň 25 % výšky zóny ji trvale vyřadí. Počítá se i knot; u demand od horní hrany dolů, u supply od dolní hrany nahoru.</p>
-                <div class="zone-chart-toolbar"><label>Svíčky<select id="tz-resolution"><option>D1</option><option>W1</option></select></label><button id="tz-reset" type="button">Reset pohledu</button><label>Zpřesnění<select id="tz-refinement"><option value="parent">Původní HTF zóna</option></select></label></div>
+                <div class="zone-chart-toolbar"><label>Svíčky<select id="tz-resolution"><option>H4</option><option>D1</option><option>W1</option></select></label><button id="tz-reset" type="button">Reset pohledu</button><label>Zpřesnění<select id="tz-refinement"><option value="parent">Původní HTF zóna</option></select></label></div>
                 <p id="tz-refine-note"></p>
                 <div class="zone-chart-wrap"><div id="tz-chart" tabindex="0" aria-label="Cenový graf obchodní zóny"></div><div id="tz-tip" class="zone-tooltip" hidden></div></div>
                 <p id="tz-caption"></p>
@@ -65,7 +65,7 @@
             </section>
             <p>Vzdálenost ceny (%) = vzdálenost posledního dokončeného close k nejbližší hraně zóny / absolutní hodnota close × 100. Uvnitř zóny je 0 %. Nejde o procento zásahu zóny ani o živou cenu. Filtry se kombinují; chybějící kontext není automaticky potvrzení.</p>
             <div class="zone-table-wrap"><table class="zone-table"><thead><tr><th>Instrument / zóna</th><th>Vznik / cena</th><th>Cena od zóny (%)</th><th>Kvalita / důkazy</th><th>Sezonalita</th><th>Historická COT shoda</th><th></th></tr></thead><tbody id="tz-results"></tbody></table></div>
-            <details><summary>Pokrytí a omezení</summary><div id="tz-coverage"></div><p>Počítáme z dostupných D1/W1 snapshotů, nikoli z živých cen. Sezonalita není podmínkou zobrazení. Zóny stejného impulzu se mohou překrývat a nejsou nezávislé obchody. W1 lze zpřesnit jen existující D1 zónou uvnitř původní zóny, známou nejpozději při jejím potvrzení; D1 → H4 zatím nelze bez H4 dat.</p></details>
+            <details><summary>Pokrytí a omezení</summary><div id="tz-coverage"></div><p>Počítáme z dostupných H4/D1/W1 snapshotů, nikoli z živých cen. H4 je pouze pro obchodní zóny: šest dokončených slotů musí přesně odpovídat ověřené NY17 D1 session stejného OANDA zdroje; neúplné sessions nepoužíváme. H4 má samostatné UTC timestampy a potvrzení až na konci svíčky. Sezonalita a COT zůstávají denním kontextem. Zóny nejsou nezávislé obchody. W1 lze zpřesnit existující D1 zónou; automatické vnořené D1 → H4 zpřesnění zatím neprovádíme.</p></details>
         </section>
         <section id="market-seasonality-view" class="market-seasonality-view" role="tabpanel" aria-labelledby="market-tab-seasonality">
         <nav class="seasonality-tabs" aria-label="Seasonality views">
