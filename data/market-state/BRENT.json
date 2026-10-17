@@ -113,6 +113,39 @@
         "fetchedAt": "2026-10-16T19:17:08.258Z",
         "runId": "4501c500-9a2e-457b-b50a-e1c3719b550e"
       }
+    },
+    {
+      "timestamp": 1792108800,
+      "providerTimestamp": "2026-10-16T00:00:00.000Z",
+      "providerUtcDate": "2026-10-16",
+      "date": "2026-10-16",
+      "open": 105.65,
+      "high": 110,
+      "low": 104.91,
+      "close": 109.86,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "BRN01:00-23:00 Europe/London, no trading over weekend; timestamp00UTC corresponds01BST. Original start timestamp 1792108800 maps to 2026-10-16 01:00:00, trade date 2026-10-16. The documented session and its calendar have ended: 2026-10-17T01:02:06.950Z is 2026-10-17 02:02:06 local, after conservative 23:00:00 acceptance boundary for that trade date. Boundary is NOT claimed as exact provider time_close. Calendar has no October16 holiday/shortened-day exception. No successor bar or historical price agreement is used as sole completion evidence.",
+        "checkedAt": "2026-10-17T01:02:06.950Z",
+        "timezone": "Europe/London",
+        "sources": [
+          {
+            "url": "https://www.ice.com/products/219/Brent-Crude-Futures",
+            "finding": "BRN01:00-23:00 Europe/London, no trading over weekend; timestamp00UTC corresponds01BST."
+          },
+          {
+            "url": "https://www.ice.com/publicdocs/Trading_Schedule.pdf",
+            "finding": "2026 ICE calendar has no October16 special-hours exception."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "6a34ecc68f95620f8238d4306ce794ad9d5b4b0e75bee127ebb6f61d987e18fd",
+        "fetchedAt": "2026-10-17T01:02:06.950Z",
+        "runId": "c18819de-cb66-47bc-910c-b13f5f52d4c9"
+      }
     }
   ]
 }

@@ -110,6 +110,39 @@
         "fetchedAt": "2026-10-16T19:17:08.258Z",
         "runId": "4501c500-9a2e-457b-b50a-e1c3719b550e"
       }
+    },
+    {
+      "timestamp": 1792157400,
+      "providerTimestamp": "2026-10-16T13:30:00.000Z",
+      "providerUtcDate": "2026-10-16",
+      "date": "2026-10-16",
+      "open": 227.2,
+      "high": 228.75,
+      "low": 227.075,
+      "close": 228.35,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "LE08:30-13:05 Chicago Monday-Friday; distinct day-only livestock session. Original start timestamp 1792157400 maps to 2026-10-16 08:30:00, trade date 2026-10-16. The documented session and its calendar have ended: 2026-10-17T01:02:06.950Z is 2026-10-16 20:02:06 local, after conservative 17:00:00 acceptance boundary for that trade date. Boundary is NOT claimed as exact provider time_close. Calendar has no October16 holiday/shortened-day exception. No successor bar or historical price agreement is used as sole completion evidence.",
+        "checkedAt": "2026-10-17T01:02:06.950Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/markets/agriculture/livestock/live-cattle",
+            "finding": "LE08:30-13:05 Chicago Monday-Friday; distinct day-only livestock session."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "2026 calendar verified: October16 regular Friday, no listed holiday shortening; timezone America/Chicago."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "6a34ecc68f95620f8238d4306ce794ad9d5b4b0e75bee127ebb6f61d987e18fd",
+        "fetchedAt": "2026-10-17T01:02:06.950Z",
+        "runId": "c18819de-cb66-47bc-910c-b13f5f52d4c9"
+      }
     }
   ]
 }

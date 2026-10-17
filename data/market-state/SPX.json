@@ -113,6 +113,39 @@
         "fetchedAt": "2026-10-16T19:17:08.258Z",
         "runId": "4501c500-9a2e-457b-b50a-e1c3719b550e"
       }
+    },
+    {
+      "timestamp": 1792157400,
+      "providerTimestamp": "2026-10-16T13:30:00.000Z",
+      "providerUtcDate": "2026-10-16",
+      "date": "2026-10-16",
+      "open": 7745.32,
+      "high": 7756.84,
+      "low": 7631.77,
+      "close": 7659.44,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Underlying cash core session09:30-16:00 ET; October16 regular trading day. Original start timestamp 1792157400 maps to 2026-10-16 09:30:00, trade date 2026-10-16. The documented session and its calendar have ended: 2026-10-17T01:02:06.950Z is 2026-10-16 21:02:06 local, after conservative 18:00:00 acceptance boundary for that trade date. Boundary is NOT claimed as exact provider time_close. Calendar has no October16 holiday/shortened-day exception. No successor bar or historical price agreement is used as sole completion evidence.",
+        "checkedAt": "2026-10-17T01:02:06.950Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "url": "https://www.nyse.com/trade/hours-calendars",
+            "finding": "Underlying cash core session09:30-16:00 ET; October16 regular trading day."
+          },
+          {
+            "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+            "finding": "US calendar corroborates ordinary October16 cash market session."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "6a34ecc68f95620f8238d4306ce794ad9d5b4b0e75bee127ebb6f61d987e18fd",
+        "fetchedAt": "2026-10-17T01:02:06.950Z",
+        "runId": "c18819de-cb66-47bc-910c-b13f5f52d4c9"
+      }
     }
   ]
 }

@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ok",
-  "runDate": "2026-10-16",
-  "runStartedAt": "2026-10-16T19:18:50.985Z",
-  "runFinishedAt": "2026-10-16T19:31:22.859Z",
-  "sourceCommit": "63bd7e568721b8b7052e2cf52b52debe9db1e609",
-  "workflowUrl": "https://github.com/ondrejmatousek/SeasonalityApp/actions/runs/38953813819",
-  "marketDailyFetchedAt": "2026-10-16T19:17:08.258Z",
+  "runDate": "2026-10-17",
+  "runStartedAt": "2026-10-17T01:04:40.422Z",
+  "runFinishedAt": "2026-10-17T01:18:27.332Z",
+  "sourceCommit": "959be6ce74592b301453f57f165521f60b9ea084",
+  "workflowUrl": "https://github.com/ondrejmatousek/SeasonalityApp/actions/runs/38989192851",
+  "marketDailyFetchedAt": "2026-10-17T01:02:06.950Z",
   "market": {
     "status": "ok",
     "received": 39,
@@ -14,13 +14,13 @@
     "duplicates": 39,
     "failed": 0,
     "failedSymbols": [],
-    "inputSha256": "e1712c85254d83c63476783c087edc1e65411ebc4fc85ad820cf79e6a45e81d7"
+    "inputSha256": "6a34ecc68f95620f8238d4306ce794ad9d5b4b0e75bee127ebb6f61d987e18fd"
   },
   "stocks": {
     "status": "ok",
     "refresh": {
-      "startedAt": "2026-10-16T19:18:57.078351+00:00",
-      "finishedAt": "2026-10-16T19:29:16.2193641+00:00",
+      "startedAt": "2026-10-17T01:04:46.3826772+00:00",
+      "finishedAt": "2026-10-17T01:16:17.0186315+00:00",
       "attempted": 457,
       "yahooSucceeded": [
         "DBC",
@@ -486,12 +486,12 @@
       "fallbackSucceeded": [],
       "failedSymbols": []
     },
-    "snapshotAt": "2026-10-16T19:30:29.422Z",
+    "snapshotAt": "2026-10-17T01:17:33.127Z",
     "lastBarDate": "2026-10-15"
   },
   "cot": {
     "status": "ok",
-    "latestPositionsDate": "2026-10-06",
+    "latestPositionsDate": "2026-10-13",
     "contracts": 62
   },
   "seasonality": {
@@ -507,7 +507,7 @@
     "status": "ok"
   },
   "seasonalityCandidates": 118,
-  "zoneCandidates": 222,
+  "zoneCandidates": 221,
   "screenerRows": 118,
   "instrumentChecks": [
     {
@@ -523,8 +523,8 @@
     {
       "symbol": "EURUSD",
       "historicalSource": "validated-v2/series/EURUSD.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 376e17c8c956bbfa75c3b90ea05821693d233ba101a3b5fa62d3b920969502b0",
-      "lastBarDate": "2026-10-15",
+      "dailySource": "Azure SQL market_daily.Inbox / 59b113b719fada71fab003bbd7012fe219f27dd3c30942342f4c74ed28bdf885",
+      "lastBarDate": "2026-10-16",
       "seasonalitySource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
       "provider": "OANDA",
@@ -534,8 +534,8 @@
     {
       "symbol": "NDX",
       "historicalSource": "validated-v2/series/NDX.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 376e17c8c956bbfa75c3b90ea05821693d233ba101a3b5fa62d3b920969502b0",
-      "lastBarDate": "2026-10-15",
+      "dailySource": "Azure SQL market_daily.Inbox / 59b113b719fada71fab003bbd7012fe219f27dd3c30942342f4c74ed28bdf885",
+      "lastBarDate": "2026-10-16",
       "seasonalitySource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
       "htfSource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
       "provider": "NASDAQ",
@@ -545,8 +545,8 @@
     {
       "symbol": "SPX",
       "historicalSource": "validated-v2/series/SPX.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 376e17c8c956bbfa75c3b90ea05821693d233ba101a3b5fa62d3b920969502b0",
-      "lastBarDate": "2026-10-15",
+      "dailySource": "Azure SQL market_daily.Inbox / 59b113b719fada71fab003bbd7012fe219f27dd3c30942342f4c74ed28bdf885",
+      "lastBarDate": "2026-10-16",
       "seasonalitySource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
       "htfSource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
       "provider": "S&P",
@@ -556,8 +556,8 @@
     {
       "symbol": "XAUUSD",
       "historicalSource": "validated-v2/series/XAUUSD.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 376e17c8c956bbfa75c3b90ea05821693d233ba101a3b5fa62d3b920969502b0",
-      "lastBarDate": "2026-10-15",
+      "dailySource": "Azure SQL market_daily.Inbox / 59b113b719fada71fab003bbd7012fe219f27dd3c30942342f4c74ed28bdf885",
+      "lastBarDate": "2026-10-16",
       "seasonalitySource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
       "provider": "OANDA",
@@ -567,8 +567,8 @@
     {
       "symbol": "WTI",
       "historicalSource": "validated-v2/series/WTI.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 376e17c8c956bbfa75c3b90ea05821693d233ba101a3b5fa62d3b920969502b0",
-      "lastBarDate": "2026-10-14",
+      "dailySource": "Azure SQL market_daily.Inbox / 59b113b719fada71fab003bbd7012fe219f27dd3c30942342f4c74ed28bdf885",
+      "lastBarDate": "2026-10-15",
       "seasonalitySource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
       "htfSource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
       "provider": "NYMEX",
@@ -581,17 +581,17 @@
   "published": true,
   "mode": "live",
   "eligibleForPublication": true,
-  "durationSeconds": 752,
-  "staleAfter": "2026-10-18T07:31:22.859Z",
+  "durationSeconds": 827,
+  "staleAfter": "2026-10-18T13:18:27.332Z",
   "marketDailySql": {
     "schemaVersion": 1,
-    "generationId": 3,
-    "receiptId": "376e17c8c956bbfa75c3b90ea05821693d233ba101a3b5fa62d3b920969502b0",
-    "payloadSha256": "e1712c85254d83c63476783c087edc1e65411ebc4fc85ad820cf79e6a45e81d7",
-    "auditSha256": "997d3a3058d208d03fe22ff4fcb60beeac1c629202bc93cc0819b2b70265f323",
-    "stateSha256": "c6edbbd8faad2cd562b8ce55beb1ce6d5522470a4844e3ff0697fd9df896f63c",
+    "generationId": 4,
+    "receiptId": "59b113b719fada71fab003bbd7012fe219f27dd3c30942342f4c74ed28bdf885",
+    "payloadSha256": "6a34ecc68f95620f8238d4306ce794ad9d5b4b0e75bee127ebb6f61d987e18fd",
+    "auditSha256": "93eb86cf3f19df1b53ac1ad482164cb902dccb00eebef93bde511c7e64c7aa62",
+    "stateSha256": "6ca1372de8647434de5382836c413dcbfeedbc8714ade6822fa5bf1f166422fb",
     "baselineFingerprint": "d127c81826f29861a6cf17d336dde497e7ac544e2ee455ed7ec96977e93cff9e",
-    "runDate": "2026-10-16"
+    "runDate": "2026-10-17"
   },
   "publication": "Generated files prepared for commit; hosting remains separate"
 }
