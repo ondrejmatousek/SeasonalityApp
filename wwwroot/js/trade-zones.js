@@ -1,6 +1,7 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./market-candles.js'));else root.TradeZones=factory(root.MarketCandles);})(typeof globalThis==='object'?globalThis:this,function(Htf){
  'use strict';
- const defaults=Object.freeze({version:'trade-zones-v2-experimental',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
+ const defaults=Object.freeze({version:'trade-zones-v3-last-opposing',atr:14,impulseAtr:1.5,departureBars:3,baseMax:3,baseAtr:1,bodyFraction:.5,swing:2,volumeLookback:20,volumeRatio:1.5,volumeWindow:1,bounds:'full',maxAgeDays:365});
+ const opposing=(b,up)=>up?b.close<b.open:b.close>b.open;
  const day=s=>Date.parse(s.includes('T')?s:s+'T00:00:00Z'),ms=86400000;
  function distancePercent(close,lower,upper){
   return [close,lower,upper].every(Number.isFinite)&&close!==0&&lower<upper
@@ -81,10 +82,16 @@
     if(hi-lo<=atr*c.baseAtr&&base.every(b=>Math.abs(b.close-b.open)<=(b.high-b.low)*c.bodyFraction))kinds.push('base');
     for(const kind of kinds)for(const up of [true,false]){
      if(kind==='origin'&&(up?base[0].close>=base[0].open:base[0].close<=base[0].open))continue;
+     // A base containing an opposing candle belongs to that candle's origin,
+     // evaluated independently with its own ATR, bounds, volume and lifecycle.
+     // Never retain the wider multi-candle alternative or fall back to it after
+     // the narrower origin has been mitigated. Dojis are not opposing candles.
+     if(kind==='base'&&base.some(b=>opposing(b,up)))continue;
      const first=bars[start+count];if(up?first.close<=first.open:first.close>=first.open)continue;
      for(let k=0;k<c.departureBars&&start+count+k<bars.length;k++){
       const index=start+count+k,departure=bars.slice(start+count,index+1),segment=bars.slice(start,index+1);
       if(segment.some((b,i)=>i&&day(b.date)-day(segment[i-1].date)>(tf==='H4'?4*3600000:(tf==='W1'?10:7)*ms)))break;
+      if(departure.some(b=>opposing(b,up)))break; // A newer opposing candle becomes the next origin.
       if(departure.some(b=>up?b.close<lo:b.close>hi))break;
       const b=bars[index],displacement=(up?b.close-hi:lo-b.close)/atr;if(displacement<c.impulseAtr)continue;
       const knownAt=b.endDate||b.date;if(day(asOf)-day(knownAt)>c.maxAgeDays*ms)break;

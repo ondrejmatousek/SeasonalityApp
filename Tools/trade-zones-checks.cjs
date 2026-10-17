@@ -10,15 +10,19 @@ bars.push({date:date(30),open:100.2,high:100.5,low:99.5,close:99.8,volume:300},{
 const price={bars,latestClose:104.5},before=JSON.stringify(price),asOf=date(32);
 const origin=(p=price,a=asOf)=>Z.detect(p,'D1',a).find(z=>z.kind==='origin'&&z.baseDate===date(30)&&z.type==='demand');
 const wick=origin();assert.ok(wick,'No-BOS origins still exist');assert.equal(wick.bos.state,'no','Wick beyond swing is NOT BOS');assert.equal(wick.volume.state,'high');assert.equal(wick.session.state,'unknown');assert.equal(wick.lower,99.5);assert.equal(wick.upper,100.5);
-assert.deepEqual(wick.kinds,['origin','base'],'Same candle may have both classifications, but only one row');
+assert.deepEqual(wick.kinds,['origin'],'Opposing source candle is an origin, not a wider base alternative');
 assert.equal(Z.detect(price,'D1',asOf).filter(z=>z.lower===wick.lower&&z.upper===wick.upper&&z.confirmedAt===wick.confirmedAt&&z.type===wick.type).length,1);
-assert.equal(wick.qualityPoints,1,'Duplicate classifications do not add quality points');
+assert.equal(wick.qualityPoints,1,'Selecting an origin does not add quality points');
 assert.deepEqual(Z.deduplicate([wick,wick]),Z.deduplicate([wick]),'Idempotent merge');
 const physical=wick.detections[0];
 for(const change of [{timeframe:'W1'},{type:'supply'},{confirmedAt:date(34)},{upper:physical.upper+.00000001}])assert.equal(Z.deduplicate([physical,{...physical,...change,id:'other'}]).length,2,'Different timeframes/sides/confirmations/bounds stay distinct');
 assert.deepEqual(Z.deduplicate([...wick.detections].reverse()),Z.deduplicate(wick.detections),'Input order cannot choose stronger evidence');
 const close={...price,bars:bars.map((b,i)=>i===31?{...b,close:106}:b),latestClose:106};assert.equal(origin(close).bos.state,'yes','Close beyond swing qualifies');assert.equal(origin(close).bos.date,date(20));
 const mirrored={bars:bars.map(b=>({...b,open:200-b.open,high:200-b.low,low:200-b.high,close:200-b.close})),latestClose:95.5};assert.ok(Z.detect(mirrored,'D1',asOf).some(z=>z.kind==='origin'&&z.type==='supply'&&z.baseDate===date(30)));
+const renewed={bars:[...bars.slice(0,31),{date:date(31),open:100,high:101,low:99.6,close:100.1,volume:100},{date:date(32),open:100.4,high:101,low:99,close:99.8,volume:300},{date:date(33),open:100,high:111,low:100,close:110,volume:100}],latestClose:110};
+const renewedZones=Z.detect(renewed,'D1',date(34)).filter(z=>z.type==='demand');
+assert.ok(!renewedZones.some(z=>z.baseDate===date(30)),'An opposite candle inside an unconfirmed departure supersedes the old origin');
+assert.ok(renewedZones.some(z=>z.baseDate===date(32)),'The last opposing candle is evaluated independently');
 for(const type of ['demand','supply']){
  const check=(depth,when=date(32))=>Z.lifecycle([{date:when,open:type==='demand'?105:99,high:type==='supply'?100+depth:106,low:type==='demand'?104-depth:98,close:type==='demand'?105:99}],type,100,104,date(31));
  assert.equal(check(.9999).invalid,false,'Less than 25 percent remains valid');
@@ -57,6 +61,17 @@ for(const p of Object.values(h.prices).filter(p=>p.status==='ready'))for(const t
  const found=Z.detect(p,tf,h.asOf,options),keys=found.map(z=>JSON.stringify([z.timeframe,z.type,z.lower,z.upper,z.confirmedAt]));assert.equal(new Set(keys).size,keys.length,'No duplicate physical zones for any instrument/timeframe/parameter variant');
 }
 const cad=Z.detect(h.prices.CADJPY,'D1',h.asOf).filter(z=>z.baseDate==='2025-12-04'&&z.confirmedAt==='2025-12-09'&&z.type==='demand');assert.equal(cad.length,0,'CADJPY screenshot zone already mitigated by a wick must be absent');
+const nzd=Z.detect(h.prices.NZDCHF,'D1',h.asOf).filter(z=>z.type==='supply'&&z.confirmedAt==='2026-10-02');
+assert.equal(nzd.length,1,'NZDCHF screenshot: only one zone for the September 30 origin');
+assert.equal(nzd[0].baseDate,'2026-09-30');assert.equal(nzd[0].baseEnd,'2026-09-30');
+assert.equal(nzd[0].lower,.47008);assert.equal(nzd[0].upper,.4718);assert.deepEqual(nzd[0].kinds,['origin']);
+const mirroredNzd={...h.prices.NZDCHF,weekly:undefined,bars:h.prices.NZDCHF.bars.map(b=>({...b,open:1-b.open,high:1-b.low,low:1-b.high,close:1-b.close})),latestClose:1-h.prices.NZDCHF.latestClose};
+const demandNzd=Z.detect(mirroredNzd,'D1',h.asOf).filter(z=>z.type==='demand'&&z.confirmedAt==='2026-10-02');
+assert.equal(demandNzd.length,1);assert.equal(demandNzd[0].baseDate,'2026-09-30');assert.equal(demandNzd[0].lower,1-.4718);assert.equal(demandNzd[0].upper,1-.47008);
+const hitNzd={...h.prices.NZDCHF,bars:[...h.prices.NZDCHF.bars,{date:h.asOf,open:.466,high:.47051,low:.465,close:.466,volume:100}],latestClose:.466};
+const afterHit=Z.detect(hitNzd,'D1',new Date(Date.parse(h.asOf)+86400000).toISOString().slice(0,10));
+assert.ok(!afterHit.some(z=>z.type==='supply'&&['2026-09-29','2026-09-30'].includes(z.baseDate)&&z.confirmedAt==='2026-10-02'),'A 25% hit of the selected candle never resurrects the wider base');
+assert.ok(rows.some(z=>z.kind==='base'),'Continuation bases without opposing candles remain supported');
 const cadLife=Z.lifecycle(h.prices.CADJPY.bars,'demand',110.604,111.401,'2025-12-09');assert.equal(cadLife.invalid,true);assert.equal(cadLife.invalidatedAt,'2026-08-03','First invalidating wick in the screenshot is on August 3');
 for(const r of rows)assert.ok(r.maxPenetration<.25,'Every returned D1/W1 zone survives the daily-wick threshold');
 assert.ok(rows.length>0);assert.ok(rows.every(r=>r.lower<r.upper&&r.confirmedAt<h.asOf&&r.session.state==='unknown'));assert.equal(JSON.stringify(h),pristine);
