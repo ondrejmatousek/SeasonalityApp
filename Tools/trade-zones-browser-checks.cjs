@@ -1,11 +1,13 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{chromium}=require('playwright');
 const root=path.resolve(process.argv[2]||'artifacts/data-runs-preview');let browser;const errors=[];
 const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost'),name=path.resolve(root,'.'+(url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname));if(!name.startsWith(root+path.sep)||!fs.existsSync(name)||!fs.statSync(name).isFile()){res.writeHead(404);return res.end();}res.setHeader('Content-Type',({'.js':'application/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.svg':'image/svg+xml'})[path.extname(name)]||'application/octet-stream');res.end(fs.readFileSync(name));});
+async function assertFramed(page){await page.waitForFunction(()=>{const c=document.getElementById('tz-chart'),d=c.dataset,n=k=>Number(d[k]),valid=k=>d[k]!==undefined&&d[k]!=='null'&&Number.isFinite(n(k));return ['zoneLeft','zoneTop','zoneBottom','paneWidth','paneHeight'].every(valid)&&n('paneWidth')<=c.clientWidth&&n('zoneLeft')>=0&&n('zoneLeft')<n('paneWidth')&&n('zoneTop')>=0&&n('zoneBottom')<=n('paneHeight')&&(d.seasonalStart==='null'||valid('seasonalStart')&&valid('seasonalEnd')&&n('seasonalStart')>=0&&n('seasonalEnd')<=n('paneWidth')&&n('seasonalStart')<n('seasonalEnd'));});}
 (async()=>{try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));try{browser=await chromium.launch({headless:true});}catch{browser=await chromium.launch({headless:true,channel:'msedge'});}
  const page=await browser.newPage({viewport:{width:1600,height:1000}});page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/');
  await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();await page.locator('#tz-results button').first().waitFor();assert.ok(await page.locator('#tz-results button').count()>0);
  assert.ok(await page.locator('#tz-chart').getAttribute('data-candle-count'));assert.match(await page.locator('#tz-status').textContent(),/Session a makro neověřeny/);
+ await assertFramed(page);
  const wtiDate=await page.evaluate(async()=>{const s=await StaticMarketData.zonePrices(),p=s.prices.WTI;return MarketCandles.dateInfo(p,p.bars.at(-1));});
  if(wtiDate.sessionDate){assert.match(await page.locator('#tz-coverage').textContent(),new RegExp('WTI:.*datum svíčky '+wtiDate.barDate+'.*den session '+wtiDate.sessionDate),'Real snapshot coverage distinguishes UTC start and derived session day');}
  assert.equal(await page.locator('#tz-scope').inputValue(),'cfd');
@@ -48,7 +50,8 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  await page.locator('#tz-search').fill(target.key);await page.locator('tr[data-zone-id]').filter({has:page.locator('button')}).evaluateAll((rows,id)=>rows.find(r=>r.dataset.zoneId===id).querySelector('button').click(),target.id);
  await page.waitForFunction(()=>Number.isFinite(Number(document.getElementById('tz-chart').dataset.seasonalStart))&&document.getElementById('tz-chart').dataset.seasonalStart!=='null');
  assert.match(await page.locator('#tz-caption').textContent(),/Svislé sezonní okno/);
- await page.locator('#tz-resolution').selectOption('W1');await page.waitForFunction(()=>Number.isFinite(Number(document.getElementById('tz-chart').dataset.seasonalEnd))&&document.getElementById('tz-chart').dataset.seasonalEnd!=='null');await page.locator('#tz-resolution').selectOption('D1');
+ await assertFramed(page);
+ await page.locator('#tz-resolution').selectOption('W1');await page.waitForFunction(()=>Number.isFinite(Number(document.getElementById('tz-chart').dataset.seasonalEnd))&&document.getElementById('tz-chart').dataset.seasonalEnd!=='null');await assertFramed(page);await page.locator('#tz-resolution').selectOption('D1');await assertFramed(page);
  const interval=await page.locator('#tz-open-seasonality').evaluate(b=>({...b.dataset}));
  await page.locator('#tz-open-seasonality').click();assert.equal(await page.locator('#market-seasonality-view').isVisible(),true);
  assert.equal(await page.locator('#seasonality-start-date').inputValue(),interval.startDate);assert.equal(await page.locator('#seasonality-end-date').inputValue(),interval.endDate);
@@ -60,11 +63,11 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  await page.locator('#tz-search').fill('');await page.locator('#tz-volume-window').selectOption('3');await page.locator('#tz-bounds').selectOption('body-wick');assert.ok(await page.locator('#tz-results button').count()>0);
  await page.locator('#tz-search').fill('NO_SUCH_SYMBOL');assert.match(await page.locator('#tz-results').textContent(),/Žádná platná zóna/);assert.equal(await page.locator('#tz-detail').isVisible(),false);
  await page.locator('#tz-search').fill('');await page.screenshot({path:path.join(root,'trade-zones-desktop.png'),fullPage:true});
- await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile overflow');await page.screenshot({path:path.join(root,'trade-zones-mobile.png'),fullPage:true});
+ await page.setViewportSize({width:390,height:844});await assertFramed(page);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile overflow');await page.screenshot({path:path.join(root,'trade-zones-mobile.png'),fullPage:true});
  await page.evaluate(()=>{window.StaticMarketData.opportunities=async()=>{throw Error('Test unavailable context');};});
  await page.locator('#tz-reload').click();await page.waitForFunction(()=>document.getElementById('tz-caption').textContent.includes('Sezonní okno není dostupné'));
  assert.ok(await page.locator('#tz-results button').count()>0,'Missing seasonality never hides zones');
- await page.waitForFunction(()=>document.getElementById('tz-chart').dataset.seasonalStart==='null');
+ await page.waitForFunction(()=>document.getElementById('tz-chart').dataset.seasonalStart==='null');await assertFramed(page);
  assert.equal(await page.locator('#tz-open-seasonality').isDisabled(),true,'No fabricated seasonal interval without context');
  assert.equal(await page.getByRole('tab',{name:'HTF shoda',exact:true}).count(),0);assert.equal(await page.locator('#market-htf-view').count(),0);
  const resources=await page.locator('script[src],link[rel=stylesheet]').evaluateAll(nodes=>nodes.map(n=>n.src||n.href));assert.ok(!resources.some(s=>/\/(htf-ui|htf-chart|htf-zones|htf)\.(js|css)/.test(s)),'Retired resources not loaded');

@@ -16,40 +16,51 @@
             autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#aebbc3',fontSize:12,attributionLogo:true},
             grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},
             rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.12,bottom:.12}},
-            timeScale:{borderColor:'#344047',timeVisible:intraday,secondsVisible:false,minBarSpacing:2,rightOffset:8},
+            timeScale:{borderColor:'#344047',timeVisible:intraday,secondsVisible:false,minBarSpacing:.001,rightOffset:8,lockVisibleTimeRangeOnResize:true},
             crosshair:{mode:L.CrosshairMode.Normal,vertLine:{labelBackgroundColor:'#43515a'},horzLine:{labelBackgroundColor:'#43515a'}},
             localization:{locale:'cs-CZ',priceFormatter:number,timeFormatter:displayTime},
             handleScroll:{mouseWheel:false,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
             handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}}
         });
-        const series=chart.addSeries(L.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350',borderVisible:false,priceFormat:{type:'price',precision,minMove:10**-precision}});
+        const series=chart.addSeries(L.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350',borderVisible:false,priceFormat:{type:'price',precision,minMove:10**-precision},
+            // A primitive is not part of the default candle autoscale. Include the
+            // real zone bounds even when all visible candles trade far above/below it.
+            autoscaleInfoProvider:original=>{const info=original(),range=info?.priceRange;return {...info,priceRange:{minValue:Math.min(range?.minValue??zone.lower,zone.lower),maxValue:Math.max(range?.maxValue??zone.upper,zone.upper)}};}});
         const data=bars.map(b=>({time:intraday?b.timestamp:b.date,open:b.open,high:b.high,low:b.low,close:b.close}));
         const setup=zone.liquiditySetup?.state==='ready'?zone.liquiditySetup:null;
         for(const key of ['rangeStart','rangeEnd','liquidityLevel'])delete container.dataset[key];
         container.dataset.structure=setup?'range-liquidity':'none';
         // Future whitespace locates the seasonal interval; never invent future candles.
-        const cursor=new Date(day(bars.at(-1).date));let extra=0;
-        while(extra<8||cursor.toISOString().slice(0,10)<(candidate?.endDate||bars.at(-1).date)){
+        const cursor=new Date(day(bars.at(-1).date)),step=intraday?14400000:(resolution==='W1'?7:1)*86400000;
+        const seasonalEnd=candidate?day(candidate.endDate):+cursor,target=Math.max(+cursor+8*step,seasonalEnd+3*86400000);
+        const cryptoWeekends=price.provider==='Yahoo Finance'&&price.symbol?.endsWith('-USD');let extra=0;
+        while((extra<8||+cursor<target)&&extra<20000){
             if(intraday)cursor.setUTCHours(cursor.getUTCHours()+4);else cursor.setUTCDate(cursor.getUTCDate()+(resolution==='W1'?7:1));
-            if(resolution==='W1'||![0,6].includes(cursor.getUTCDay())){data.push({time:intraday?+cursor/1000:cursor.toISOString().slice(0,10)});extra++;}
-            if(extra>260)break;
+            if(resolution==='W1'||cryptoWeekends||![0,6].includes(cursor.getUTCDay())){data.push({time:intraday?+cursor/1000:cursor.toISOString().slice(0,10)});extra++;}
         }
+        // Bounded whitespace generation must never clip the supplied interval.
+        if(Number.isFinite(seasonalEnd)&&+cursor<seasonalEnd)data.push({time:intraday?seasonalEnd/1000:candidate.endDate});
+        if(candidate&&day(candidate.startDate)<day(bars[0].date))data.unshift({time:intraday?day(candidate.startDate)/1000:candidate.startDate});
         // Keep our immutable ISO-date axis: the library normalizes data.time internally.
         const dates=data.map(b=>axisKey(b.time));
         series.setData(data);container.dataset.candleCount=bars.length;container.dataset.resolution=resolution;
         const x=date=>{
             let n=dates.findIndex(d=>d>=date);if(n<0)n=dates.length-1;
             let p=n;if(n>0&&dates[n]!==date)p=n-1+(day(date)-day(dates[n-1]))/(day(dates[n])-day(dates[n-1]));
-            // Future whitespace has no price data. Extend the real trading-bar spacing,
-            // rather than relying on the library's whitespace-index coordinate lookup.
-            const last=bars.length-1,anchor=chart.timeScale().timeToCoordinate(intraday?bars[last].timestamp:bars[last].date),previous=chart.timeScale().timeToCoordinate(intraday?bars[Math.max(0,last-1)].timestamp:bars[Math.max(0,last-1)].date);
-            return anchor===null||previous===null?null:anchor+(p-last)*(anchor-previous);
+            // Whitespace-only logical coordinates are unreliable in the bundled
+            // library. Extend the spacing between two actual provider candles.
+            const last=bars.length-1,time=i=>intraday?bars[i].timestamp:bars[i].date;
+            const anchor=chart.timeScale().timeToCoordinate(time(last)),previous=chart.timeScale().timeToCoordinate(time(Math.max(0,last-1)));
+            const lastIndex=dates.indexOf(axisKey(time(last)));
+            return anchor===null||previous===null?null:anchor+(p-lastIndex)*(anchor-previous);
         };
         const renderer={draw(target){target.useMediaCoordinateSpace(({context:ctx,mediaSize:{width,height}})=>{
             const start=candidate?x(candidate.startDate):null,end=candidate?x(candidate.endDate):null,base=x(zone.baseDate),upper=series.priceToCoordinate(zone.upper),lower=series.priceToCoordinate(zone.lower);
             container.dataset.seasonalStart=String(start);container.dataset.seasonalEnd=String(end);
+            container.dataset.zoneLeft=String(base);container.dataset.zoneTop=String(upper);container.dataset.zoneBottom=String(lower);
+            container.dataset.paneWidth=String(width);container.dataset.paneHeight=String(height);
             ctx.save();ctx.beginPath();ctx.rect(0,0,width,height);ctx.clip();
-            if(start!==null&&end!==null){ctx.fillStyle=seasonal.fill;ctx.fillRect(start,0,end-start,height);ctx.strokeStyle=seasonal.line;ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=seasonal.text;ctx.font='11px sans-serif';ctx.fillText(seasonal.label,Math.max(6,start+6),height-12);}
+            if(start!==null&&end!==null){ctx.fillStyle=seasonal.fill;ctx.fillRect(start,0,end-start,height);ctx.strokeStyle=seasonal.line;ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=seasonal.text;ctx.font='11px sans-serif';ctx.fillText(seasonal.label,Math.max(6,Math.min(start+6,width-ctx.measureText(seasonal.label).width-6)),height-12);}
             if(upper!==null&&lower!==null){const left=Math.max(0,base??0);ctx.fillStyle=zone.type==='demand'?'#26a69a30':'#ef535025';ctx.strokeStyle=zone.type==='demand'?'#26a69a99':'#ef535099';ctx.fillRect(left,upper,width-left,lower-upper);ctx.strokeRect(left,upper,width-left,lower-upper);ctx.fillStyle='#aebbc3';ctx.font='11px sans-serif';ctx.fillText(`${zone.timeframe} ${zone.type}`,left+6,upper-6);}
             if(setup){
                 ctx.font='11px sans-serif';
@@ -67,7 +78,14 @@
         series.attachPrimitive({paneViews:()=>[{zOrder:()=> 'bottom',renderer:()=>renderer}]});
         function recordRange(){const r=chart.timeScale().getVisibleLogicalRange();if(r){container.dataset.visibleFrom=r.from;container.dataset.visibleTo=r.to;}}
         chart.timeScale().subscribeVisibleLogicalRangeChange(recordRange);
-        const reset=()=>{chart.priceScale('right').applyOptions({autoScale:true});const rangeIndex=setup?bars.findIndex(b=>b.date>=setup.range.start):-1;chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rangeIndex>=0?rangeIndex-5:bars.length-(resolution==='W1'?65:130)),to:data.length-1});tip.hidden=true;};
+        const reset=()=>{
+            chart.priceScale('right').applyOptions({autoScale:true});
+            const baseIndex=Math.max(0,dates.findIndex(d=>d>=zone.baseDate)),rangeIndex=setup?dates.findIndex(d=>d>=setup.range.start):-1;
+            const seasonalIndex=candidate?Math.max(0,dates.findIndex(d=>d>=candidate.startDate)):Infinity;
+            const first=Math.min(baseIndex-8,rangeIndex>=0?rangeIndex-5:Infinity,seasonalIndex-3,Math.max(0,bars.length-(resolution==='W1'?65:130))),last=data.length-1;
+            const padding=Math.max(3,(last-first)*.03);
+            chart.timeScale().setVisibleLogicalRange({from:first-padding,to:last+padding});tip.hidden=true;
+        };
         const zoom=factor=>{const r=chart.timeScale().getVisibleLogicalRange();if(r){const mid=(r.from+r.to)/2,half=Math.max(6,(r.to-r.from)*factor/2);chart.timeScale().setVisibleLogicalRange({from:mid-half,to:mid+half});}};
         chart.subscribeCrosshairMove(p=>{
             if(!p.point||!p.time||p.point.x<0||p.point.y<0){tip.hidden=true;return;}
