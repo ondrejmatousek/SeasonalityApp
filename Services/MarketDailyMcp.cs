@@ -80,6 +80,8 @@ public static class MarketDailyMcp
             tools.Add(CreateTool<MarketDailySubmissionTool>(nameof(MarketDailySubmissionTool.SubmitMarketDaily),IngestScope));
             tools.Add(CreateTool<MarketH4Tool>(nameof(MarketH4Tool.SubmitMarketH4),IngestScope));
             tools.Add(CreateTool<MarketH4Tool>(nameof(MarketH4Tool.GetMarketH4Status),IngestScope));
+            tools.Add(CreateTool<MarketZonePriceTool>(nameof(MarketZonePriceTool.SubmitZonePrices),IngestScope));
+            tools.Add(CreateTool<MarketZonePriceTool>(nameof(MarketZonePriceTool.GetZonePricesStatus),IngestScope));
         }
         services.AddMcpServer().WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools(tools);
         return true;

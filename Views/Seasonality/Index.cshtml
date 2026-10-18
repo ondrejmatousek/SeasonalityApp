@@ -26,6 +26,7 @@
         <section id="market-zones-view" role="tabpanel" aria-labelledby="market-tab-zones" hidden>
             <h2>Obchodní zóny <small>Experimentální v1</small></h2>
             <p>Nejdřív původ impulzu nebo pokračovací základna. BOS, objem a session jsou kvalita; COT, sezonalita a makro jsou oddělený kontext. Nejde o pravděpodobnost úspěchu ani pokyn ke vstupu.</p>
+            <p>CFD watchlist zahrnuje všech 50 požadovaných trhů. Zóny hodnotíme z uvedeného referenčního zdroje, nikoli z kotací konkrétního brokera. U ropy, plynu, zlata a stříbra zůstává dosavadní futures/spot proxy; krypto používá Yahoo, nikoli porovnávací TradingView řadu. Chybějící kontext nových párů nepřidává žádné body.</p>
             <details><summary>Pravidla a parametry prototypu</summary>
                 <p>Impulz = close alespoň zvolený násobek ATR(14) za celým rozpětím zóny během 1–3 následujících svíček. Supply používá pouze poslední zelenou svíčku před poklesem, demand poslední červenou před růstem. Sousední svíčky hranice této zóny nerozšiřují a širší základnu nezobrazujeme jako alternativu. Pokračovací základna bez protisměrné svíčky zůstává 1–3 malé svíčky, rozpětí do 1 ATR, každé tělo nejvýše polovina svíčky; doji není protisměrná svíčka. Tyto číselné prahy jsou návrh k ověření, ne schválená obchodní metodika.</p>
                 <p>BOS = close během impulzu za posledním předem potvrzeným swingem (2 svíčky vlevo i vpravo). Knot nestačí; BOS není podmínkou vzniku zóny. Platnost zóny končí prvním pozdějším zásahem alespoň 25 % její výšky včetně knotu; návraty evidujeme. W1 používá pouze dokončené týdny a pozdější zásahy ověřuje z dokončených D1 svíček.</p>
@@ -35,7 +36,7 @@
             </details>
             <div class="zone-controls">
                 <label>Instrument<input id="tz-search" type="search" placeholder="Např. GBPAUD" /></label>
-                <label>Rozsah<select id="tz-scope"><option value="core">Core instrumenty</option><option value="research">Research / review zvlášť</option></select></label>
+                <label>Rozsah<select id="tz-scope"><option value="cfd">CFD watchlist · všechny požadované trhy</option><option value="all">Všechny zdroje</option><option value="core">Core instrumenty</option><option value="research">Research / review zvlášť</option></select></label>
                 <label>Timeframe<select id="tz-tf"><option value="all">H4 + D1 + W1</option><option>H4</option><option>D1</option><option>W1</option></select></label>
                 <label>Typ<select id="tz-kind"><option value="all">Oba typy</option><option value="origin">Původ impulzu</option><option value="base">Konsolidační základna</option></select></label>
                 <label>Směr<select id="tz-side"><option value="all">Oba</option><option value="demand">Demand</option><option value="supply">Supply</option></select></label>

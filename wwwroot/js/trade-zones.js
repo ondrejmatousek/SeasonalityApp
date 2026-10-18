@@ -29,7 +29,7 @@
  }
  function sourceBars(price,tf,asOf){
   if(tf==='H4'){
-   if(price.timeframe!=='H4'||price.validation!=='h4-d1-parity-v1')throw Error('H4 nemá ověřenou D1/session návaznost');
+   if(price.timeframe!=='H4'||!['h4-d1-parity-v1','zone-provider-boundary-v1'].includes(price.validation))throw Error('H4 nemá ověřenou D1/session návaznost');
    const raw=(price.bars||[]).filter(b=>Htf.validH4(b)&&day(b.endDate)<=day(asOf)).sort((a,b)=>a.timestamp-b.timestamp);
    if(new Set(raw.map(b=>b.timestamp)).size!==raw.length)throw Error('Duplicitní H4 timestamp');return raw;
   }

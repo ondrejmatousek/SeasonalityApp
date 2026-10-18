@@ -16,8 +16,9 @@ public sealed class SeasonalityService
     public static IReadOnlyList<string> SearchAliases(string key) => key switch
     {
         "NDX" => ["NQ"], "SPX" => ["ES"], "DJI" => ["YM"], "RUT" => ["RTY"],
-        "XAUUSD" => ["XAU", "GC"], "SILVER" => ["XAG", "SI"],
-        "WTI" => ["CL"], "NATGAS" => ["NG"],
+        "XAUUSD" => ["XAU", "GC"], "SILVER" => ["XAG", "XAGUSD", "SI"],
+        "PLATINUM" => ["XPTUSD", "XPT", "PL"],
+        "WTI" => ["CL"], "NATGAS" => ["NG", "NGAS"],
         "LIVECATTLE" => ["LE", "LE=F", "Live Cattle", "dobytek", "skot", "hovězí", "maso"],
         "FEEDERCATTLE" => ["GF", "GF=F", "Feeder Cattle", "dobytek", "skot", "hovězí", "maso"],
         "LEANHOGS" => ["HE", "HE=F", "Lean Hogs", "prasata", "vepřové", "maso"],
@@ -59,6 +60,17 @@ public sealed class SeasonalityService
                 new("CADJPY", "CAD/JPY", "CADJPY=X", "cadjpy"),
                 new("CADCHF", "CAD/CHF", "CADCHF=X", "cadchf"),
                 new("CHFJPY", "CHF/JPY", "CHFJPY=X", "chfjpy"),
+                new("USDHKD", "USD/HKD", "HKD=X", "usdhkd"),
+                new("EURNOK", "EUR/NOK", "EURNOK=X", "eurnok"),
+                new("EURPLN", "EUR/PLN", "EURPLN=X", "eurpln"),
+                new("EURSEK", "EUR/SEK", "EURSEK=X", "eursek"),
+                new("USDMXN", "USD/MXN", "MXN=X", "usdmxn"),
+                new("USDNOK", "USD/NOK", "NOK=X", "usdnok"),
+                new("USDPLN", "USD/PLN", "PLN=X", "usdpln"),
+                new("USDSEK", "USD/SEK", "SEK=X", "usdsek"),
+                new("USDZAR", "USD/ZAR", "ZAR=X", "usdzar"),
+                new("SGDJPY", "SGD/JPY", "SGDJPY=X", "sgdjpy"),
+                new("USDSGD", "USD/SGD", "SGD=X", "usdsgd"),
                 new("DXY", "US Dollar Index / DXY", "DX-Y.NYB", "dx.f"),
                 new("XAUUSD", "Gold / XAU/USD", "GC=F", "xauusd"),
                 new("SILVER", "Silver", "SI=F", "si.f"),
@@ -565,9 +577,9 @@ public sealed class SeasonalityService
             throw new InvalidOperationException($"Duplicate seasonality asset key: {duplicateKey.Key}");
         }
 
-        if (assets.Length != 526)
+        if (assets.Length != 537)
         {
-            throw new InvalidOperationException($"Expected 526 seasonality assets, got {assets.Length}.");
+            throw new InvalidOperationException($"Expected 537 seasonality assets, got {assets.Length}.");
         }
 
         return assets;

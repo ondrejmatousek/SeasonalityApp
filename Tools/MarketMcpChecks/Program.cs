@@ -142,13 +142,17 @@ try
     using (var r = await Rpc(h, new { jsonrpc = "2.0", id = 2, method = "tools/list" }, auth))
     {
         var tools = (await Json(r)).GetProperty("result").GetProperty("tools");
-        Check(tools.GetArrayLength() == (h4Discovery?4:1) && tools.EnumerateArray().Any(t=>t.GetProperty("name").GetString()=="validate_market_daily"), "Only configured tools exposed");
+        Check(tools.GetArrayLength() == (h4Discovery?6:1) && tools.EnumerateArray().Any(t=>t.GetProperty("name").GetString()=="validate_market_daily"), "Only configured tools exposed");
         if(h4Discovery){var names=tools.EnumerateArray().Select(t=>t.GetProperty("name").GetString()).ToHashSet();Check(names.Contains("submit_market_h4")&&names.Contains("get_market_h4_status"),"H4 discovery");}
     }
     if(h4Discovery)
     {
         using var denied=await Rpc(h,new{jsonrpc="2.0",id=40,method="tools/call",@params=new{name="submit_market_h4",arguments=new{h4Json="not json"}}},auth);
         var body=(await Json(denied)).GetProperty("result");Check(body.GetProperty("isError").GetBoolean()&&body.GetProperty("content")[0].GetProperty("text").GetString()!.Contains("market.ingest"),"H4 scope checked before parse/SQL");
+        using var zoneDenied=await Rpc(h,new{jsonrpc="2.0",id=41,method="tools/call",@params=new{name="submit_zone_prices",arguments=new{pricesJson="not json"}}},auth);
+        var zoneBody=(await Json(zoneDenied)).GetProperty("result");Check(zoneBody.GetProperty("isError").GetBoolean()&&zoneBody.GetProperty("content")[0].GetProperty("text").GetString()!.Contains("market.ingest"),"Zone scope before parse/SQL");
+        using var zoneStatusDenied=await Rpc(h,new{jsonrpc="2.0",id=42,method="tools/call",@params=new{name="get_zone_prices_status",arguments=new{}}},auth);
+        Check((await Json(zoneStatusDenied)).GetProperty("result").GetProperty("isError").GetBoolean(),"Zone read scope before SQL");
         Console.WriteLine("PASS: real H4 MCP discovery and scope-before-parse/SQL. No external requests or database access.");return;
     }
     // Test fixture changes envelope time only, not any provider bar or stored source file.

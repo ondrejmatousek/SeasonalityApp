@@ -71,6 +71,7 @@ jobs:
           dotnet run --project Tools/H4SqlImport/H4SqlImport.csproj -c Release -- --h4-live-validation
           dotnet run --project Tools/MarketMcpChecks/MarketMcpChecks.csproj -c Release -- --h4-discovery
           node Tools/h4-zone-live-checks.cjs
+          dotnet run --project Tools/ZonePriceImport/ZonePriceImport.csproj -c Release -- --checks
 
       - name: SQL wake-up GitHub App regression (ephemeral key, intercepted HTTP, no SQL)
         run: dotnet run --project Tools/MarketTriggerChecks/MarketTriggerChecks.csproj -c Release

@@ -11,7 +11,7 @@ public static class AssetClassification
         "SPY", "QQQ", "DIA", "IWM", "VTI", "VT", "EFA", "EEM", "TLT", "IEF", "GLD", "SLV", "USO", "UNG",
         "XLE", "XLF", "XLK", "XLV", "XLY", "XLP", "XLI", "XLU", "XLB", "VNQ", "ARKK"];
 
-    public static string ClassFor(SeasonalityAsset asset) => CotCatalog.IsForexPair(asset.Key) ? "forex"
+    public static string ClassFor(SeasonalityAsset asset) => CotCatalog.IsForexPair(asset.Key) || SeasonalityApp.Services.MarketZonePrices.Forex.Contains(asset.Key) ? "forex"
         : Indices.Contains(asset.Key) ? "index" : Crypto.Contains(asset.Key) ? "crypto"
         : asset.YahooSymbol.EndsWith("=F", StringComparison.Ordinal) ? "commodity"
         : Etfs.Contains(asset.Key) ? "etf" : "equity";

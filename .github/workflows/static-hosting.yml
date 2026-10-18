@@ -18,6 +18,11 @@ on:
       - '.github/workflows/static-hosting.yml'
       - 'Tools/h4-zone-*.cjs'
       - 'Tools/H4SqlImport/**'
+      - 'Tools/ZonePriceImport/**'
+      - 'Tools/cfd-zone-*.cjs'
+      - 'Tools/fetch-zone-crypto.ps1'
+      - 'Services/SeasonalityService.cs'
+      - 'Services/AssetClassification.cs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -82,6 +87,17 @@ jobs:
           node Tools/h4-zone-snapshot.cjs overlay artifacts/h4-hosting-source.json artifacts/public-site
           node Tools/h4-zone-snapshot-checks.cjs artifacts/public-site
           node Tools/liquidity-setup-checks.cjs artifacts/public-site
+      - name: Export isolated CFD zone prices and verify Yahoo crypto identity
+        if: steps.publication.outputs.run == 'true'
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+        run: |
+          dotnet build Tools/ZonePriceImport/ZonePriceImport.csproj -c Release
+          dotnet Tools/ZonePriceImport/bin/Release/net10.0/ZonePriceImport.dll --checks
+          dotnet Tools/ZonePriceImport/bin/Release/net10.0/ZonePriceImport.dll --export --config-root . --output artifacts/cfd-zone-source.json
+          pwsh -NoProfile -File Tools/fetch-zone-crypto.ps1 -OutputDir artifacts/zone-crypto
+          node Tools/cfd-zone-snapshot.cjs artifacts/public-site artifacts/cfd-zone-source.json artifacts/zone-crypto
+          node Tools/cfd-zone-checks.cjs artifacts/public-site
       - name: Overlay this morning's report including failed runs (keep last good analytics)
         if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
         env:
