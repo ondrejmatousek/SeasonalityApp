@@ -35,6 +35,26 @@ static class Checks
    var conflict=await MarketZonePrices.Receive(db,MarketZonePrices.Parse(Payload(close:7.76m),at));Check(conflict.Status=="Conflict"&&conflict.Inserted==0,"Exact OHLC conflict fails closed");
    await using(var c=new SqlCommand("SELECT COUNT(*) FROM market_zones.Bars WHERE Volume=100 AND [Close]=7.75",db))Check(Convert.ToInt32(await c.ExecuteScalarAsync())==2,"Original prices/volumes retained");
    await using(var c=new SqlCommand("SELECT Value FROM dbo.CanonicalSentinel",db))Check(Convert.ToInt32(await c.ExecuteScalarAsync())==39,"Canonical D1 untouched");
+   Check(await MarketZonePrices.NeedsZonePublication(db,first),"New OANDA bars request zone publication");
+   var retry=await MarketZonePrices.Receive(db,batch);
+   Check(retry.Retry&&await MarketZonePrices.NeedsZonePublication(db,retry),"Existing receipt retry retains actual inserted OANDA decision");
+   Check(!await MarketZonePrices.NeedsZonePublication(db,revise),"Volume-only duplicates do not publish");
+   Check(!await MarketZonePrices.NeedsZonePublication(db,conflict),"Conflicting batch does not publish");
+   MarketZonePrices.Batch TestBatch(string tag,params MarketZonePrices.Bar[] bars)
+   {var raw=System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{test=tag,bars}));return new(MarketH4Ingestion.Sha(raw),raw,bars.ToList(),0);}
+   var crypto=batch.Bars[0] with{Symbol="CRYPTO:BTCUSD",Start=T("2026-10-17T00:00Z")};
+   var mixedBatch=TestBatch("duplicate OANDA plus new shadow crypto",batch.Bars[0],crypto);
+   var mixed=await MarketZonePrices.Receive(db,mixedBatch);
+   Check(mixed.Inserted==1&&mixed.Duplicates==1&&!await MarketZonePrices.NeedsZonePublication(db,mixed),"New shadow crypto with duplicate OANDA does not publish");
+   var mixedRetry=await MarketZonePrices.Receive(db,mixedBatch);
+   Check(mixedRetry.Retry&&!await MarketZonePrices.NeedsZonePublication(db,mixedRetry),"Mixed shadow-only receipt retry does not publish");
+   var cryptoOnly=await MarketZonePrices.Receive(db,TestBatch("new shadow crypto only",crypto with{Symbol="CRYPTO:ETHUSD"}));
+   Check(cryptoOnly.Inserted==1&&!await MarketZonePrices.NeedsZonePublication(db,cryptoOnly),"Pure shadow crypto does not publish");
+   var duplicatesOnly=await MarketZonePrices.Receive(db,TestBatch("all duplicates",batch.Bars[0],crypto));
+   Check(duplicatesOnly.Inserted==0&&!await MarketZonePrices.NeedsZonePublication(db,duplicatesOnly),"All duplicates do not publish");
+   var newOanda=await MarketZonePrices.Receive(db,TestBatch("new OANDA plus duplicate crypto",batch.Bars[0] with{Symbol="OANDA:EURPLN"},crypto));
+   Check(newOanda.Inserted==1&&newOanda.Duplicates==1&&await MarketZonePrices.NeedsZonePublication(db,newOanda),"New OANDA in mixed batch still publishes");
+   Console.WriteLine("PASS publication uses actual receipt-owned OANDA inserts; shadow crypto, mixed duplicates, volume changes, conflicts and persisted retries.");
    Console.WriteLine("PASS isolated SQL receipts, raw hash readback, idempotence, conflicts, immutable volume and canonical sentinel.");
   }
   finally{if(!System.Text.RegularExpressions.Regex.IsMatch(name,"^SeasonalityZoneTest_[a-f0-9]{32}$"))throw new InvalidOperationException("Unsafe test cleanup");await Exec(admin,$"ALTER DATABASE [{name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{name}]");}

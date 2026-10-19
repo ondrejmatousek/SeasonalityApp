@@ -66,6 +66,15 @@ public static class MarketZonePrices
         // Adjacent provider boundary; regular Thursday->Friday close exception only.
         return d.DayOfWeek==DayOfWeek.Thursday || next==new DateTimeOffset(close).ToUnixTimeSeconds();
     }
+    public static async Task<bool> NeedsZonePublication(SqlConnection db,Receipt receipt,CancellationToken ct=default)
+    {
+        if(receipt.Status!="Accepted"||receipt.Inserted==0)return false;
+        // Duplicates retain their original ReceiptId. Inspect actual inserted rows,
+        // not all submitted symbols; this also preserves the decision on retries.
+        await using var cmd=new SqlCommand("SELECT CASE WHEN EXISTS(SELECT 1 FROM market_zones.Bars WHERE ReceiptId=@id AND Symbol LIKE 'OANDA:%') THEN 1 ELSE 0 END",db){CommandTimeout=120};
+        cmd.Parameters.Add(new SqlParameter("@id",SqlDbType.Char,64){Value=receipt.ReceiptId});
+        return Convert.ToInt32(await cmd.ExecuteScalarAsync(ct))==1;
+    }
     public static async Task<Receipt> Receive(SqlConnection db,Batch batch,CancellationToken ct=default)
     {
         using var tx=db.BeginTransaction(IsolationLevel.Serializable);
@@ -135,7 +144,7 @@ public sealed class MarketZonePriceTool(IConfiguration config,MarketDailyGitHubT
         {
             var batch=MarketZonePrices.Parse(pricesJson,DateTimeOffset.UtcNow);await using var db=new SqlConnection(config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);
             var receipt=await MarketZonePrices.Receive(db,batch,cancellationToken);
-            var publish=receipt.Status=="Accepted"&&receipt.Inserted>0&&batch.Bars.Any(b=>b.Symbol.StartsWith("OANDA:",StringComparison.Ordinal));
+            var publish=await MarketZonePrices.NeedsZonePublication(db,receipt,cancellationToken);
             var wake=publish?await trigger.RequestH4Async(cancellationToken):new MarketDailyGitHubTrigger.Result("NoNewZoneBars");
             return MarketDailyMcp.ToolResult(new{receipt,persisted=true,rule=MarketZonePrices.Rule,comparisonPolicy="ohlc-exact-volume-audit-v1",providerBoundaryValidated=receipt.Status=="Accepted",exchangeCalendarValidated=false,completionValidated=false,canonicalD1Changed=false,cryptoYahooChanged=false,zonePublicationRequested=wake.Requested,workflowTrigger=wake.Status},receipt.Status!="Accepted");
         }
