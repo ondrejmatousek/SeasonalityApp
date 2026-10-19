@@ -1,15 +1,20 @@
 @{
     ViewData["DataPage"] = true;
 }
-<section class="data-runs" id="data-runs">
+<section class="data-runs" id="data-runs" data-audit-url="https://seasonality-gbfhasdjamcnf6dm.westeurope-01.azurewebsites.net/api/data-runs/receipts">
     <header class="runs-heading">
         <div><p class="runs-eyebrow">DATA / PROVOZ</p><h1>Denní běhy</h1><p>Sběr → SQL → validace → analytika → zveřejnění. Časy jsou v Europe/Prague.</p></div>
         <button type="button" id="runs-refresh">Obnovit</button>
     </header>
     <p id="runs-state" role="status">Načítám uložené reporty…</p>
     <p class="runs-note">Zelený přepočet není potvrzení nasazení. Dostupnost webu ověřujeme zvlášť proti jeho manifestu. Přijetí kolekce do SQL samo nepotvrzuje, že Work právě načetl nové svíčky z TradingView.</p>
+    <div class="runs-tabs" role="group" aria-label="Timeframe běhů">
+        <button type="button" id="runs-d1" aria-pressed="true">D1 · denní běhy</button>
+        <button type="button" id="runs-h4" aria-pressed="false">H4 · čtyřhodinové běhy</button>
+    </div>
+    <p id="runs-audit-state" role="status"></p>
     <div class="runs-columns">
-        <section aria-labelledby="runs-history-heading"><h2 id="runs-history-heading">Historie po dnech</h2><div id="runs-history"></div></section>
+        <section aria-labelledby="runs-history-heading"><h2 id="runs-history-heading">Historie D1</h2><div id="runs-history"></div><nav class="runs-pagination" aria-label="Stránkování běhů"><button type="button" id="runs-prev">Předchozí</button><span id="runs-page" aria-live="polite"></span><button type="button" id="runs-next">Další</button></nav></section>
         <section aria-labelledby="runs-detail-heading"><h2 id="runs-detail-heading">Detail běhu</h2><div id="runs-detail"></div></section>
     </div>
     <noscript>Pro načtení uložených reportů je potřeba JavaScript.</noscript>
