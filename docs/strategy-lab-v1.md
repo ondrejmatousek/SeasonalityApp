@@ -106,3 +106,10 @@ Execution assumptions reference: [TradingView strategy emulator documentation](h
 Drawdown in this first pilot is the cumulative CLOSED-trade R drawdown, not
 mark-to-market account drawdown. Once an entry has occurred, subsequent zone
 invalidation cannot retroactively delete the trade; SL/TP/time rules govern it.
+# Trade audit chart
+
+The explicit “Obchody” button opens a native modal dialog (never automatically after a calculation). It contains the selected variant's trades or a clear zero-trade state. A trade opens its evidence and chart inside the dialog, with a back-to-list button. Close/Escape dispose the chart and return focus through native dialog behavior; the background is inert. On mobile the dialog fills the viewport; the trade table scrolls inside its own container.
+
+Each variant opens its complete closed-trade list. Each trade opens the exact simulated entry/SL/TP/exit, costs and textual entry evidence from the unchanged engine reference and frozen source candles. The chart uses bundled TradingView Lightweight Charts, not the full TradingView platform. It provides M15/H4/D1, pan/zoom, crosshair OHLC, keyboard controls, trade/context/history framing, two-point ruler and PNG export. Zone/parent boundaries, swept M15 swing, signal, entry, exit, risk and reward are drawn. Separate EMA trades show their causal H4 EMA values only after the H4 close.
+
+Higher-timeframe markers are positioned on their containing candle; the text retains exact UTC times. Exit time is the end of the exit candle, not a claimed intrabar fill timestamp. Risk/target and zones participate in autoscale even when outside the visible candle prices. No backtest rules, fills, data, scheduling or trading activation change.

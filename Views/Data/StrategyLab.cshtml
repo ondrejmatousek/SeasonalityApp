@@ -25,5 +25,22 @@
     <p id="lab-status" role="status">Vyber rodinu a spusť srovnání. Výsledky zatím nejsou vypočítané.</p>
     <p id="lab-report-context"></p>
     <div class="lab-table-wrap"><table class="lab-table"><thead><tr><th>Model / parametry</th><th>Obchody</th><th>Čisté R</th><th>Průměr R</th><th>PF</th><th>Propad uzavřených R</th><th>2× náklady: R</th><th>Audit</th></tr></thead><tbody id="lab-results"></tbody></table></div>
-    <section id="lab-trades" hidden><h2>Obchody vybrané varianty</h2><p id="lab-trade-summary"></p><div class="lab-table-wrap"><table class="lab-table"><thead><tr><th>Směr / vstup UTC</th><th>Vstup / SL / TP</th><th>Konec výstupní svíčky UTC</th><th>Důvod</th><th>Čisté R / náklady R</th></tr></thead><tbody id="lab-trade-rows"></tbody></table></div></section>
+    <dialog id="lab-trade-modal" aria-labelledby="lab-modal-title">
+    <div class="lab-modal-header"><h2 id="lab-modal-title">Obchody strategie</h2><button type="button" id="lab-modal-close" aria-label="Zavřít okno obchodů" autofocus>Zavřít ×</button></div>
+    <section id="lab-trades" hidden><h3>Obchody vybrané varianty</h3><p id="lab-trade-summary"></p><div class="lab-table-wrap"><table class="lab-table"><thead><tr><th>Směr / vstup UTC</th><th>Vstup / SL / TP</th><th>Konec výstupní svíčky UTC</th><th>Důvod</th><th>Čisté R / náklady R</th><th>Detail</th></tr></thead><tbody id="lab-trade-rows"></tbody></table></div></section>
+    <section id="lab-trade-detail" hidden aria-labelledby="lab-detail-title">
+        <button type="button" id="lab-trade-back">← Zpět na seznam obchodů</button>
+        <h2 id="lab-detail-title" tabindex="-1">Detail obchodu</h2>
+        <p id="lab-detail-result"></p><h3>Proč model vstoupil</h3><ol id="lab-entry-reasons"></ol>
+        <div class="lab-chart-controls">
+            <label>Svíčky <select id="lab-chart-timeframe"><option value="M15">M15 · vstupní model</option><option value="H4">H4 · kontext</option><option value="D1">D1 · kontext</option></select></label>
+            <button type="button" id="lab-chart-reset">Zaměřit obchod</button><button type="button" id="lab-chart-context">Zóna / kontext</button><button type="button" id="lab-chart-all">Celá historie</button>
+            <button type="button" id="lab-chart-in" aria-label="Přiblížit graf">+</button><button type="button" id="lab-chart-out" aria-label="Oddálit graf">−</button>
+            <button type="button" id="lab-chart-ruler" aria-pressed="false">Pravítko</button><button type="button" id="lab-chart-clear">Smazat měření</button><button type="button" id="lab-chart-image">Stáhnout graf PNG</button>
+        </div>
+        <p id="lab-chart-readout" role="status">Časy grafu jsou v UTC.</p>
+        <div id="lab-trade-chart" tabindex="0" role="region" aria-label="Svíčkový graf simulovaného obchodu, čas UTC"></div>
+        <p class="lab-chart-help">Kolečko / pinch: zoom; tažení: posun; tažení cenové osy: měřítko. Klávesy + / −, šipky a 0 (zaměřit obchod). Pravítko: dva klepy do grafu. Zelená plocha = plánovaný cíl, červená = risk; jejich šířka je pro čitelnost nejméně 70 px, ne délka držení. Značky = signál, vstup a výstup. H4/D1 agregují polohu značek do své svíčky; přesné časy zůstávají v textu. Graf je zpětný audit, nikoli živá kotace. Výstupní čas označuje konec svíčky; pořadí pohybu uvnitř ní neznáme.</p>
+    </section>
+    </dialog>
 </section>
