@@ -6,8 +6,8 @@ const errors=[];let currentCase;
 (async()=>{try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));try{browser=await chromium.launch({headless:true});}catch{browser=await chromium.launch({headless:true,channel:'msedge'});}
  const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/lib/lightweight-charts/README.md');
- await page.setContent('<style>body{margin:0;background:#101416}#chart{width:100vw;height:480px}</style><div id="chart"></div><div id="tip" hidden></div>');
- const url='http://127.0.0.1:'+server.address().port;await page.addScriptTag({url:url+'/lib/lightweight-charts/lightweight-charts.standalone.production.js'});await page.addScriptTag({url:url+'/js/zone-price-chart.js'});
+ await page.setContent('<style>body{margin:0;background:#101416}#chart{width:100vw;height:480px;box-sizing:border-box}</style><div id="chart" class="zone-chart-wrap" tabindex="0"></div><div id="tip" hidden></div>');
+ const url='http://127.0.0.1:'+server.address().port;await page.addStyleTag({url:url+'/css/zone-chart.css'});await page.addScriptTag({url:url+'/lib/lightweight-charts/lightweight-charts.standalone.production.js'});await page.addScriptTag({url:url+'/js/chart-drawing-tools.js'});await page.addScriptTag({url:url+'/js/zone-price-chart.js'});
  // Capture the actual native series without replacing chart rendering.
  await page.evaluate(()=>{const create=LightweightCharts.createChart;window.LightweightCharts={...LightweightCharts,createChart:(...args)=>{const chart=create(...args),add=chart.addSeries.bind(chart);chart.addSeries=(...a)=>{const series=add(...a);window.boundaryTestSeries=series;return series;};return chart;}};});
  const visible=async seasonal=>{

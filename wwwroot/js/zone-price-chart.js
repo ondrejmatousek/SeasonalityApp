@@ -12,7 +12,8 @@
         const seasonal=candidate?.direction==='up'
             ? {fill:'#22c55e22',line:'#22c55ebb',text:'#86efac',label:'Sezonní růst'}
             : {fill:'#ef444422',line:'#ef4444bb',text:'#fca5a5',label:'Sezonní pokles'};
-        const chart=L.createChart(container,{
+        const host=document.createElement('div');host.className='zone-chart-canvas';container.append(host);
+        const chart=L.createChart(host,{
             autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#aebbc3',fontSize:12,attributionLogo:true},
             grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},
             rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.12,bottom:.12},alignLabels:true},
@@ -52,6 +53,7 @@
             axisLabelColor:zone.type==='demand'?'#26a69a':'#ef5350',axisLabelTextColor:'#ffffff',title:''
         });
         const markers=annotations.length?L.createSeriesMarkers(series,annotations):null;
+        const drawingTools=window.ChartDrawingTools?.create(container,chart,series,{number});
         const x=date=>{
             let n=dates.findIndex(d=>d>=date);if(n<0)n=dates.length-1;
             let p=n;if(n>0&&dates[n]!==date)p=n-1+(day(date)-day(dates[n-1]))/(day(dates[n])-day(dates[n-1]));
@@ -96,16 +98,17 @@
         };
         const zoom=factor=>{const r=chart.timeScale().getVisibleLogicalRange();if(r){const mid=(r.from+r.to)/2,half=Math.max(6,(r.to-r.from)*factor/2);chart.timeScale().setVisibleLogicalRange({from:mid-half,to:mid+half});}};
         chart.subscribeCrosshairMove(p=>{
+            if(drawingTools?.active){tip.hidden=true;return;}
             if(!p.point||!p.time||p.point.x<0||p.point.y<0){tip.hidden=true;return;}
             const b=p.seriesData.get(series),value=series.coordinateToPrice(p.point.y);
             tip.textContent=`${displayTime(p.time)} · cena ${number(value)}${b?.open!==undefined?`\nO ${number(b.open)} · H ${number(b.high)}\nL ${number(b.low)} · C ${number(b.close)}`:'\nBez svíčky · budoucí sezonní období'}`;
             if(resolution!=='W1'&&b?.open!==undefined){const original=price.bars.find(bar=>bar.date===iso(p.time)),dates=window.MarketCandles.dateInfo(price,original);if(dates.sessionDate)tip.textContent+=`\nDen session ${dates.sessionDate} (odvozený)\nZačátek UTC ${dates.providerTimestamp}`;}
             tip.hidden=false;
-            const box=container.getBoundingClientRect(),pos=window.MarketChartUi.tooltipPosition(p.point.x,p.point.y,tip.offsetWidth,tip.offsetHeight,box.width,box.height);
+            const box=container.getBoundingClientRect(),hostBox=host.getBoundingClientRect(),pos=window.MarketChartUi.tooltipPosition(p.point.x+hostBox.left-box.left,p.point.y,tip.offsetWidth,tip.offsetHeight,box.width,box.height);
             tip.style.left=pos.left+'px';tip.style.top=pos.top+'px';
         });
         const key=e=>{if(['+','=','-','0','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();if(e.key==='0')reset();else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){const r=chart.timeScale().getVisibleLogicalRange(),move=(r.to-r.from)*.1*(e.key==='ArrowLeft'?-1:1);chart.timeScale().setVisibleLogicalRange({from:r.from+move,to:r.to+move});}else zoom(e.key==='-'?1.25:.8);}};
         container.addEventListener('keydown',key);reset();
-        return {reset,zoom,fit:()=>{chart.priceScale('right').applyOptions({autoScale:true});chart.timeScale().fitContent();},destroy:()=>{container.removeEventListener('keydown',key);markers?.detach();chart.remove();tip.hidden=true;}};
+        return {reset,zoom,fit:()=>{chart.priceScale('right').applyOptions({autoScale:true});chart.timeScale().fitContent();},destroy:()=>{container.removeEventListener('keydown',key);drawingTools?.destroy();markers?.detach();chart.remove();host.remove();tip.hidden=true;}};
     }};
 })();
