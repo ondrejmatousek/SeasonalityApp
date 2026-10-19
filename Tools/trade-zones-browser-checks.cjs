@@ -8,6 +8,21 @@ async function assertFramed(page){await page.waitForFunction(()=>{const c=docume
  await page.getByRole('tab',{name:'Obchodní zóny',exact:true}).click();await page.locator('#tz-results button').first().waitFor();assert.ok(await page.locator('#tz-results button').count()>0);
  assert.ok(await page.locator('#tz-chart').getAttribute('data-candle-count'));assert.match(await page.locator('#tz-status').textContent(),/Session a makro neověřeny/);
  await assertFramed(page);
+ assert.equal(await page.locator('#tz-sort').inputValue(),'distance');assert.equal(await page.locator('#tz-sort-direction').inputValue(),'asc');
+ assert.equal(await page.locator('[data-tz-sort="distance"]').locator('..').getAttribute('aria-sort'),'ascending');
+ assert.ok(await page.locator('#tz-results tr[data-zone-id]').count()<=20);
+ await page.locator('#tz-page-size').selectOption('10');
+ const firstPage=await page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>r.dataset.symbol+'|'+r.dataset.zoneId));
+ if(!await page.locator('#tz-page-next').isDisabled()){
+  await page.locator('#tz-page-next').click();assert.match(await page.locator('#tz-page-info').textContent(),/Strana 2/);
+  const secondPage=await page.locator('#tz-results tr[data-zone-id]').evaluateAll(rows=>rows.map(r=>r.dataset.symbol+'|'+r.dataset.zoneId));assert.ok(secondPage.every(id=>!firstPage.includes(id)),'No repeated zones between pages');
+  const first=page.locator('#tz-results tr[data-zone-id]').first(),symbol=await first.getAttribute('data-symbol');await first.locator('button').click();assert.ok((await page.locator('#tz-title').textContent()).startsWith(symbol+' ·'),'Selected chart belongs to visible page');
+ }
+ for(const key of ['instrument','newest','quality','seasonal','cot','distance']){
+  await page.locator('[data-tz-sort="'+key+'"]').click();assert.equal(await page.locator('#tz-sort').inputValue(),key);assert.match(await page.locator('#tz-page-info').textContent(),/Strana 1/);
+  const prior=await page.locator('#tz-sort-direction').inputValue();await page.locator('[data-tz-sort="'+key+'"]').click();assert.notEqual(await page.locator('#tz-sort-direction').inputValue(),prior,'Header toggles direction');
+ }
+ await page.locator('#tz-page-size').selectOption('all');await page.locator('#tz-clear-filters').click();
  const wtiDate=await page.evaluate(async()=>{const s=await StaticMarketData.zonePrices(),p=s.prices.WTI;return MarketCandles.dateInfo(p,p.bars.at(-1));});
  if(wtiDate.sessionDate){assert.match(await page.locator('#tz-coverage').textContent(),new RegExp('WTI:.*datum svíčky '+wtiDate.barDate+'.*den session '+wtiDate.sessionDate),'Real snapshot coverage distinguishes UTC start and derived session day');}
  assert.equal(await page.locator('#tz-scope').inputValue(),'cfd');
@@ -63,7 +78,8 @@ async function assertFramed(page){await page.waitForFunction(()=>{const c=docume
  await page.locator('#tz-search').fill('');await page.locator('#tz-volume-window').selectOption('3');await page.locator('#tz-bounds').selectOption('body-wick');assert.ok(await page.locator('#tz-results button').count()>0);
  await page.locator('#tz-search').fill('NO_SUCH_SYMBOL');assert.match(await page.locator('#tz-results').textContent(),/Žádná platná zóna/);assert.equal(await page.locator('#tz-detail').isVisible(),false);
  await page.locator('#tz-search').fill('');await page.screenshot({path:path.join(root,'trade-zones-desktop.png'),fullPage:true});
- await page.setViewportSize({width:390,height:844});await assertFramed(page);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile overflow');await page.screenshot({path:path.join(root,'trade-zones-mobile.png'),fullPage:true});
+ await page.setViewportSize({width:390,height:844});await page.locator('#tz-page-size').selectOption('20');await assertFramed(page);
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Mobile overflow '+JSON.stringify(await page.evaluate(()=>({width:document.documentElement.scrollWidth,offenders:[...document.querySelectorAll('body *')].filter(e=>!e.closest('.zone-table-wrap')).filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&getComputedStyle(e).position!=='absolute';}).slice(0,12).map(e=>({id:e.id,tag:e.tagName,cls:e.className,width:e.getBoundingClientRect().width,right:e.getBoundingClientRect().right}))}))));await page.screenshot({path:path.join(root,'trade-zones-mobile.png'),fullPage:true});
  await page.evaluate(()=>{window.StaticMarketData.opportunities=async()=>{throw Error('Test unavailable context');};});
  await page.locator('#tz-reload').click();await page.waitForFunction(()=>document.getElementById('tz-caption').textContent.includes('Sezonní okno není dostupné'));
  assert.ok(await page.locator('#tz-results button').count()>0,'Missing seasonality never hides zones');

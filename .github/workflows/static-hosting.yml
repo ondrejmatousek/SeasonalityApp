@@ -69,6 +69,7 @@ jobs:
           # Render current Razor navigation and the Data view without SQL or analytics.
           node Tools/data-runs-checks.cjs
           node Tools/trade-zones-checks.cjs
+          node Tools/trade-zone-table-checks.cjs
           node Tools/market-date-checks.cjs
           node Tools/htf-retirement-checks.cjs
           dotnet build SeasonalityApp.slnx --configuration Release
