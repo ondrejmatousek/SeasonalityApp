@@ -8,6 +8,8 @@ const errors=[];let currentCase;
  const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/lib/lightweight-charts/README.md');
  await page.setContent('<style>body{margin:0;background:#101416}#chart{width:100vw;height:480px}</style><div id="chart"></div><div id="tip" hidden></div>');
  const url='http://127.0.0.1:'+server.address().port;await page.addScriptTag({url:url+'/lib/lightweight-charts/lightweight-charts.standalone.production.js'});await page.addScriptTag({url:url+'/js/zone-price-chart.js'});
+ // Capture the actual native series without replacing chart rendering.
+ await page.evaluate(()=>{const create=LightweightCharts.createChart;window.LightweightCharts={...LightweightCharts,createChart:(...args)=>{const chart=create(...args),add=chart.addSeries.bind(chart);chart.addSeries=(...a)=>{const series=add(...a);window.boundaryTestSeries=series;return series;};return chart;}};});
  const visible=async seasonal=>{
   await page.waitForFunction(expected=>{const d=document.getElementById('chart').dataset,n=k=>Number(d[k]),has=k=>d[k]!==undefined&&d[k]!=='null'&&Number.isFinite(n(k));return ['zoneLeft','zoneTop','zoneBottom','paneWidth','paneHeight'].every(has)&&n('paneWidth')>100&&n('zoneLeft')>=0&&n('zoneLeft')<n('paneWidth')&&n('zoneTop')>=0&&n('zoneBottom')<=n('paneHeight')&&n('zoneTop')<n('zoneBottom')&&(!expected||has('seasonalStart')&&has('seasonalEnd')&&n('seasonalStart')>=0&&n('seasonalEnd')<=n('paneWidth')&&n('seasonalStart')<n('seasonalEnd'));},seasonal);
   const d=await page.locator('#chart').evaluate(n=>({...n.dataset}));assert.ok(Number(d.zoneTop)>=0&&Number(d.zoneBottom)<=Number(d.paneHeight));if(!seasonal)assert.equal(d.seasonalStart,'null');
@@ -21,6 +23,9 @@ const errors=[];let currentCase;
    window.originalEvidence=JSON.stringify({price,zone,candidate});window.testEvidence={price,zone,candidate};window.testChart=ZonePriceChart.create(c,document.getElementById('tip'),{price,zone,candidate,resolution});
   },{resolution,seasonal,side});
   await visible(seasonal);
+  const boundaries=await page.evaluate(()=>boundaryTestSeries.priceLines().map(line=>line.options()));
+  assert.deepEqual(boundaries.map(b=>b.price),side==='above'?[300,302]:[10,12]);
+  assert.ok(boundaries.every(b=>b.axisLabelVisible&&!b.lineVisible&&b.title===''&&b.color===(side==='above'?'#ef5350':'#26a69a')),'Both exact native boundary labels, no full-width extension');
   if(resolution==='D1'&&seasonal==='future'&&side==='above'&&width!==320)await page.locator('#chart').screenshot({path:path.join(root,'zone-framing-seasonal-'+width+'.png')});
   // Reset must recover the complete framing after an intentional zoom/pan.
   await page.evaluate(()=>{testChart.zoom(.1);testChart.reset();});await visible(seasonal);

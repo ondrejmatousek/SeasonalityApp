@@ -15,7 +15,7 @@
         const chart=L.createChart(container,{
             autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#aebbc3',fontSize:12,attributionLogo:true},
             grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},
-            rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.12,bottom:.12}},
+            rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.12,bottom:.12},alignLabels:true},
             timeScale:{borderColor:'#344047',timeVisible:intraday,secondsVisible:false,minBarSpacing:.001,rightOffset:8,lockVisibleTimeRangeOnResize:true},
             crosshair:{mode:L.CrosshairMode.Normal,vertLine:{labelBackgroundColor:'#43515a'},horzLine:{labelBackgroundColor:'#43515a'}},
             localization:{locale:'cs-CZ',priceFormatter:number,timeFormatter:displayTime},
@@ -44,6 +44,13 @@
         // Keep our immutable ISO-date axis: the library normalizes data.time internally.
         const dates=data.map(b=>axisKey(b.time));
         series.setData(data);container.dataset.candleCount=bars.length;container.dataset.resolution=resolution;
+        // Native price lines keep both boundary prices on the right axis during
+        // zoom/pan and resize. The primitive still draws the time-bounded zone.
+        for(const boundary of [zone.lower,zone.upper])series.createPriceLine({
+            price:boundary,color:zone.type==='demand'?'#26a69a':'#ef5350',
+            lineVisible:false,axisLabelVisible:true,
+            axisLabelColor:zone.type==='demand'?'#26a69a':'#ef5350',axisLabelTextColor:'#ffffff',title:''
+        });
         const markers=annotations.length?L.createSeriesMarkers(series,annotations):null;
         const x=date=>{
             let n=dates.findIndex(d=>d>=date);if(n<0)n=dates.length-1;
