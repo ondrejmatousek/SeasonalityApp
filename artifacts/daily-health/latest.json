@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ok",
-  "runDate": "2026-10-18",
-  "runStartedAt": "2026-10-18T01:12:48.246Z",
-  "runFinishedAt": "2026-10-18T01:25:12.386Z",
-  "sourceCommit": "1e6981ab78b584c4512188f7dbe55cfb8255e3c5",
-  "workflowUrl": "https://github.com/ondrejmatousek/SeasonalityApp/actions/runs/39085559547",
-  "marketDailyFetchedAt": "2026-10-18T01:09:08.731Z",
+  "runDate": "2026-10-19",
+  "runStartedAt": "2026-10-19T01:13:14.724Z",
+  "runFinishedAt": "2026-10-19T01:28:38.221Z",
+  "sourceCommit": "a0154de78d49f51737f4e82b0f639b1322a88c27",
+  "workflowUrl": "https://github.com/ondrejmatousek/SeasonalityApp/actions/runs/39184236066",
+  "marketDailyFetchedAt": "2026-10-19T01:07:23.123Z",
   "market": {
     "status": "ok",
     "received": 39,
@@ -14,13 +14,13 @@
     "duplicates": 39,
     "failed": 0,
     "failedSymbols": [],
-    "inputSha256": "fca07200e54a3061d6f032bbcdea6b41bbc8e44fcd26e6cb03c44980df5dcc2a"
+    "inputSha256": "3cb05cb834090d0707ae47cd991c2da2fcaab4e98d7d6039c8a87168ff1294e2"
   },
   "stocks": {
     "status": "ok",
     "refresh": {
-      "startedAt": "2026-10-18T01:12:53.9173953+00:00",
-      "finishedAt": "2026-10-18T01:23:09.9155841+00:00",
+      "startedAt": "2026-10-19T01:13:21.3946518+00:00",
+      "finishedAt": "2026-10-19T01:26:16.1297228+00:00",
       "attempted": 457,
       "yahooSucceeded": [
         "DBC",
@@ -486,7 +486,7 @@
       "fallbackSucceeded": [],
       "failedSymbols": []
     },
-    "snapshotAt": "2026-10-18T01:24:18.259Z",
+    "snapshotAt": "2026-10-19T01:27:43.587Z",
     "lastBarDate": "2026-10-16"
   },
   "cot": {
@@ -506,9 +506,9 @@
   "staticExport": {
     "status": "ok"
   },
-  "seasonalityCandidates": 118,
+  "seasonalityCandidates": 120,
   "zoneCandidates": 181,
-  "screenerRows": 118,
+  "screenerRows": 120,
   "instrumentChecks": [
     {
       "symbol": "AAPL",
@@ -523,7 +523,7 @@
     {
       "symbol": "EURUSD",
       "historicalSource": "validated-v2/series/EURUSD.json",
-      "dailySource": "Azure SQL market_daily.Inbox / c140ca6fbafafebf65bd26f2370a992cd7324af4a92cadecac3c4c2c9f3b339c",
+      "dailySource": "Azure SQL market_daily.Inbox / 8bb185c1b12462a82a7e93eaa30541ead725a451824894d632603b2701634b4c",
       "lastBarDate": "2026-10-16",
       "seasonalitySource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
@@ -534,7 +534,7 @@
     {
       "symbol": "NDX",
       "historicalSource": "validated-v2/series/NDX.json",
-      "dailySource": "Azure SQL market_daily.Inbox / c140ca6fbafafebf65bd26f2370a992cd7324af4a92cadecac3c4c2c9f3b339c",
+      "dailySource": "Azure SQL market_daily.Inbox / 8bb185c1b12462a82a7e93eaa30541ead725a451824894d632603b2701634b4c",
       "lastBarDate": "2026-10-16",
       "seasonalitySource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
       "htfSource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
@@ -545,7 +545,7 @@
     {
       "symbol": "SPX",
       "historicalSource": "validated-v2/series/SPX.json",
-      "dailySource": "Azure SQL market_daily.Inbox / c140ca6fbafafebf65bd26f2370a992cd7324af4a92cadecac3c4c2c9f3b339c",
+      "dailySource": "Azure SQL market_daily.Inbox / 8bb185c1b12462a82a7e93eaa30541ead725a451824894d632603b2701634b4c",
       "lastBarDate": "2026-10-16",
       "seasonalitySource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
       "htfSource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
@@ -556,7 +556,7 @@
     {
       "symbol": "XAUUSD",
       "historicalSource": "validated-v2/series/XAUUSD.json",
-      "dailySource": "Azure SQL market_daily.Inbox / c140ca6fbafafebf65bd26f2370a992cd7324af4a92cadecac3c4c2c9f3b339c",
+      "dailySource": "Azure SQL market_daily.Inbox / 8bb185c1b12462a82a7e93eaa30541ead725a451824894d632603b2701634b4c",
       "lastBarDate": "2026-10-16",
       "seasonalitySource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
@@ -567,7 +567,7 @@
     {
       "symbol": "WTI",
       "historicalSource": "validated-v2/series/WTI.json",
-      "dailySource": "Azure SQL market_daily.Inbox / c140ca6fbafafebf65bd26f2370a992cd7324af4a92cadecac3c4c2c9f3b339c",
+      "dailySource": "Azure SQL market_daily.Inbox / 8bb185c1b12462a82a7e93eaa30541ead725a451824894d632603b2701634b4c",
       "lastBarDate": "2026-10-15",
       "lastSessionDate": "2026-10-16",
       "sessionDateBasis": "Odvozeno ze začátku v 17:00 America/Chicago; sváteční výjimky nejsou tímto přepočtem ověřeny.",
@@ -584,17 +584,17 @@
   "published": true,
   "mode": "live",
   "eligibleForPublication": true,
-  "durationSeconds": 744,
-  "staleAfter": "2026-10-19T13:25:12.386Z",
+  "durationSeconds": 923,
+  "staleAfter": "2026-10-20T13:28:38.221Z",
   "marketDailySql": {
     "schemaVersion": 1,
-    "generationId": 5,
-    "receiptId": "c140ca6fbafafebf65bd26f2370a992cd7324af4a92cadecac3c4c2c9f3b339c",
-    "payloadSha256": "fca07200e54a3061d6f032bbcdea6b41bbc8e44fcd26e6cb03c44980df5dcc2a",
-    "auditSha256": "8284bafab4413e7611bcca7c04e5be52fb802e5d1fca4a9a2e9317cc304dcca4",
+    "generationId": 6,
+    "receiptId": "8bb185c1b12462a82a7e93eaa30541ead725a451824894d632603b2701634b4c",
+    "payloadSha256": "3cb05cb834090d0707ae47cd991c2da2fcaab4e98d7d6039c8a87168ff1294e2",
+    "auditSha256": "6eb55cabc2a9ca5c49d399b1aed038ec4dce4c05c4735882a5b352c4fe49de13",
     "stateSha256": "6ca1372de8647434de5382836c413dcbfeedbc8714ade6822fa5bf1f166422fb",
     "baselineFingerprint": "d127c81826f29861a6cf17d336dde497e7ac544e2ee455ed7ec96977e93cff9e",
-    "runDate": "2026-10-18"
+    "runDate": "2026-10-19"
   },
   "publication": "Generated files prepared for commit; hosting remains separate"
 }
