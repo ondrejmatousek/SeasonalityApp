@@ -70,7 +70,7 @@
   }
   return {invalid:false,invalidatedAt:null,visits,maxPenetration};
  }
- function detect(price,tf,asOf,options={}){
+ function detect(price,tf,asOf,options={},formationOnly=false){
   const c=settings(options),bars=sourceBars(price,tf,asOf),out=[],seen=new Set(),daily=tf==='H4'?bars:(price.bars||[]).filter(b=>b.date<asOf&&Htf.valid(b)).sort((a,b)=>a.date.localeCompare(b.date));
   const latestClose=tf==='H4'?bars.at(-1)?.close:price.latestClose;
   for(let start=Math.max(c.atr,c.volumeLookback);start<bars.length-1;start++){
@@ -100,8 +100,8 @@
       if(!(upper>lower))break;
       const swing=swingAt(bars,start,up,c),applicable=swing&&(up?swing.price>hi:swing.price<lo);
       const bos=applicable?{state:departure.some(d=>up?d.close>swing.price:d.close<swing.price)?'yes':'no',...swing}:{state:'unknown',note:'Před základnou není potvrzený relevantní swing před směrem pohybu.'};
-      const life=lifecycle(daily,up?'demand':'supply',lower,upper,knownAt,tf==='H4');
-      if(tf==='H4'){
+      const life=formationOnly?{invalid:false,visits:0,maxPenetration:0}:lifecycle(daily,up?'demand':'supply',lower,upper,knownAt,tf==='H4');
+      if(tf==='H4'&&!formationOnly){
        // Accepted D1 wicks after confirmation also protect against H4 coverage
        // gaps. Never use a daily range containing pre-confirmation price action.
        const fallback=lifecycle((price.dailyLifecycleBars||[]).filter(d=>day(d.endDate)<=day(asOf)),up?'demand':'supply',lower,upper,knownAt,true);
@@ -170,5 +170,10 @@
   const cot=aligned?Htf.cotState(c):'insufficient';
   return {seasonal:sufficient?(aligned?'supports':'against'):'unknown',cot,macro:'unknown',candidate:c};
  }
- return {defaults,settings,sourceBars,detect,volumeAt,swingAt,refine,context,deduplicate,lifecycle,distancePercent,rangeLiquidity,liquidityDefaults};
+ // Historical formations, NOT today's surviving zones. Replay applies lifecycle
+ // chronologically. Do not expose latest-price distance or future visit metadata.
+ function formations(price,tf,asOf,options={}){
+  return detect(price,tf,asOf,{...options,maxAgeDays:36500},true).map(z=>({id:z.id,timeframe:z.timeframe,kind:z.kind,kinds:z.kinds,type:z.type,lower:z.lower,upper:z.upper,baseDate:z.baseDate,confirmedAt:z.confirmedAt,atr:z.atr,bos:z.bos,volume:z.volume}));
+ }
+ return {defaults,settings,sourceBars,detect,formations,volumeAt,swingAt,refine,context,deduplicate,lifecycle,distancePercent,rangeLiquidity,liquidityDefaults};
 });

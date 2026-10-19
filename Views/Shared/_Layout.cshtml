@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="~/css/zone-chart.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/trade-zones.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/data-runs.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/strategy-lab.css" asp-append-version="true" />
 </head>
 <body class="journal-shell app-section-shell">
     <header>
@@ -28,7 +29,8 @@
     <div class="app-workspace">
         <aside class="app-sidebar">
             <div class="sidebar-title">Analýza trhů</div>
-            <a class="sidebar-link @(ViewData["DataPage"] is true ? "" : "active")" href="/">Seasonality &amp; COT</a>
+            <a class="sidebar-link @(ViewData["DataPage"] is true || ViewData["LabPage"] is true ? "" : "active")" href="/">Seasonality &amp; COT</a>
+            <a class="sidebar-link @(ViewData["LabPage"] is true ? "active" : "")" href="/strategy-lab/">Laboratoř strategií</a>
             <div class="sidebar-title">Data</div>
             <a class="sidebar-link @(ViewData["DataPage"] is true ? "active" : "")" href="/runs/">Denní běhy</a>
         </aside>
@@ -60,6 +62,8 @@
     <script src="~/js/cot.js" asp-append-version="true"></script>
     <script src="~/js/market-candles.js" asp-append-version="true"></script>
     <script src="~/js/trade-zones.js" asp-append-version="true"></script>
+    <script src="~/js/strategy-lab.js" asp-append-version="true"></script>
+    <script src="~/js/strategy-lab-ui.js" asp-append-version="true"></script>
     <script src="~/lib/lightweight-charts/lightweight-charts.standalone.production.js" asp-append-version="true"></script>
     <script src="~/js/zone-price-chart.js" asp-append-version="true"></script>
     <script src="~/js/cfd-instruments.js" asp-append-version="true"></script>

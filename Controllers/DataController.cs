@@ -6,4 +6,6 @@ public sealed class DataController : Controller
 {
     [HttpGet("/runs/")]
     public IActionResult Index() => View();
+    [HttpGet("/strategy-lab/")]
+    public IActionResult StrategyLab() => View();
 }

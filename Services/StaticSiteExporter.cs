@@ -177,5 +177,13 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
             new TempDataDictionary(http, tempData), runsWriter, new HtmlHelperOptions()));
         Directory.CreateDirectory(Path.Combine(directory, "runs"));
         await File.WriteAllTextAsync(Path.Combine(directory, "runs", "index.html"), runsWriter.ToString());
+        var labView = views.GetView(null, "/Views/Data/StrategyLab.cshtml", true);
+        if (!labView.Success) throw new InvalidOperationException("Strategy lab view not found.");
+        using var labWriter = new StringWriter();
+        await labView.View.RenderAsync(new ViewContext(action, labView.View,
+            new ViewDataDictionary(metadata, new ModelStateDictionary()),
+            new TempDataDictionary(http, tempData), labWriter, new HtmlHelperOptions()));
+        Directory.CreateDirectory(Path.Combine(directory, "strategy-lab"));
+        await File.WriteAllTextAsync(Path.Combine(directory, "strategy-lab", "index.html"), labWriter.ToString());
     }
 }

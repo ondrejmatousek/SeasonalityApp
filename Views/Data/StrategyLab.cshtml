@@ -1,0 +1,29 @@
+@{ ViewData["LabPage"] = true; }
+<section class="strategy-lab" id="strategy-lab">
+    <p class="lab-eyebrow">VÝZKUM / PILOT M15</p><h1>Laboratoř strategií</h1>
+    <p>Supply/demand a samostatná EMA strategie. Žádné EMA filtry v zónových modelech. Výpočty jsou simulace, nikoli obchodní signály.</p>
+    <p class="lab-warning">Pouze krátký historický pilot tří párů, bez nedotčeného závěrečného testu. Z výsledků nelze vyhlásit obchodovatelnou vítěznou strategii. Pravidelný M15 sběr ani automatické obchodování nejsou zapnuté.</p>
+    <p id="lab-data-state" role="status">Načítám ověřená pilotní data…</p>
+    <div class="lab-controls">
+        <label>Instrument<select id="lab-symbol"></select></label>
+        <label>Samostatná rodina<select id="lab-family"><option value="zones">Supply/demand + M15 SFP · 24 variant</option><option value="ema">H4 EMA pullback · 8 variant</option></select></label>
+        <label>Spread (bps)<input id="lab-spread" type="number" value="1" min="0" max="50" step="0.1" /></label>
+        <label>Komise za celý obchod (bps)<input id="lab-commission" type="number" value="0" min="0" max="50" step="0.1" /></label>
+        <label>Skluz na jednu stranu (bps)<input id="lab-slippage" type="number" value="0.5" min="0" max="50" step="0.1" /></label>
+        <label>Financování / kalendářní den (bps)<input id="lab-financing" type="number" value="0" min="0" max="50" step="0.1" /></label>
+        <label>Zpoždění vstupu<select id="lab-delay"><option value="1" selected>15 min po signálu</option><option value="2">30 min po signálu</option><option value="0">Ideální další open · bez zpoždění sběru</option></select></label>
+        <button type="button" id="lab-run" disabled>Porovnat varianty</button><button type="button" id="lab-export" disabled>Stáhnout audit JSON</button>
+    </div>
+    <p>Náklady jsou pracovní předpoklad, ne ceník brokera. 1 bps = 0,01 % ceny. Výsledek je v násobcích původního risku (R), nikoli výnos účtu. Propad počítáme pouze z uzavřených obchodů, ne z průběžného ocenění otevřených pozic. Financování 0 znamená nezapočítané financování, ne bezplatné držení. SL/TP jsou teoretické ceny; velikost ticku a minimální odstup příkazů konkrétního brokera ještě nejsou modelované.</p>
+    <details><summary>Pevná pravidla prvního experimentu</summary>
+        <p>Zóny: D1 + M15 SFP; D1 → vnořená H4 + M15 SFP; nebo H4 + M15 SFP. Každý model: BOS volitelný/povinný, SL za knotem SFP/za zónou, TP 2R/3R. První návrat musí obsahovat SFP v téže M15 svíčce. U zpřesnění musí být H4 uvnitř D1 a obě oblasti platné.</p>
+        <p>Long SFP: knot pod posledním již potvrzeným M15 swing low a close zpět nad ním; short obráceně. Swing má dvě svíčky vlevo/vpravo a musí být známý před signální svíčkou. Jednou vybraný swing se znovu nepoužije. Zásah ≥ 25 % výšky zóny ji trvale ruší i na signální svíčce.</p>
+        <p>EMA je oddělená: H4 EMA 20/50 nebo 50/200, návrat k předchozí rychlé EMA a směrový close zpět za aktuální rychlou EMA. SL 1,5/2 ATR(14), TP 2R/3R. EMA začíná průměrem prvních N close, ATR je průměr 14 true ranges. Žádná zóna ani BOS filtr.</p>
+        <p>Jedna pozice na instrument v rámci varianty. Nové signály během otevřené pozice se neobchodují. SL buffer u zón je 0,05 M15 ATR. Vstup až po uzavřeném signálu a zvoleném zpoždění. Současný SL/TP ve svíčce počítá SL první; nepříznivý gap stop plní na open. Chybějící svíčky nevyplňujeme, nedořešené pozice nejsou započítané jako realizovaný zisk. Časový výstup po 480 M15 svíčkách.</p>
+        <p>Historické zóny vznikají chronologicky, ne z dnešního seznamu přeživších oblastí. Starší zóny bez prokázané historie prvního návratu do testu nepouštíme. Sezonalita, COT ani makro v tomto experimentu nejsou.</p>
+    </details>
+    <p id="lab-status" role="status">Vyber rodinu a spusť srovnání. Výsledky zatím nejsou vypočítané.</p>
+    <p id="lab-report-context"></p>
+    <div class="lab-table-wrap"><table class="lab-table"><thead><tr><th>Model / parametry</th><th>Obchody</th><th>Čisté R</th><th>Průměr R</th><th>PF</th><th>Propad uzavřených R</th><th>2× náklady: R</th><th>Audit</th></tr></thead><tbody id="lab-results"></tbody></table></div>
+    <section id="lab-trades" hidden><h2>Obchody vybrané varianty</h2><p id="lab-trade-summary"></p><div class="lab-table-wrap"><table class="lab-table"><thead><tr><th>Směr / vstup UTC</th><th>Vstup / SL / TP</th><th>Konec výstupní svíčky UTC</th><th>Důvod</th><th>Čisté R / náklady R</th></tr></thead><tbody id="lab-trade-rows"></tbody></table></div></section>
+</section>
