@@ -1,2 +1,6 @@
 # Keep migration evidence checksums stable across Windows/Linux checkouts.
 data/market-daily/migration-evidence/** -text
+# Preserve user-provided Pine/Work evidence bytes and executable engine hashes.
+docs/research/market-structure-order-blocks-fm.pine -text
+docs/research/daily-outlook-work-export-2026-10-19.md -text
+wwwroot/js/fm-order-blocks.js text eol=lf
