@@ -24,3 +24,4 @@ assert.ok(fs.readFileSync('Services/StaticSiteExporter.cs','utf8').includes('/Vi
 const routes=JSON.parse(fs.readFileSync('StaticSite/staticwebapp.config.json')).routes;assert.ok(routes.some(r=>r.route==='/runs*'&&r.rewrite==='/runs/index.html'));
 assert.equal(new Set(routes.map(r=>r.route.replace(/\/$/,''))).size,routes.length,'Azure normalizes trailing slash routes');
 console.log('PASS: Data view navigation, daily selection, preserved failures, stale reports and exact live SQL provenance; no invented Work/deploy success.');
+(async()=>{const original=global.fetch;try{global.fetch=()=>new Promise(()=>{});await assert.rejects(ui.json('/never-resolves',20),/Vypršel čas/);console.log('PASS: independent request deadline works even when fetch ignores cancellation.');}finally{global.fetch=original;}})().catch(e=>{console.error(e);process.exitCode=1;});
