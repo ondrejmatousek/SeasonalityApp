@@ -8,4 +8,6 @@ public sealed class DataController : Controller
     public IActionResult Index() => View();
     [HttpGet("/strategy-lab/")]
     public IActionResult StrategyLab() => View();
+    [HttpGet("/daily-outlook/")]
+    public IActionResult FmOutlook() => View();
 }

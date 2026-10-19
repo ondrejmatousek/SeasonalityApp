@@ -2,7 +2,7 @@
 (() => {
     const iso=t=>typeof t==='string'?t:typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):`${t.year}-${String(t.month).padStart(2,'0')}-${String(t.day).padStart(2,'0')}`;
     const day=s=>Date.parse(s.includes('T')?s:s+'T00:00:00Z'),fmt=s=>new Date(day(s)).toLocaleDateString('cs-CZ');
-    window.ZonePriceChart={create(container,tip,{price,zone,candidate,resolution}){
+    window.ZonePriceChart={create(container,tip,{price,zone,candidate,resolution,annotations=[]}){
         const L=window.LightweightCharts;if(!L)throw Error('Knihovna cenového grafu není dostupná');
         const bars=resolution==='W1'?price.weekly:price.bars,intraday=resolution==='H4';
         const axisKey=t=>intraday?(typeof t==='number'?new Date(t*1000).toISOString():t):iso(t);
@@ -44,6 +44,7 @@
         // Keep our immutable ISO-date axis: the library normalizes data.time internally.
         const dates=data.map(b=>axisKey(b.time));
         series.setData(data);container.dataset.candleCount=bars.length;container.dataset.resolution=resolution;
+        const markers=annotations.length?L.createSeriesMarkers(series,annotations):null;
         const x=date=>{
             let n=dates.findIndex(d=>d>=date);if(n<0)n=dates.length-1;
             let p=n;if(n>0&&dates[n]!==date)p=n-1+(day(date)-day(dates[n-1]))/(day(dates[n])-day(dates[n-1]));
@@ -98,6 +99,6 @@
         });
         const key=e=>{if(['+','=','-','0','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();if(e.key==='0')reset();else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){const r=chart.timeScale().getVisibleLogicalRange(),move=(r.to-r.from)*.1*(e.key==='ArrowLeft'?-1:1);chart.timeScale().setVisibleLogicalRange({from:r.from+move,to:r.to+move});}else zoom(e.key==='-'?1.25:.8);}};
         container.addEventListener('keydown',key);reset();
-        return {reset,zoom,fit:()=>{chart.priceScale('right').applyOptions({autoScale:true});chart.timeScale().fitContent();},destroy:()=>{container.removeEventListener('keydown',key);chart.remove();tip.hidden=true;}};
+        return {reset,zoom,fit:()=>{chart.priceScale('right').applyOptions({autoScale:true});chart.timeScale().fitContent();},destroy:()=>{container.removeEventListener('keydown',key);markers?.detach();chart.remove();tip.hidden=true;}};
     }};
 })();

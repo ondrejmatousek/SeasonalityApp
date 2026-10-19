@@ -1,0 +1,703 @@
+//@version=6
+// ⚠️ VLOŽENÍ DO TRADINGVIEW: nejdřív SMAŽ celý obsah editoru (Cmd/Ctrl+A → Delete),
+//    teprve pak vlož tento kód. Jinak pod ním zůstane default šablona
+//    (indicator("My script") + plot(close)) = DVĚ deklarace → error CE10243.
+// ═══════════════════════════════════════════════════════════════════════════
+// Market Structure MTF + Order Blocks [FM] — merged v1
+// Sloučení dvou indikátorů do jednoho:
+//   • MODUL A — Market Structure MTF (dřív "MS-MTF v2"): swing + internal
+//     struktura na chart TF (šipky HH/HL/LH/LL + BOS/CHoCH), shadow 4H svíčky
+//     vpravo od ceny, MTF tabulka 5m/15m/4H (internal + swing).
+//   • MODUL B — Order Blocks Retail (dřív "OB Retail"): klasické OB + Orderblock
+//     série, nastavitelná přísnost (Volná/Střední/Přísná), mitigace, max 5 fresh
+//     nad + 5 pod cenou.
+//
+// Každý modul jde vypnout master přepínačem (skupina "Moduly"). Nastavení obou
+// jsou zachovaná 1:1, jen skupiny naprefixované "MS · " / "OB · " a OB `swingLen`
+// přejmenován na `obSwingLen` (kolidoval s MS swingLen).
+//
+// Limity objektů sloučené: max_lines_count=500, max_labels_count=500,
+// max_boxes_count=500. Při vysokém "Počet zobrazených 4H svíček" (MS) + hodně OB
+// se můžeš přiblížit stropu labelů — nejstarší se pak automaticky zahazují.
+//
+// Merge zachoval v2.2 memory fix MS modulu (request.security vrací jen scalary,
+// akumulace 4H svíček na chart TF straně — viz Log/Znalosti/pine-v6-pitfalls
+// BUG-001). Nevracet array z request.security().
+// ═══════════════════════════════════════════════════════════════════════════
+indicator("Market Structure + Order Blocks [FM]", shorttitle="MS+OB",
+     overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
+
+// ── Moduly (master přepínače) ────────────────────────────────────────────────
+bool showMS = input.bool(true, "Modul A: Market Structure MTF", group="Moduly",
+     tooltip="Zapíná strukturu (šipky/BOS/CHoCH), shadow 4H svíčky a MTF tabulku.")
+bool showOB = input.bool(true, "Modul B: Order Blocks", group="Moduly",
+     tooltip="Zapíná detekci a kreslení Order Blocků (klasické OB i Orderblock série).")
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODUL A — MARKET STRUCTURE MTF
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Inputs ──────────────────────────────────────────────────────────────────
+int   swingLen     = input.int(20, "Swing length (pivotal)", minval=2, group="MS · Struktura")
+int   internalLen  = input.int(5,  "Internal length",        minval=1, group="MS · Struktura")
+bool  showInternal = input.bool(true, "Zobrazit internal strukturu", group="MS · Zobrazení")
+bool  showTable    = input.bool(true, "Zobrazit MTF tabulku",        group="MS · Zobrazení")
+int   maxKept      = input.int(50, "Max objektů na typ", minval=5, maxval=240, group="MS · Zobrazení")
+
+bool  showShadow4h = input.bool(true, "Zobrazit shadow 4H svíčky", group="MS · Shadow 4H")
+int   numShadow4h  = input.int(30, "Počet zobrazených 4H svíček", minval=3, maxval=120, group="MS · Shadow 4H",
+     tooltip="Kolik posledních 4H svíček se vykreslí v shadow bloku (poslední je živá, aktualizuje se uvnitř probíhajícího 4H baru).")
+int   shadowGap    = input.int(63, "Poloha — mezera od posl. baru (bary)", minval=1, maxval=300, group="MS · Shadow 4H",
+     tooltip="Vodorovná poloha bloku: o kolik barů vpravo od posledního baru začíná první (nejstarší) shadow svíčka. Vyšší číslo = blok dál doprava.")
+int   shadowWidth  = input.int(3,  "Šířka jedné shadow svíčky (bary)", minval=1, maxval=20, group="MS · Shadow 4H",
+     tooltip="Šířka těla jedné shadow svíčky v barech. Ovlivňuje i celkovou šířku bloku (šířka × počet svíček).")
+
+color bullCol      = input.color(color.teal,   "Swing — bullish",     group="MS · Barvy")
+color bearCol      = input.color(color.red,    "Swing — bearish",     group="MS · Barvy")
+color intBullCol   = input.color(color.blue,   "Internal — bullish",  group="MS · Barvy")
+color intBearCol   = input.color(color.orange, "Internal — bearish",  group="MS · Barvy")
+color htfCol       = input.color(color.orange, "4H eventy",           group="MS · Barvy")
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODUL B — ORDER BLOCKS (RETAIL)
+// ═══════════════════════════════════════════════════════════════════════════
+// Přísnost
+string strictness    = input.string("Střední", "Přísnost detekce (jen klasické OB)", options=["Volná", "Střední", "Přísná"], group="OB · Přísnost", tooltip="Platí jen pro klasické OB.\nVolná: jen break protisměrné svíčky (nejvíc OB).\nStřední: navíc displacement — impulz od base musí být >= 1.5x ATR.\nPřísná: displacement >= 2.5x ATR + BOS (impulz musí prolomit poslední swing).")
+int    atrLen        = input.int(96, "ATR délka (počet svíček)", minval=1, maxval=2000, group="OB · Přísnost", tooltip="ATR se počítá přímo z posledních N svíček na aktuálním timeframu.\nNapř. 96 = ATR z posledních 96 svíček (na 15m ≈ 24h, na 5m ≈ 8h).\nStrop 2000 kvůli limitu historie (max_bars_back).")
+int    obSwingLen    = input.int(5, "Swing délka (BOS, jen Přísná)", minval=2, group="OB · Přísnost", tooltip="Délka pivotu pro BOS kontrolu (jen přísný režim OB). Nezaměňovat s MS Swing length.")
+// Detekce
+string obMode        = input.string("1 – Klasické OB (1 svíčka)", "Typ Order Blocků", options=["1 – Klasické OB (1 svíčka)", "2 – Orderblock (série svíček)", "Obojí"], group="OB · Detekce", tooltip="1: klasický OB — poslední protisměrná svíčka před impulzem (podléhá přísnosti a impulznímu oknu).\n2: Orderblock — série protisměrných svíček; po jejím skončení čeká level, dokud ho close neprolomí. Zóna = rozsah celé série.\nObojí: kreslí oba typy současně.")
+string cisdLvlMode   = input.string("Highest/Lowest open série", "Orderblock level zdroj", options=["Highest/Lowest open série", "Open první svíčky série"], group="OB · Detekce", tooltip="Z jakého OPENu série se počítá level, který musí close prolomit.\nHighest/Lowest: nejvyšší open bearish série (demand) / nejnižší open bullish série (supply).\nOpen první svíčky: open první svíčky série.")
+int    cisdMinSeries = input.int(1, "Orderblock: min. počet svíček v sérii", minval=1, maxval=20, group="OB · Detekce", tooltip="Kolik po sobě jdoucích protisměrných svíček musí série mít, aby vytvořila platný level.")
+int    impulseBars   = input.int(3, "Impulz: následující svíčky po base (klasické OB)", minval=1, group="OB · Detekce")
+string breakRef      = input.string("Body (open/close)", "Úroveň pro break (klasické OB)", options=["Body (open/close)", "Wick (high/low)"], group="OB · Detekce")
+string zoneSrc       = input.string("Full range (high–low)", "Zdroj zóny", options=["Full range (high–low)", "Body (open–close)"], group="OB · Detekce")
+// Lookback
+int    lookbackBars  = input.int(10000, "Max lookback (svíčky zpět)", minval=100, maxval=10000, group="OB · Lookback", tooltip="Jak daleko zpět indikátor hledá a drží OB. Strop 10000 = limit vykreslování boxů v Pine. Reálná hloubka je omezená i tím, kolik svíček načte tvůj plán na daném TF.")
+// Freshness
+float  mitigationPct = input.float(25.0, "Práh mitigace (%)", minval=1, maxval=100, group="OB · Freshness")
+// Zobrazení
+bool   hideMitigated = input.bool(false, "Skrýt zasažené / invalidované zóny", group="OB · Zobrazení", tooltip="Zapnuto: mitigované (retest > prahu) i invalidované (close skrz zónu) OB se z grafu úplně odstraní.\nVypnuto: zůstávají šedé (do stropu 'Max ponechaných mitigated').")
+int    maxPerSide    = input.int(5, "Max fresh OB nad / pod cenou", minval=1, group="OB · Zobrazení")
+int    maxMitKeep    = input.int(10, "Max ponechaných mitigated", minval=0, group="OB · Zobrazení")
+int    freshCap      = input.int(50, "Bezpečnostní strop fresh OB", minval=10, group="OB · Zobrazení")
+// Debug
+bool   showDebug     = input.bool(false, "Debug: označit zamítnuté kandidáty", group="OB · Debug", tooltip="Jen klasické OB. U kandidáta (poslední protisměrná svíčka), který prolomil base, ale OB nevznikl, vykreslí štítek s důvodem: 'disp A.Bx/C.D' (actual/required displacement) nebo 'BOS'. Pokud štítek chybí, cena ani nezavřela za tělem base do N svíček.")
+// Vizuál
+color  demandCol     = input.color(color.new(#26A69A, 0), "Demand barva", group="OB · Vizuál")
+color  supplyCol     = input.color(color.new(#EF5350, 0), "Supply barva", group="OB · Vizuál")
+color  mitCol        = input.color(color.new(color.gray, 0), "Mitigated barva", group="OB · Vizuál")
+int    fillTransp    = input.int(85, "Průhlednost výplně (0–100)", minval=0, maxval=100, group="OB · Vizuál")
+bool   showBorder    = input.bool(true, "Zobrazit ohraničení", group="OB · Vizuál")
+
+bool useClassic  = showOB and obMode != "2 – Orderblock (série svíček)"
+bool useCISD     = showOB and obMode != "1 – Klasické OB (1 svíčka)"
+bool useHiLoOpen = cisdLvlMode == "Highest/Lowest open série"
+
+// ── OB typ ──────────────────────────────────────────────────────────────────
+type OB
+    float top
+    float bot
+    int   startIdx
+    bool  isDemand
+    bool  fresh
+    bool  armed
+    float extreme
+    box   b
+var array<OB> obs = array.new<OB>()
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FUNKCE — MODUL A (Market Structure)
+// ═══════════════════════════════════════════════════════════════════════════
+// Event kódy: 0 = nic, 1 = BOS ▲, 2 = CHoCH ▲, -1 = BOS ▼, -2 = CHoCH ▼
+// Trend: 1 = bullish, -1 = bearish, 0 = neutral (po CHoCH, čeká na BOS)
+f_structure(int len) =>
+    float ph = ta.pivothigh(high, len, len)
+    float pl = ta.pivotlow(low, len, len)
+    var float lastH = na
+    var float lastL = na
+    var bool  hLive = false
+    var bool  lLive = false
+    var int   trend = 0
+    var int   bias  = 0
+    var int   evCnt = 0
+    int ev = 0
+    if not na(ph)
+        lastH := ph
+        hLive := true
+    if not na(pl)
+        lastL := pl
+        lLive := true
+    if barstate.isconfirmed
+        if hLive and close > lastH
+            hLive := false
+            if trend == 1
+                ev := 1
+            else if trend == -1
+                trend := 0
+                bias  := 1
+                ev := 2
+            else
+                if bias == -1
+                    bias := 1
+                    ev := 2
+                else
+                    trend := 1
+                    bias  := 0
+                    ev := 1
+        if lLive and close < lastL
+            lLive := false
+            if trend == -1
+                ev := -1
+            else if trend == 1
+                trend := 0
+                bias  := -1
+                ev := -2
+            else
+                if bias == 1
+                    bias := -1
+                    ev := -2
+                else
+                    trend := -1
+                    bias  := 0
+                    ev := -1
+    if ev != 0
+        evCnt += 1
+    [trend, lastH, lastL, ev, evCnt, ph, pl]
+
+f_render(int len, int trendNow, int ev, float ph, float pl, float lastH, float lastL, bool show, bool internal) =>
+    var line  hiLine = na
+    var line  loLine = na
+    var float prevH  = na
+    var float prevL  = na
+    var array<line>  lns = array.new<line>()
+    var array<label> lbs = array.new<label>()
+    color cBull = internal ? intBullCol : bullCol
+    color cBear = internal ? intBearCol : bearCol
+    color trendArrowCol = trendNow == 1 ? bullCol : trendNow == -1 ? bearCol : color.gray
+    if not na(ph)
+        if show
+            if not na(hiLine)
+                line.set_extend(hiLine, extend.none)
+                line.set_x2(hiLine, bar_index)
+            hiLine := line.new(bar_index - len, ph, bar_index, ph, extend=extend.right,
+                 color=cBear, style=internal ? line.style_dotted : line.style_solid,
+                 width=internal ? 1 : 2)
+            array.push(lns, hiLine)
+            if array.size(lns) > maxKept
+                line.delete(array.shift(lns))
+            if not internal
+                bool isHH = not na(prevH) and ph > prevH
+                string arrow   = na(prevH) ? "●" : isHH ? "▲" : "▼"
+                string arrSize = na(prevH) ? size.tiny : size.small
+                label lb = label.new(bar_index - len, ph, arrow, style=label.style_label_down,
+                     color=color.new(color.black, 100),
+                     textcolor=trendArrowCol, size=arrSize)
+                array.push(lbs, lb)
+                if array.size(lbs) > maxKept
+                    label.delete(array.shift(lbs))
+        prevH := ph
+    if not na(pl)
+        if show
+            if not na(loLine)
+                line.set_extend(loLine, extend.none)
+                line.set_x2(loLine, bar_index)
+            loLine := line.new(bar_index - len, pl, bar_index, pl, extend=extend.right,
+                 color=cBull, style=internal ? line.style_dotted : line.style_solid,
+                 width=internal ? 1 : 2)
+            array.push(lns, loLine)
+            if array.size(lns) > maxKept
+                line.delete(array.shift(lns))
+            if not internal
+                bool isLL = not na(prevL) and pl < prevL
+                string arrow   = na(prevL) ? "●" : isLL ? "▼" : "▲"
+                string arrSize = na(prevL) ? size.tiny : size.small
+                label lb = label.new(bar_index - len, pl, arrow, style=label.style_label_up,
+                     color=color.new(color.black, 100),
+                     textcolor=trendArrowCol, size=arrSize)
+                array.push(lbs, lb)
+                if array.size(lbs) > maxKept
+                    label.delete(array.shift(lbs))
+        prevL := pl
+    if ev != 0 and show
+        bool up = ev > 0
+        if up and not na(hiLine)
+            line.set_extend(hiLine, extend.none)
+            line.set_x2(hiLine, bar_index)
+        if not up and not na(loLine)
+            line.set_extend(loLine, extend.none)
+            line.set_x2(loLine, bar_index)
+        bool isBos = math.abs(ev) == 1
+        string etxt = (internal ? "i" : "") + (isBos ? "BOS" : "CHoCH")
+        float  y = up ? lastH : lastL
+        label el = label.new(bar_index, y, etxt,
+             style=up ? label.style_label_up : label.style_label_down,
+             color=color.new(up ? cBull : cBear, internal ? 85 : 60),
+             textcolor=color.white, size=internal ? size.tiny : size.small)
+        array.push(lbs, el)
+        if array.size(lbs) > maxKept
+            label.delete(array.shift(lbs))
+    ev
+
+f_trendBoth() =>
+    [swTr, sh1, sl1, sev1, scnt1, sph1, spl1] = f_structure(swingLen)
+    [inTr, ih1, il1, iev1, icnt1, iph1, ipl1] = f_structure(internalLen)
+    [swTr, inTr]
+
+// v2.2 memory fix: request.security vrací jen scalary (ne array). Viz header.
+f_htfScalars() =>
+    [tr, lh, ll, ev, cnt, ph1, pl1] = f_structure(swingLen)
+    [inTr, ih2, il2, iev2, icnt2, iph2, ipl2] = f_structure(internalLen)
+    [tr, ev, cnt, inTr, time, open, high, low, close, ph1, pl1]
+
+f_shadowX(int slot) =>
+    int sx1 = bar_index + shadowGap + slot * (shadowWidth + 1)
+    int sx2 = sx1 + shadowWidth - 1
+    int sxm = int(math.round((sx1 + sx2) / 2.0))
+    [sx1, sx2, sxm]
+
+f_stTxt(int t) =>
+    t == 1 ? "Bullish" : t == -1 ? "Bearish" : "Neutral"
+
+f_stCol(int t) =>
+    t == 1 ? bullCol : t == -1 ? bearCol : color.gray
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FUNKCE — MODUL B (Order Blocks)
+// ═══════════════════════════════════════════════════════════════════════════
+f_zoneTop(_o, _c, _h) => zoneSrc == "Body (open–close)" ? math.max(_o, _c) : _h
+f_zoneBot(_o, _c, _l) => zoneSrc == "Body (open–close)" ? math.min(_o, _c) : _l
+f_breakUp(_o, _c, _h) => breakRef == "Wick (high/low)" ? _h : math.max(_o, _c)
+f_breakDn(_o, _c, _l) => breakRef == "Wick (high/low)" ? _l : math.min(_o, _c)
+brdColOf(_col) => showBorder ? _col : na
+f_newOB(float _top, float _bot, int _idx, bool _isDemand) =>
+    baseCol = _isDemand ? demandCol : supplyCol
+    o = OB.new(_top, _bot, _idx, _isDemand, true, false, _isDemand ? _top : _bot, na)
+    o.b := box.new(_idx, _top, bar_index, _bot, border_color=brdColOf(baseCol), bgcolor=color.new(baseCol, fillTransp), border_width=1)
+    array.push(obs, o)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOP-LEVEL SÉRIE (ta.* musí být na top-levelu)
+// ═══════════════════════════════════════════════════════════════════════════
+// MODUL A struktura (chart TF)
+[swTrend, swLastH, swLastL, swEv, swCnt, swPH, swPL] = f_structure(swingLen)
+[inTrend, inLastH, inLastL, inEv, inCnt, inPH, inPL] = f_structure(internalLen)
+
+// MODUL B ATR + pivoty pro BOS
+atrVal = ta.atr(atrLen)
+obPh = ta.pivothigh(obSwingLen, obSwingLen)
+obPl = ta.pivotlow(obSwingLen, obSwingLen)
+var float lastSwingHigh = na
+var float lastSwingLow  = na
+if not na(obPh)
+    lastSwingHigh := obPh
+if not na(obPl)
+    lastSwingLow := obPl
+float dispMult   = strictness == "Volná" ? 0.0 : strictness == "Střední" ? 1.5 : 2.5
+bool  requireBOS = strictness == "Přísná"
+bool  bosUpOK    = not requireBOS or (not na(lastSwingHigh) and close > lastSwingHigh)
+bool  bosDnOK    = not requireBOS or (not na(lastSwingLow) and close < lastSwingLow)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODUL A — RENDER + MTF + SHADOW + TABULKA
+// ═══════════════════════════════════════════════════════════════════════════
+r1 = f_render(swingLen,    swTrend, swEv, swPH, swPL, swLastH, swLastL, showMS,                 false)
+r2 = f_render(internalLen, inTrend, inEv, inPH, inPL, inLastH, inLastL, showMS and showInternal, true)
+
+[t5sw,  t5in]  = request.security(syminfo.tickerid, "5",  f_trendBoth())
+[t15sw, t15in] = request.security(syminfo.tickerid, "15", f_trendBoth())
+[h4Trend, h4Ev, h4Cnt, h4TrendIn, h4Time, h4CO, h4CH, h4CL, h4CC, h4PHraw, h4PLraw] =
+     request.security(syminfo.tickerid, "240", f_htfScalars())
+
+// akumulace posledních N 4H svící na chart TF straně (mimo security — memory fix)
+var array<float> h4O     = array.new<float>()
+var array<float> h4Hh    = array.new<float>()
+var array<float> h4Ll    = array.new<float>()
+var array<float> h4C     = array.new<float>()
+var array<int>   h4TrArr = array.new<int>()
+var array<float> h4PHArr = array.new<float>()
+var array<float> h4PLArr = array.new<float>()
+var array<int>   h4EvArr = array.new<int>()
+var float lastH4Time = na
+
+if na(lastH4Time) or h4Time != lastH4Time
+    array.push(h4O, h4CO)
+    array.push(h4Hh, h4CH)
+    array.push(h4Ll, h4CL)
+    array.push(h4C, h4CC)
+    array.push(h4TrArr, h4Trend)
+    array.push(h4PHArr, h4PHraw)
+    array.push(h4PLArr, h4PLraw)
+    array.push(h4EvArr, h4Ev)
+    lastH4Time := h4Time
+    if array.size(h4O) > numShadow4h
+        array.shift(h4O)
+        array.shift(h4Hh)
+        array.shift(h4Ll)
+        array.shift(h4C)
+        array.shift(h4TrArr)
+        array.shift(h4PHArr)
+        array.shift(h4PLArr)
+        array.shift(h4EvArr)
+else
+    int lastIdx = array.size(h4O) - 1
+    array.set(h4Hh, lastIdx, math.max(array.get(h4Hh, lastIdx), h4CH))
+    array.set(h4Ll, lastIdx, math.min(array.get(h4Ll, lastIdx), h4CL))
+    array.set(h4C, lastIdx, h4CC)
+    array.set(h4TrArr, lastIdx, h4Trend)
+    if not na(h4PHraw)
+        array.set(h4PHArr, lastIdx, h4PHraw)
+    if not na(h4PLraw)
+        array.set(h4PLArr, lastIdx, h4PLraw)
+    if h4Ev != 0
+        array.set(h4EvArr, lastIdx, h4Ev)
+
+bool showShadowNow = showMS and showShadow4h and timeframe.in_seconds() < timeframe.in_seconds("240")
+
+var array<box>   shBoxes  = array.new<box>()
+var array<line>  shWicks  = array.new<line>()
+var array<label> shLabels = array.new<label>()
+
+if showShadowNow and barstate.islast
+    while array.size(shBoxes) > 0
+        box.delete(array.pop(shBoxes))
+    while array.size(shWicks) > 0
+        line.delete(array.pop(shWicks))
+    while array.size(shLabels) > 0
+        label.delete(array.pop(shLabels))
+
+    int cnt = array.size(h4O)
+    int startIdx = math.max(0, cnt - numShadow4h)
+
+    int slot = 0
+    for i = startIdx to cnt - 1
+        float o_ = array.get(h4O, i)
+        float h_ = array.get(h4Hh, i)
+        float l_ = array.get(h4Ll, i)
+        float c_ = array.get(h4C, i)
+        [x1, x2, xm] = f_shadowX(slot)
+        bool bull = c_ >= o_
+        color bodyCol = bull ? bullCol : bearCol
+        box bx = box.new(x1, math.max(o_, c_), x2, math.min(o_, c_),
+             border_color=color.new(bodyCol, 50), bgcolor=color.new(bodyCol, 60))
+        line wk = line.new(xm, h_, xm, l_, color=color.new(bodyCol, 50), width=1)
+        array.push(shBoxes, bx)
+        array.push(shWicks, wk)
+        slot += 1
+
+    float prevShH = na
+    float prevShL = na
+    for i = startIdx to cnt - 1
+        int   trendAtI = array.get(h4TrArr, i)
+        color trendCol = trendAtI == 1 ? bullCol : trendAtI == -1 ? bearCol : color.gray
+        float phAtI = array.get(h4PHArr, i)
+        float plAtI = array.get(h4PLArr, i)
+        int   evAtI = array.get(h4EvArr, i)
+        if not na(phAtI)
+            bool   isHH   = not na(prevShH) and phAtI > prevShH
+            string arrowH = na(prevShH) ? "●" : isHH ? "▲" : "▼"
+            prevShH := phAtI
+            int targetIdxH = i - swingLen
+            if targetIdxH >= startIdx and targetIdxH <= cnt - 1
+                [tx1h, tx2h, txmh] = f_shadowX(targetIdxH - startIdx)
+                label laH = label.new(txmh, phAtI, arrowH, style=label.style_label_down,
+                     color=color.new(color.black, 100), textcolor=trendCol, size=size.tiny)
+                array.push(shLabels, laH)
+        if not na(plAtI)
+            bool   isLL   = not na(prevShL) and plAtI < prevShL
+            string arrowL = na(prevShL) ? "●" : isLL ? "▼" : "▲"
+            prevShL := plAtI
+            int targetIdxL = i - swingLen
+            if targetIdxL >= startIdx and targetIdxL <= cnt - 1
+                [tx1l, tx2l, txml] = f_shadowX(targetIdxL - startIdx)
+                label laL = label.new(txml, plAtI, arrowL, style=label.style_label_up,
+                     color=color.new(color.black, 100), textcolor=trendCol, size=size.tiny)
+                array.push(shLabels, laL)
+        if evAtI != 0
+            bool   up4s    = evAtI > 0
+            bool   isBos4s = math.abs(evAtI) == 1
+            string etxt4s  = "4H " + (isBos4s ? "BOS" : "CHoCH")
+            [ex1, ex2, exm] = f_shadowX(i - startIdx)
+            float ey = up4s ? array.get(h4Hh, i) : array.get(h4Ll, i)
+            label leE = label.new(exm, ey, etxt4s,
+                 style=up4s ? label.style_label_up : label.style_label_down,
+                 color=color.new(up4s ? bullCol : bearCol, 60), textcolor=color.white, size=size.tiny)
+            array.push(shLabels, leE)
+
+// 4H eventy (BOS/CHoCH label u aktuální ceny, dedup přes counter)
+var int h4CntPrev = na
+if na(h4CntPrev)
+    h4CntPrev := nz(h4Cnt)
+bool h4NewEv = not na(h4Cnt) and h4Cnt > h4CntPrev
+int  h4EvNow = h4NewEv ? h4Ev : 0
+if h4NewEv and showShadowNow
+    bool up4 = h4EvNow > 0
+    string t4 = "4H " + (math.abs(h4EvNow) == 1 ? "BOS" : "CHoCH")
+    label l4 = label.new(bar_index, up4 ? high : low, t4,
+         style=up4 ? label.style_label_up : label.style_label_down,
+         color=color.new(htfCol, 30), textcolor=color.white, size=size.small)
+h4CntPrev := not na(h4Cnt) ? h4Cnt : h4CntPrev
+
+// MTF tabulka
+var table tbl = table.new(position.top_right, 3, 4,
+     bgcolor=color.new(color.black, 30), border_width=1, border_color=color.new(color.gray, 70))
+
+if showMS and showTable and barstate.islast
+    table.cell(tbl, 0, 0, "TF",       text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 0, "Internal", text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 0, "Swing",    text_color=color.white, text_size=size.small)
+
+    table.cell(tbl, 0, 1, "5m", text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 1, f_stTxt(t5in), text_color=color.white, text_size=size.small, bgcolor=color.new(f_stCol(t5in), 35))
+    table.cell(tbl, 2, 1, f_stTxt(t5sw), text_color=color.white, text_size=size.small, bgcolor=color.new(f_stCol(t5sw), 35))
+
+    table.cell(tbl, 0, 2, "15m", text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 2, f_stTxt(t15in), text_color=color.white, text_size=size.small, bgcolor=color.new(f_stCol(t15in), 35))
+    table.cell(tbl, 2, 2, f_stTxt(t15sw), text_color=color.white, text_size=size.small, bgcolor=color.new(f_stCol(t15sw), 35))
+
+    table.cell(tbl, 0, 3, "4H", text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 3, f_stTxt(h4TrendIn), text_color=color.white, text_size=size.small, bgcolor=color.new(f_stCol(h4TrendIn), 35))
+    table.cell(tbl, 2, 3, f_stTxt(h4Trend),   text_color=color.white, text_size=size.small, bgcolor=color.new(f_stCol(h4Trend), 35))
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODUL B — ORDER BLOCKS: detekce, potvrzení, mitigace, prune, zobrazení
+// ═══════════════════════════════════════════════════════════════════════════
+bearish = close < open
+bullish = close > open
+
+// Kandidáti KLASICKÉ OB (poslední protisměrná svíčka = base)
+var float candDbreak = na
+var float candDtop   = na
+var float candDbot   = na
+var int   candDidx   = na
+var int   candDage   = na
+var bool  candDlabeled = false
+var float candSbreak = na
+var float candStop   = na
+var float candSbot   = na
+var int   candSidx   = na
+var int   candSage   = na
+var bool  candSlabeled = false
+if bearish
+    candDbreak := f_breakUp(open, close, high)
+    candDtop   := f_zoneTop(open, close, high)
+    candDbot   := f_zoneBot(open, close, low)
+    candDidx   := bar_index
+    candDage   := 0
+    candDlabeled := false
+else if not na(candDage)
+    candDage := candDage + 1
+if bullish
+    candSbreak := f_breakDn(open, close, low)
+    candStop   := f_zoneTop(open, close, high)
+    candSbot   := f_zoneBot(open, close, low)
+    candSidx   := bar_index
+    candSage   := 0
+    candSlabeled := false
+else if not na(candSage)
+    candSage := candSage + 1
+
+// Orderblock (série): sledování sérií protisměrných svíček
+var int   serDcount  = 0
+var int   serDidx    = na
+var float serDfirst  = na
+var float serDhiOpen = na
+var float serDtop    = na
+var float serDbot    = na
+var int   serScount  = 0
+var int   serSidx    = na
+var float serSfirst  = na
+var float serSloOpen = na
+var float serStop    = na
+var float serSbot    = na
+var float pendDlvl = na
+var float pendDtop = na
+var float pendDbot = na
+var int   pendDidx = na
+var float pendSlvl = na
+var float pendStop = na
+var float pendSbot = na
+var int   pendSidx = na
+if bearish
+    if serScount >= cisdMinSeries
+        pendSlvl := useHiLoOpen ? serSloOpen : serSfirst
+        pendStop := serStop
+        pendSbot := serSbot
+        pendSidx := serSidx
+    serScount := 0
+    serSidx   := na
+    serSfirst := na
+    serSloOpen := na
+    if serDcount == 0
+        serDidx    := bar_index
+        serDfirst  := open
+        serDhiOpen := open
+        serDtop    := f_zoneTop(open, close, high)
+        serDbot    := f_zoneBot(open, close, low)
+    else
+        serDhiOpen := math.max(serDhiOpen, open)
+        serDtop    := math.max(serDtop, f_zoneTop(open, close, high))
+        serDbot    := math.min(serDbot, f_zoneBot(open, close, low))
+    serDcount += 1
+if bullish
+    if serDcount >= cisdMinSeries
+        pendDlvl := useHiLoOpen ? serDhiOpen : serDfirst
+        pendDtop := serDtop
+        pendDbot := serDbot
+        pendDidx := serDidx
+    serDcount := 0
+    serDidx   := na
+    serDfirst := na
+    serDhiOpen := na
+    if serScount == 0
+        serSidx    := bar_index
+        serSfirst  := open
+        serSloOpen := open
+        serStop    := f_zoneTop(open, close, high)
+        serSbot    := f_zoneBot(open, close, low)
+    else
+        serSloOpen := math.min(serSloOpen, open)
+        serStop    := math.max(serStop, f_zoneTop(open, close, high))
+        serSbot    := math.min(serSbot, f_zoneBot(open, close, low))
+    serScount += 1
+
+// Potvrzení a vznik KLASICKÉHO OB (break + displacement + volitelně BOS)
+legD     = close - candDbot
+dispOKd  = dispMult <= 0 or (not na(atrVal) and atrVal > 0 and legD >= dispMult * atrVal)
+demWindow = not na(candDidx) and candDage >= 1 and candDage <= impulseBars
+demBreak  = useClassic and demWindow and close > candDbreak and candDtop > candDbot
+if demBreak and dispOKd and bosUpOK
+    f_newOB(candDtop, candDbot, candDidx, true)
+    candDidx := na
+    candDage := na
+    candDbreak := na
+else if showDebug and demBreak and not candDlabeled
+    ratioD = (not na(atrVal) and atrVal > 0) ? legD / atrVal : 0.0
+    reasonD = not dispOKd ? "disp " + str.tostring(ratioD, "0.0") + "x/" + str.tostring(dispMult, "0.0") : "BOS"
+    label.new(candDidx, candDbot, "D✗ " + reasonD, yloc=yloc.price, style=label.style_label_up, color=color.new(color.teal, 20), textcolor=color.white, size=size.tiny)
+    candDlabeled := true
+legS     = candStop - close
+dispOKs  = dispMult <= 0 or (not na(atrVal) and atrVal > 0 and legS >= dispMult * atrVal)
+supWindow = not na(candSidx) and candSage >= 1 and candSage <= impulseBars
+supBreak  = useClassic and supWindow and close < candSbreak and candStop > candSbot
+if supBreak and dispOKs and bosDnOK
+    f_newOB(candStop, candSbot, candSidx, false)
+    candSidx := na
+    candSage := na
+    candSbreak := na
+else if showDebug and supBreak and not candSlabeled
+    ratioS = (not na(atrVal) and atrVal > 0) ? legS / atrVal : 0.0
+    reasonS = not dispOKs ? "disp " + str.tostring(ratioS, "0.0") + "x/" + str.tostring(dispMult, "0.0") : "BOS"
+    label.new(candSidx, candStop, "S✗ " + reasonS, yloc=yloc.price, style=label.style_label_down, color=color.new(color.red, 20), textcolor=color.white, size=size.tiny)
+    candSlabeled := true
+
+// Potvrzení a vznik Orderblocku (série): close prolomí pending level
+bullOB = useCISD and not na(pendDlvl) and close > pendDlvl
+if bullOB and pendDtop > pendDbot
+    f_newOB(pendDtop, pendDbot, pendDidx, true)
+if bullOB
+    pendDlvl := na
+    pendDidx := na
+bearOB = useCISD and not na(pendSlvl) and close < pendSlvl
+if bearOB and pendStop > pendSbot
+    f_newOB(pendStop, pendSbot, pendSidx, false)
+if bearOB
+    pendSlvl := na
+    pendSidx := na
+
+// Update: prodloužení / mitigace
+thr = mitigationPct / 100
+for ob in obs
+    if ob.fresh
+        h   = ob.top - ob.bot
+        mit = false
+        if ob.isDemand
+            if not ob.armed and low > ob.top
+                ob.armed := true
+                ob.extreme := ob.top
+            if ob.armed
+                ob.extreme := math.min(ob.extreme, low)
+                if h > 0 and (ob.top - ob.extreme) / h > thr
+                    mit := true
+            if close < ob.bot
+                mit := true
+        else
+            if not ob.armed and high < ob.bot
+                ob.armed := true
+                ob.extreme := ob.bot
+            if ob.armed
+                ob.extreme := math.max(ob.extreme, high)
+                if h > 0 and (ob.extreme - ob.bot) / h > thr
+                    mit := true
+            if close > ob.top
+                mit := true
+        if mit
+            ob.fresh := false
+            box.set_right(ob.b, bar_index)
+            box.set_bgcolor(ob.b, color.new(mitCol, fillTransp))
+            box.set_border_color(ob.b, brdColOf(mitCol))
+        else
+            box.set_right(ob.b, bar_index)
+
+// Prune: skrytí mitigated + lookback okno + strop mitigated/fresh
+mTotal = 0
+fTotal = 0
+for ob in obs
+    if ob.fresh
+        fTotal += 1
+    else
+        mTotal += 1
+dropMit   = math.max(0, mTotal - maxMitKeep)
+dropFresh = math.max(0, fTotal - freshCap)
+newArr = array.new<OB>()
+for ob in obs
+    drop = false
+    if (bar_index - ob.startIdx) >= lookbackBars
+        drop := true
+    else if (not ob.fresh) and hideMitigated
+        drop := true
+    else if ob.fresh and dropFresh > 0
+        dropFresh -= 1
+        drop := true
+    else if (not ob.fresh) and dropMit > 0
+        dropMit -= 1
+        drop := true
+    if drop
+        box.delete(ob.b)
+    else
+        array.push(newArr, ob)
+obs := newArr
+
+// Zobrazení: max fresh nad + pod cenou (jen na posledním baru)
+if barstate.islast
+    for ob in obs
+        if ob.fresh
+            visible = false
+            if ob.bot <= close and ob.top >= close
+                visible := true
+            else if ob.bot > close
+                rank = 0
+                for o2 in obs
+                    if o2.fresh and o2.bot > close and (o2.bot - close) < (ob.bot - close)
+                        rank += 1
+                visible := rank < maxPerSide
+            else if ob.top < close
+                rank = 0
+                for o2 in obs
+                    if o2.fresh and o2.top < close and (close - o2.top) < (close - ob.top)
+                        rank += 1
+                visible := rank < maxPerSide
+            baseCol = ob.isDemand ? demandCol : supplyCol
+            box.set_bgcolor(ob.b, visible ? color.new(baseCol, fillTransp) : color.new(baseCol, 100))
+            box.set_border_color(ob.b, (visible and showBorder) ? baseCol : na)
+
+// ── Alerty (Modul A) ─────────────────────────────────────────────────────────
+plot(swTrend, "Swing trend (1/0/-1)", display=display.data_window)
+
+alertcondition(swEv == 1,     "Swing BOS ▲",   "MS+OB: BOS nahoru (swing) — bullish struktura potvrzena")
+alertcondition(swEv == -1,    "Swing BOS ▼",   "MS+OB: BOS dolů (swing) — bearish struktura potvrzena")
+alertcondition(swEv == 2,     "Swing CHoCH ▲", "MS+OB: CHoCH nahoru (swing) — struktura neutral, čeká na BOS")
+alertcondition(swEv == -2,    "Swing CHoCH ▼", "MS+OB: CHoCH dolů (swing) — struktura neutral, čeká na BOS")
+alertcondition(h4EvNow == 1,  "4H BOS ▲",      "MS+OB: 4H BOS nahoru")
+alertcondition(h4EvNow == -1, "4H BOS ▼",      "MS+OB: 4H BOS dolů")
+alertcondition(h4EvNow == 2,  "4H CHoCH ▲",    "MS+OB: 4H CHoCH nahoru")
+alertcondition(h4EvNow == -2, "4H CHoCH ▼",    "MS+OB: 4H CHoCH dolů")

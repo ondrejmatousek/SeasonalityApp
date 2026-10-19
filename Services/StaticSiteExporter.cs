@@ -185,5 +185,13 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
             new TempDataDictionary(http, tempData), labWriter, new HtmlHelperOptions()));
         Directory.CreateDirectory(Path.Combine(directory, "strategy-lab"));
         await File.WriteAllTextAsync(Path.Combine(directory, "strategy-lab", "index.html"), labWriter.ToString());
+        var fmView = views.GetView(null, "/Views/Data/FmOutlook.cshtml", true);
+        if (!fmView.Success) throw new InvalidOperationException("FM outlook view not found.");
+        using var fmWriter = new StringWriter();
+        await fmView.View.RenderAsync(new ViewContext(action, fmView.View,
+            new ViewDataDictionary(metadata, new ModelStateDictionary()),
+            new TempDataDictionary(http, tempData), fmWriter, new HtmlHelperOptions()));
+        Directory.CreateDirectory(Path.Combine(directory, "daily-outlook"));
+        await File.WriteAllTextAsync(Path.Combine(directory, "daily-outlook", "index.html"), fmWriter.ToString());
     }
 }
