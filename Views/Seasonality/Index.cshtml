@@ -15,6 +15,7 @@
                 <button id="market-tab-cot" type="button" role="tab" aria-selected="false" aria-controls="market-cot-view" tabindex="-1" data-market-tab="cot">COT</button>
                 <button id="market-tab-screener" type="button" role="tab" aria-selected="false" aria-controls="market-screener-view" tabindex="-1" data-market-tab="screener">Screener</button>
                 <button id="market-tab-zones" type="button" role="tab" aria-selected="false" aria-controls="market-zones-view" tabindex="-1" data-market-tab="zones">Obchodní zóny</button>
+                <button id="market-tab-swing" type="button" role="tab" aria-selected="false" aria-controls="market-swing-view" tabindex="-1" data-market-tab="swing">Swing Honzy Šrajera</button>
             </nav>
             <div class="seasonality-asset-search" data-export-omit>
                 <input id="seasonality-asset-search" type="search" value="@Model.Assets.FirstOrDefault()?.Name" autocomplete="off" spellcheck="false" aria-label="Vyhledat asset" aria-controls="seasonality-asset-suggestions" aria-expanded="false">
@@ -23,6 +24,7 @@
                 <span id="seasonality-asset-status" class="seasonality-asset-status" role="status"></span>
             </div>
         </header>
+        <partial name="~/Views/Seasonality/_SwingSrajer.cshtml" />
         <section id="market-zones-view" role="tabpanel" aria-labelledby="market-tab-zones" hidden>
             <h2>Obchodní zóny <small>FM · nejbližší dvojice</small></h2>
             <p>Stejný FM detektor jako v denním výhledu: klasický order block, medium, celé high–low. Pro každý instrument a timeframe nejbližší fresh supply a nejbližší fresh demand s doloženým odchodem. Obě jsou společně na grafu s popisky kvality a rozepsané v tabulce pod ním. Kvalita nepřebíjí vzdálenost; chybějící platnou stranu nevymýšlíme. Nejde o signál ke vstupu.</p>

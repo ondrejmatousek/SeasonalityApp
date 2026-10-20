@@ -73,6 +73,7 @@ jobs:
           node Tools/strategy-lab-checks.cjs wwwroot/research/strategy-lab-pilot.json
           node Tools/fm-order-blocks-checks.cjs wwwroot/research/fm-outlook-pilot.json
           node Tools/fm-trade-zones-checks.cjs
+          node Tools/swing-srajer-checks.cjs
           node Tools/chart-time-checks.cjs
           node Tools/market-date-checks.cjs
           node Tools/htf-retirement-checks.cjs

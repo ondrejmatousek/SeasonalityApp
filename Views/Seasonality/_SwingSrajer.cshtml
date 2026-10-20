@@ -1,0 +1,49 @@
+<section id="market-swing-view" role="tabpanel" aria-labelledby="market-tab-swing" class="swing-srajer" hidden>
+ <p class="lab-eyebrow">W1 → D1 · SWINGOVÝ CHECKLIST</p><h2>Swing Honzy Šrajera</h2>
+ <p>Pracovní převod dodaného obrázku, nikoli oficiální indikátor ani ověřená zisková strategie. Hledáme první fresh weekly demand pod cenou a supply nad cenou, potom stejně orientovanou daily zónu plně uvnitř. Žádné H4, M15 ani EMA filtry.</p>
+ <p class="lab-warning">Automaticky ověřujeme geometrii zón a sezónní statistiku. Skutečný futures volume profil / POC, 11složkové makro skóre a celý COT checklist nejsou v tomto modulu datově integrované. Bez doložení zůstávají <strong>neověřené</strong>; vysoké CFD/tick volume je nenahrazuje. Výsledky jsou kandidáti k analýze, ne pokyny k obchodování.</p>
+ <details><summary>Pravidla z obrázku a výslovné pracovní volby</summary>
+  <ol><li><strong>W1:</strong> první demand pod cenou a supply nad cenou. Pracovní detekce FM classic, medium 1,5 ATR(96), celé high–low, potvrzené svíčky. Používá FM freshness: po odchodu ruší knot více než 25 %, close za vnější hranou také. Obrázek přesnou detekci ani tento práh neurčuje.</li>
+  <li><strong>D1:</strong> stejný směr, celé hranice uvnitř W1; pracovní podmínka původu ne dříve než W1. Dvojice je známá až po potvrzení obou zón. Při více nálezech nejbližší ceně. Nenahrazujeme chybějící vnořenou zónu vzdálenější W1.</li>
+  <li><strong>Objem první filtr:</strong> ručně doložený futures fixed-range volume profil a vysoký objem v zóně, ideálně POC. Ne výška objemu CFD svíčky. Futures POC se nesmí číselně přenášet na spot/CFD bez převodu feedu a basis.</li>
+  <li><strong>Makro:</strong> Trading Analyzer porovnává 11 ukazatelů obou měn; long potřebuje kladné skóre, short záporné. Neznámé skóre není nula.</li>
+  <li><strong>COT:</strong> měny non-commercials, zlato/stříbro/platina commercials; retail opačně, rostoucí open interest, obě relevantní strany páru včetně USD/DX. Naše obecná historická COT shoda sama nepotvrzuje tento checklist.</li>
+  <li><strong>Sezonalita:</strong> 5, 10 a 15 dokončených let; tolerance kalendářních konců ±3 dny. Pracovní horizont 30 dnů od data snapshotu je nastavitelný. Pracovní potvrzení: v každém plně pokrytém okně nadpoloviční počet let ve směru obchodu. Není to pravděpodobnost úspěchu.</li>
+  <li><strong>Plán:</strong> vstup na hraně D1 nebo ověřeném POC stejného feedu, SL za zónou, TP alespoň do nejbližší protější W1. Návrh níže používá hranu D1, SL buffer 5 % výšky D1 (pracovní nastavení), nikoli brokerové tick/min-distance pravidlo. Fibonacci ani fundamenty z ceny nevymýšlíme.</li></ol>
+  <p>Verdikt: bez objemu neotevírat; při makru proti směru neotevírat; při souběhu makro/COT/sezonalita proti neotevírat. Chybějící potvrzení není splněná podmínka. Žádné automatické obchodování. Zobrazené zdroje, omezená historie a stáří snapshotu patří k auditu.</p>
+ </details>
+ <div class="lab-controls">
+  <label>Instrument<input id="sw-search" type="search" placeholder="Např. EURUSD" /></label>
+  <label>Směr<select id="sw-side"><option value="all">Oba</option><option value="demand">Long · demand</option><option value="supply">Short · supply</option></select></label>
+  <label>Stav<select id="sw-filter"><option value="all">Všechny W1 kandidáty</option><option value="nested">Jen s D1 upřesněním</option><option value="confirmed">Všech 7 bodů potvrzeno</option></select></label>
+  <label>Sezónní horizont (dny)<input id="sw-days" type="number" min="1" max="120" value="30" /></label>
+  <label>SL buffer (% výšky D1)<input id="sw-buffer" type="number" min="0.1" max="50" step="0.1" value="5" /></label>
+  <label>Na stránku<select id="sw-size"><option>10</option><option>25</option><option>50</option></select></label>
+  <button id="sw-run" type="button">Přepočítat</button>
+ </div>
+ <p id="sw-status" role="status">Otevřením záložky se načte aktuální cenový snapshot.</p>
+ <div class="lab-table-wrap"><table class="lab-table"><thead><tr><th>Instrument / směr</th><th>W1 hranice</th><th>D1 upřesnění</th><th>Vzdálenost D1 / W1</th><th>Checklist / verdikt</th><th>Detail</th></tr></thead><tbody id="sw-rows"></tbody></table></div>
+ <div class="zone-chart-toolbar"><button id="sw-prev" type="button">Předchozí</button><span id="sw-page"></span><button id="sw-next" type="button">Další</button></div>
+ <section id="sw-detail" class="zone-card" hidden>
+  <h3 id="sw-title"></h3><p id="sw-meta"></p><p id="sw-verdict" role="status"></p>
+  <div class="zone-chart-toolbar"><label>Graf<select id="sw-resolution"><option value="D1">D1 · W1 i D1 hranice</option><option value="W1">W1 · kontext</option></select></label><button id="sw-fit" type="button">Reset pohledu</button><button id="sw-audit" type="button">Stáhnout audit JSON</button></div>
+  <div class="zone-chart-wrap" id="sw-chart" aria-label="Swing graf weekly a daily zóny"><div class="zone-tooltip" id="sw-tip" hidden></div></div>
+  <p>Kalendářní D1/W1 osa; zdroj není živá brokerová kotace. Weekly hranice jsou širší pásmo, daily hranice užší pásmo. Čísla obou zón najdeš v tabulce i vpravo na cenové ose.</p>
+  <div id="sw-checklist" class="sw-checklist"></div>
+  <h4>Ruční potvrzení chybějících zdrojů</h4><p>Ukládá se jen v tomto prohlížeči a pouze pro tuto kombinaci zón, snapshotu a parametrů. Nový snapshot potvrzení nepřebírá. Vyplnění pole nezakládá nezávislé ověření.</p>
+  <form id="sw-review" class="lab-controls">
+   <label>Futures volume profil<select name="volume"><option value="unknown">Neověřeno</option><option value="yes">Sedí · vysoký objem v zóně</option><option value="no">Nesedí · chybí objem</option></select></label>
+   <label>Futures kontrakt / fixed range / zdroj<input name="volumeSource" maxlength="500" placeholder="Kontrakt, interval profilu, zdroj" /></label>
+   <label>Makro skóre (−11 až +11)<input name="macro" type="number" min="-11" max="11" step="any" placeholder="Neznámé" /></label>
+   <label>Makro zdroj / datum / obě měny<input name="macroSource" maxlength="500" /></label>
+   <label>COT velcí ve směru<select name="large"><option value="unknown">Neověřeno</option><option value="yes">Sedí</option><option value="no">Nesedí</option></select></label>
+   <label>COT retail opačně<select name="retail"><option value="unknown">Neověřeno</option><option value="yes">Sedí</option><option value="no">Nesedí</option></select></label>
+   <label>COT open interest roste<select name="oi"><option value="unknown">Neověřeno</option><option value="yes">Sedí</option><option value="no">Nesedí</option></select></label>
+   <label>COT obě strany potvrzují<select name="both"><option value="unknown">Neověřeno</option><option value="yes">Sedí</option><option value="no">Nesedí</option></select></label>
+   <label>COT kontrakty / report / zdroj<input name="cotSource" maxlength="500" /></label>
+   <label class="sw-check"><input name="planReviewed" type="checkbox" /> Plán jsem ověřil u brokera včetně nákladů, SL/TP a Fibonacci.</label>
+   <button type="submit">Uložit ruční kontrolu</button><button id="sw-clear" type="button">Vymazat tuto kontrolu</button>
+  </form><p id="sw-save" role="status"></p><p id="sw-cot-context"></p>
+  <p>Bez objemu nebo s makrem proti směru se neotevírá. Částečná shoda vyžaduje individuální posouzení, ne automatický souhlas. Příprava na W1/D1, ne hledání důvodu obchodovat každý den.</p>
+ </section>
+</section>

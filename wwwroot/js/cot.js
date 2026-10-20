@@ -42,6 +42,7 @@
         const cotActive = tab.dataset.marketTab === 'cot';
         const screenerActive = tab.dataset.marketTab === 'screener';
         const zonesActive = tab.dataset.marketTab === 'zones';
+        const swingActive = tab.dataset.marketTab === 'swing';
         tabs.forEach(button => {
             const active = button === tab;
             button.classList.toggle('is-active', active);
@@ -49,15 +50,17 @@
             button.tabIndex = active ? 0 : -1;
         });
         panel.hidden = !cotActive;
-        seasonality.hidden = cotActive || screenerActive || zonesActive;
+        seasonality.hidden = cotActive || screenerActive || zonesActive || swingActive;
         byId('market-screener-view').hidden = !screenerActive;
         byId('market-zones-view').hidden = !zonesActive;
-        root.classList.toggle('is-screener', screenerActive || zonesActive);
-        byId('market-instrument-title').textContent = zonesActive ? 'Obchodní zóny' : screenerActive ? 'Screener' : asset?.name || 'Instrument';
+        byId('market-swing-view').hidden = !swingActive;
+        root.classList.toggle('is-screener', screenerActive || zonesActive || swingActive);
+        byId('market-instrument-title').textContent = swingActive ? 'Swing Honzy Šrajera' : zonesActive ? 'Obchodní zóny' : screenerActive ? 'Screener' : asset?.name || 'Instrument';
         tooltip.hidden = true;
         if (cotActive) load();
         else if (screenerActive) root.dispatchEvent(new CustomEvent('screener-visible'));
         else if (zonesActive) root.dispatchEvent(new CustomEvent('zones-visible'));
+        else if (swingActive) root.dispatchEvent(new CustomEvent('swing-visible'));
         else root.dispatchEvent(new CustomEvent('seasonality-visible'));
     }
     tabs.forEach(tab => {

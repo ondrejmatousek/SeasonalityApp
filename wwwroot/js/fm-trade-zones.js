@@ -5,7 +5,7 @@
  // Quality is descriptive only. Equal distance uses recency then stable ID.
  function compare(a,b){return a.distancePct-b.distancePct||b.confirmedAt.localeCompare(a.confirmedAt)||a.id.localeCompare(b.id);}
  function nearest(zones){return ['supply','demand'].flatMap(side=>[...zones].filter(z=>z.type===side&&z.fm.fresh&&z.fm.armed&&Number.isFinite(z.distancePct)).sort(compare).slice(0,1));}
- function detect(price,tf,asOf,volumeOptions={}){
+ function detect(price,tf,asOf,volumeOptions={},allValid=false){
   const source=T.sourceBars(price,tf,asOf);if(!source.length)return [];
   // D1/W1 use the existing date-labelled, completed provider snapshot; their
   // nominal UTC day/week ends are not claimed to be exchange session timestamps.
@@ -19,7 +19,7 @@
    return {id:tf+'|'+z.id,timeframe:tf,type:z.type,kind:'origin',kinds:['origin'],chartLabel:`${tf} ${z.type}\n${bos?'BOS':'bez BOS'} · ${z.displacementRatio.toFixed(2).replace('.',',')} ATR`,lower:z.bot,upper:z.top,baseDate:tf==='H4'?iso(z.originTime):iso(z.originTime).slice(0,10),baseEnd:iso(z.base.end),confirmedAt:iso(z.confirmedAt),atr:z.atr,impulseAtr:z.displacementRatio,departureCount:z.confirmIndex-z.startIdx,
     bos:bos?{state:'yes',price:bos.level.price,date:iso(bos.level.t),knownAt:iso(bos.knownAt)}:{state:'no'},volume,session:{state:'unknown'},qualityPoints:(bos?2:0)+(volume.state==='high'?1:0),knownCriteria:1+Number(volume.state!=='unknown'),visits,maxPenetration:depth,fresh:true,distancePct:T.distancePercent(last,z.bot,z.top),distanceAtr:distance/z.atr,priceState:distance===0?'inside':distance<=z.atr*.5?'near':'far',selectionPolicy:policy,fm:z};
   });
-  return nearest(zones);
+  return allValid?zones:nearest(zones);
  }
- return {policy,compare,nearest,detect};
+ return {policy,compare,nearest,detect,detectAll:(price,tf,asOf)=>detect(price,tf,asOf,{},true)};
 });
