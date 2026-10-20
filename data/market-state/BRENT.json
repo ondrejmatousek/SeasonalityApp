@@ -146,6 +146,39 @@
         "fetchedAt": "2026-10-17T01:02:06.950Z",
         "runId": "c18819de-cb66-47bc-910c-b13f5f52d4c9"
       }
+    },
+    {
+      "timestamp": 1792360800,
+      "providerTimestamp": "2026-10-18T22:00:00.000Z",
+      "providerUtcDate": "2026-10-18",
+      "date": "2026-10-18",
+      "open": 109.65,
+      "high": 110.7,
+      "low": 106.82,
+      "close": 109.55,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Documented ICEEUR:BRN1! D1 session and original bar timestamp identify trade date 2026-10-19. At 2026-10-20T01:08:07.865Z local 2026-10-20 02:08:07 is after conservative completion cutoff 23:00:00. ICE July2026 trading schedule: 19 October has no listed holiday exception. Cutoff is not asserted as exact feed time_close. History/next bar not used as proof.",
+        "checkedAt": "2026-10-20T01:08:07.865Z",
+        "timezone": "Europe/London",
+        "sources": [
+          {
+            "url": "https://www.ice.com/products/219/Brent-Crude-Futures",
+            "finding": "Brent futures daily trading ends 23:00 Europe/London."
+          },
+          {
+            "url": "https://www.ice.com/publicdocs/Trading_Schedule.pdf",
+            "finding": "No October 19 holiday or shortened trading exception."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "47714e448e8a6423551d708f495f1e4bc48971966bbf54237aeb9e75e195c0e1",
+        "fetchedAt": "2026-10-20T01:08:07.865Z",
+        "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
+      }
     }
   ]
 }

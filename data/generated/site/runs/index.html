@@ -10,9 +10,12 @@
     <link rel="stylesheet" href="/css/responsive.css?v=CmDwJfNjVxWfhOLRkiJEs5Z2SRCnj4LRDEeSSC0laLQ" />
     <link rel="stylesheet" href="/css/cot.css?v=_2CuJy3Rk-Cn73YHWAU2e_TMrIhFKLLAFg5o9UhrN-E" />
     <link rel="stylesheet" href="/css/market-help.css?v=sHU8Da0aRvzGPzckhrU34v2deATU0FHXEkzYWYzsOZg" />
-    <link rel="stylesheet" href="/css/zone-chart.css?v=jyAuQLfg1YCv5cvtCgUUCAMEG30z7ksrC1ihz3kUAfs" />
-    <link rel="stylesheet" href="/css/trade-zones.css?v=x2xgqxrl-DnrbHf27rHWlGVHYjAq7NeGBoHfP44dD3U" />
-    <link rel="stylesheet" href="/css/data-runs.css?v=XmVs_4hNnfQuc5-IEnOOBk0Bz5zT8uooJ0rsVeKX4-U" />
+    <link rel="stylesheet" href="/css/zone-chart.css?v=LnASjrpVb9jzAawvyA6pSU5reAFe31kO_2sxYtsgzfo" />
+    <link rel="stylesheet" href="/css/trade-zones.css?v=qdB0FBFaSb4mn1zGEu9DVYXm2luWyQrJI-la2x0y1BU" />
+    <link rel="stylesheet" href="/css/data-runs.css?v=W6jNRzQ2cI9eXgNd3KWJM4x-ny_MHPMpRKmuY0pG0mo" />
+    <link rel="stylesheet" href="/css/strategy-lab.css?v=3EQNQrbAunvnv4uhSmPuZ9tAYj2IlC8pBNi2S9TqdTo" />
+    <link rel="stylesheet" href="/css/strategy-trade-chart.css?v=1EPJpSmwZCBPa0uYMhJyzjt7IECYNPJz5waE3OvJ-8s" />
+    <link rel="stylesheet" href="/css/fm-outlook.css?v=tn9SyR42AallEwtD5SAKnkdo7JMP7L0EX0myfD38xMs" />
 </head>
 <body class="journal-shell app-section-shell">
     <header>
@@ -29,18 +32,25 @@
         <aside class="app-sidebar">
             <div class="sidebar-title">Analýza trhů</div>
             <a class="sidebar-link " href="/">Seasonality &amp; COT</a>
+            <a class="sidebar-link " href="/strategy-lab/">Laboratoř strategií</a>
+            <a class="sidebar-link " href="/daily-outlook/">Denní výhled · FM</a>
             <div class="sidebar-title">Data</div>
             <a class="sidebar-link active" href="/runs/">Denní běhy</a>
         </aside>
-        <main role="main" class="app-workspace-main"><section class="data-runs" id="data-runs">
+        <main role="main" class="app-workspace-main"><section class="data-runs" id="data-runs" data-audit-url="https://seasonality-gbfhasdjamcnf6dm.westeurope-01.azurewebsites.net/api/data-runs/receipts">
     <header class="runs-heading">
         <div><p class="runs-eyebrow">DATA / PROVOZ</p><h1>Denní běhy</h1><p>Sběr → SQL → validace → analytika → zveřejnění. Časy jsou v Europe/Prague.</p></div>
         <button type="button" id="runs-refresh">Obnovit</button>
     </header>
     <p id="runs-state" role="status">Načítám uložené reporty…</p>
     <p class="runs-note">Zelený přepočet není potvrzení nasazení. Dostupnost webu ověřujeme zvlášť proti jeho manifestu. Přijetí kolekce do SQL samo nepotvrzuje, že Work právě načetl nové svíčky z TradingView.</p>
+    <div class="runs-tabs" role="group" aria-label="Timeframe běhů">
+        <button type="button" id="runs-d1" aria-pressed="true">D1 · denní běhy</button>
+        <button type="button" id="runs-h4" aria-pressed="false">H4 · čtyřhodinové běhy</button>
+    </div>
+    <p id="runs-audit-state" role="status"></p>
     <div class="runs-columns">
-        <section aria-labelledby="runs-history-heading"><h2 id="runs-history-heading">Historie po dnech</h2><div id="runs-history"></div></section>
+        <section aria-labelledby="runs-history-heading"><h2 id="runs-history-heading">Historie D1</h2><div id="runs-history"></div><nav class="runs-pagination" aria-label="Stránkování běhů"><button type="button" id="runs-prev">Předchozí</button><span id="runs-page" aria-live="polite"></span><button type="button" id="runs-next">Další</button></nav></section>
         <section aria-labelledby="runs-detail-heading"><h2 id="runs-detail-heading">Detail běhu</h2><div id="runs-detail"></div></section>
     </div>
     <noscript>Pro načtení uložených reportů je potřeba JavaScript.</noscript>
@@ -48,7 +58,7 @@
 </main>
     </div>
     <script src="/js/static-market-data.js?v=h4lVsOU-_Pm7V8dTA619P8Vm4a1OmghqTG8asKdMTTE"></script>
-    <script src="/js/data-runs.js?v=0mIPxUzZxDW2Qh_BnVqr7VkBxD6peGWeHjAgtNPuFtM"></script>
+    <script src="/js/data-runs.js?v=zhIs-YDHmSTzb0RBSaNmX683gwRAztqtOKbs1D5cg0k"></script>
     <script src="/js/market-chart-ui.js?v=FOzosF503VEtSzFOkFXCbS58M5DS0URLFuaQzT3J1-g"></script>
     <script src="/js/seasonality-geometry.js?v=ck3XXR5liTPY7nthjwleADubh-cctSV6tfJKoLoazWI"></script>
     <script src="/js/seasonality-year-trends.js?v=zT9yQLkqQAVDqNJ5HqXh9I8BJ1KKUPUrk_V3LkCr2Ao"></script>
@@ -72,11 +82,18 @@
     <script src="/js/cot-analogs.js?v=submncZGCw6od0TibxNUA5ysf_TalntHczB4n72B_pw"></script>
     <script src="/js/cot.js?v=BrmXDCW5RpdDVxPJOFaQw6x-zBYh-yI8SJsOrLw4Dss"></script>
     <script src="/js/market-candles.js?v=6d8Psbl-cbA1bdyvgjuBPLKK4KqXRrqU5golWjBEUrY"></script>
-    <script src="/js/trade-zones.js?v=stfltJLAhLydzSHY5EUZeVWBPMOuYoTyqD1VzSRotns"></script>
+    <script src="/js/trade-zones.js?v=3FoP9ggn4p64PWb_WfpJIj3BLImqQyKTZDiTIj_rNw8"></script>
+    <script src="/js/strategy-lab.js?v=1tuEGYukwtd1Z-OieW8KlYY6smOWDFIHWOmD6Ysjiuw"></script>
+    <script src="/js/strategy-lab-ui.js?v=5YBUh8_90v9kEJhfy9IZp9Z3PFkT8i5v3iR3XvgFVLY"></script>
     <script src="/lib/lightweight-charts/lightweight-charts.standalone.production.js?v=wJklgIZ8SRLMk4WzwnKDFbzBp2x_EIfcqQhDD8zfMdc"></script>
-    <script src="/js/zone-price-chart.js?v=_1wd3gameZN3nL0jDaAcSBtIJ6pACsO-KXdEMjIR9Q8"></script>
+    <script src="/js/strategy-trade-chart.js?v=yZOgF3eb3BXyMGlupfTXYJw--x1gs5g2ULGaIyFj70Q"></script>
+    <script src="/js/chart-drawing-tools.js?v=n3a2Mwh4avfOPANxhR6Y68bYdWUAEPa6l9GYxtuYDcI"></script>
+    <script src="/js/zone-price-chart.js?v=ZppZRFYwpMgY-hsAqWH4fB7zbWhQNZgll3GqgoDcdOI"></script>
+    <script src="/js/fm-order-blocks.js?v=TS5fl_UL86KUb3OxIJx5Nv95p39Kp6YcLMZzcjul6CE"></script>
+    <script src="/js/fm-outlook-ui.js?v=EWsNkFEMnm7Tw_91FtcuPrM72m-7N8FFFJ9wGb4hZz0"></script>
     <script src="/js/cfd-instruments.js?v=q3aoS3fFEq6AvwnO_IzRB8Q1Okb7JlLq1fCR4slU3tg"></script>
-    <script src="/js/trade-zones-ui.js?v=WSHHT-8jaHoMWfSgBO1PaB5IA0ru2pe0J067LgrkZJs"></script>
+    <script src="/js/trade-zone-table.js?v=HCN9xIeAhBaKihxe1z7O065W_Sz2smOOiRjWHAOJbZg"></script>
+    <script src="/js/trade-zones-ui.js?v=O4VIym0toA46VN9IadzBX-RM-zg152p24crpIID9Hd8"></script>
     <script src="/js/seasonality.js?v=H0sSmW2o2dYvFHquOEtwt9KGgR7l4iOVpCWtHtgDvFU"></script>
     <script src="/js/market-export.js?v=fZFB3pYU4VrDoCU6RorXYe4Wk5UemxUNfBKkLnwHSnQ"></script>
     <script src="/js/screener.js?v=DU_oPFr2viWBi1hZM93idEUfPl1lzZViVG74DyZdMY8"></script>

@@ -146,6 +146,39 @@
         "fetchedAt": "2026-10-17T01:02:06.950Z",
         "runId": "c18819de-cb66-47bc-910c-b13f5f52d4c9"
       }
+    },
+    {
+      "timestamp": 1792416600,
+      "providerTimestamp": "2026-10-19T13:30:00.000Z",
+      "providerUtcDate": "2026-10-19",
+      "date": "2026-10-19",
+      "open": 7702.77,
+      "high": 7731.18,
+      "low": 7684.79,
+      "close": 7690.73,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Documented SP:SPX D1 session and original bar timestamp identify trade date 2026-10-19. At 2026-10-20T01:08:07.865Z local 2026-10-19 21:08:07 is after conservative completion cutoff 18:00:00. Nasdaq/NYSE 2026 holiday calendars: 19 October regular US equity market day. Cutoff is not asserted as exact feed time_close. History/next bar not used as proof.",
+        "checkedAt": "2026-10-20T01:08:07.865Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "url": "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+            "finding": "US cash index follows underlying US equity market session."
+          },
+          {
+            "url": "https://www.nyse.com/trade/hours-calendars",
+            "finding": "Regular cash equity close 16:00 America/New_York; October 19 has no holiday exception."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "47714e448e8a6423551d708f495f1e4bc48971966bbf54237aeb9e75e195c0e1",
+        "fetchedAt": "2026-10-20T01:08:07.865Z",
+        "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
+      }
     }
   ]
 }

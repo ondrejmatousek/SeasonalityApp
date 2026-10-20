@@ -183,6 +183,43 @@
         "fetchedAt": "2026-10-17T01:02:06.950Z",
         "runId": "c18819de-cb66-47bc-910c-b13f5f52d4c9"
       }
+    },
+    {
+      "timestamp": 1792360800,
+      "providerTimestamp": "2026-10-18T22:00:00.000Z",
+      "providerUtcDate": "2026-10-18",
+      "date": "2026-10-18",
+      "open": 6.557,
+      "high": 6.6315,
+      "low": 6.5285,
+      "close": 6.5755,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Documented COMEX:HG1! D1 session and original bar timestamp identify trade date 2026-10-19. At 2026-10-20T01:08:07.865Z local 2026-10-19 20:08:07 is after conservative completion cutoff 17:00:00. CME 2026 Globex holiday schedule: 19 October outside holiday dates. Cutoff is not asserted as exact feed time_close. History/next bar not used as proof.",
+        "checkedAt": "2026-10-20T01:08:07.865Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/cn-s/markets/metals/base/copper.contractSpecs.html",
+            "finding": "Copper Globex daily trading session 17:00-16:00 Chicago."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "2026 product holiday calendar: October 19 is a regular trading day; all times Chicago unless specified."
+          },
+          {
+            "url": "https://www.cmegroup.com/articles/whitepapers/leveraging-cme-group-asia-trading-hours-liquidity-for-cross-commodity-trading.html",
+            "finding": "CME Globex energy/metals 17:00-16:00 CT; grains 19:00-07:45 and08:30-13:20 CT."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "47714e448e8a6423551d708f495f1e4bc48971966bbf54237aeb9e75e195c0e1",
+        "fetchedAt": "2026-10-20T01:08:07.865Z",
+        "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
+      }
     }
   ]
 }
