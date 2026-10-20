@@ -193,5 +193,13 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
             new TempDataDictionary(http, tempData), fmWriter, new HtmlHelperOptions()));
         Directory.CreateDirectory(Path.Combine(directory, "daily-outlook"));
         await File.WriteAllTextAsync(Path.Combine(directory, "daily-outlook", "index.html"), fmWriter.ToString());
+        var paperView = views.GetView(null, "/Views/Data/PaperTrading.cshtml", true);
+        if (!paperView.Success) throw new InvalidOperationException("Paper trading view not found.");
+        using var paperWriter = new StringWriter();
+        await paperView.View.RenderAsync(new ViewContext(action, paperView.View,
+            new ViewDataDictionary(metadata, new ModelStateDictionary()),
+            new TempDataDictionary(http, tempData), paperWriter, new HtmlHelperOptions()));
+        Directory.CreateDirectory(Path.Combine(directory, "paper-trading"));
+        await File.WriteAllTextAsync(Path.Combine(directory, "paper-trading", "index.html"), paperWriter.ToString());
     }
 }

@@ -2,10 +2,11 @@
 (() => {
     const iso=t=>typeof t==='string'?t:typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):`${t.year}-${String(t.month).padStart(2,'0')}-${String(t.day).padStart(2,'0')}`;
     const day=s=>Date.parse(s.includes('T')?s:s+'T00:00:00Z'),fmt=s=>new Date(day(s)).toLocaleDateString('cs-CZ');
-    window.ZonePriceChart={create(container,tip,{price,zone,zones=[],candidate,resolution,annotations=[]}){
+    window.ZonePriceChart={create(container,tip,{price,zone,zones=[],candidate,resolution,annotations=[],trade=null}){
         const L=window.LightweightCharts;if(!L)throw Error('Knihovna cenového grafu není dostupná');
         const shown=[zone,...zones].filter((z,i,a)=>a.findIndex(v=>v.type===z.type&&v.lower===z.lower&&v.upper===z.upper&&v.baseDate===z.baseDate)===i);
-        const minZone=Math.min(...shown.map(z=>z.lower)),maxZone=Math.max(...shown.map(z=>z.upper));
+        const tradePrices=trade?[trade.entry,trade.sl,trade.tp]:[];
+        const minZone=Math.min(...shown.map(z=>z.lower),...tradePrices),maxZone=Math.max(...shown.map(z=>z.upper),...tradePrices);
         container.classList.add('zone-chart-surface');container.dataset.shownZones=JSON.stringify(shown.map(z=>({type:z.type,lower:z.lower,upper:z.upper,baseDate:z.baseDate})));
         const bars=resolution==='W1'?price.weekly:price.bars,intraday=resolution==='H4';
         const axisKey=t=>intraday?(typeof t==='number'?new Date(t*1000).toISOString():t):iso(t);
@@ -51,11 +52,12 @@
         series.setData(data);container.dataset.candleCount=bars.length;container.dataset.resolution=resolution;
         // Native price lines keep both boundary prices on the right axis during
         // zoom/pan and resize. The primitive still draws the time-bounded zone.
-        for(const z of shown)for(const boundary of [z.lower,z.upper])series.createPriceLine({
+        for(const z of shown)for(const boundary of [z.lower,z.upper].filter(v=>!trade||![trade.entry,trade.sl,trade.tp].some(p=>Math.abs(p-v)<1e-12)))series.createPriceLine({
             price:boundary,color:z.type==='demand'?'#26a69a':'#ef5350',
             lineVisible:false,axisLabelVisible:true,
             axisLabelColor:z.type==='demand'?'#26a69a':'#ef5350',axisLabelTextColor:'#ffffff',title:''
         });
+        if(trade)for(const [key,title,color]of [['entry','Vstup','#c7d2da'],['sl','SL','#ef5350'],['tp','TP 2R','#26a69a']])series.createPriceLine({price:trade[key],color,lineWidth:1,lineStyle:2,lineVisible:true,axisLabelVisible:true,title});
         const markers=annotations.length?L.createSeriesMarkers(series,annotations):null;
         const drawingTools=window.ChartDrawingTools?.create(container,chart,series,{number});
         const x=date=>{
@@ -76,6 +78,7 @@
             ctx.save();ctx.beginPath();ctx.rect(0,0,width,height);ctx.clip();
             if(start!==null&&end!==null){ctx.fillStyle=seasonal.fill;ctx.fillRect(start,0,end-start,height);ctx.strokeStyle=seasonal.line;ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=seasonal.text;ctx.font='11px sans-serif';ctx.fillText(seasonal.label,Math.max(6,Math.min(start+6,width-ctx.measureText(seasonal.label).width-6)),height-12);}
             for(const z of shown){const top=series.priceToCoordinate(z.upper),bottom=series.priceToCoordinate(z.lower),left=Math.max(0,x(z.baseDate)??0);if(top===null||bottom===null)continue;ctx.fillStyle=z.type==='demand'?'#26a69a30':'#ef535025';ctx.strokeStyle=z.type==='demand'?'#26a69a99':'#ef535099';ctx.fillRect(left,top,width-left,bottom-top);ctx.strokeRect(left,top,width-left,bottom-top);ctx.fillStyle='#aebbc3';ctx.font='11px sans-serif';const lines=(z.chartLabel||`${z.timeframe} ${z.type}`).split('\n');lines.forEach((line,i)=>ctx.fillText(line,Math.min(left+6,Math.max(6,width-ctx.measureText(line).width-6)),z.labelPlacement==='below'?Math.min(height-6,bottom+14+i*13):Math.max(12,top-6-(lines.length-1-i)*13)));}
+            if(trade){const left=x(trade.registeredAt),right=x(trade.until||new Date(day(bars.at(-1).date)+8*14400000).toISOString()),entry=series.priceToCoordinate(trade.entry),sl=series.priceToCoordinate(trade.sl),tp=series.priceToCoordinate(trade.tp);if([left,right,entry,sl,tp].every(v=>v!==null)){const l=Math.max(0,left),r=Math.min(width,Math.max(left+35,right));ctx.fillStyle='#ef535052';ctx.fillRect(l,Math.min(entry,sl),r-l,Math.abs(sl-entry));ctx.fillStyle='#26a69a52';ctx.fillRect(l,Math.min(entry,tp),r-l,Math.abs(tp-entry));container.dataset.paperTrade=JSON.stringify({entry:trade.entry,sl:trade.sl,tp:trade.tp,entryY:entry,slY:sl,tpY:tp,left:l,right:r});}}
             if(setup){
                 ctx.font='11px sans-serif';
                 const left=x(setup.range.start),right=x(setup.range.end),top=series.priceToCoordinate(setup.range.upper),bottom=series.priceToCoordinate(setup.range.lower);

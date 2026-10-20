@@ -10,4 +10,6 @@ public sealed class DataController : Controller
     public IActionResult StrategyLab() => View();
     [HttpGet("/daily-outlook/")]
     public IActionResult FmOutlook() => View();
+    [HttpGet("/paper-trading/")]
+    public IActionResult PaperTrading() => View();
 }

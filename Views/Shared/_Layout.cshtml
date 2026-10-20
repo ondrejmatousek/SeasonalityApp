@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="~/css/strategy-trade-chart.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/fm-outlook.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/swing-srajer.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/h4-paper.css" asp-append-version="true" />
 </head>
 <body class="journal-shell app-section-shell">
     <header>
@@ -32,9 +33,10 @@
     <div class="app-workspace">
         <aside class="app-sidebar">
             <div class="sidebar-title">Analýza trhů</div>
-            <a class="sidebar-link @(ViewData["DataPage"] is true || ViewData["LabPage"] is true || ViewData["FmPage"] is true ? "" : "active")" href="/">Seasonality &amp; COT</a>
+            <a class="sidebar-link @(ViewData["DataPage"] is true || ViewData["LabPage"] is true || ViewData["FmPage"] is true || ViewData["PaperPage"] is true ? "" : "active")" href="/">Seasonality &amp; COT</a>
             <a class="sidebar-link @(ViewData["LabPage"] is true ? "active" : "")" href="/strategy-lab/">Laboratoř strategií</a>
             <a class="sidebar-link @(ViewData["FmPage"] is true ? "active" : "")" href="/daily-outlook/">Denní výhled · FM</a>
+            <a class="sidebar-link @(ViewData["PaperPage"] is true ? "active" : "")" href="/paper-trading/">H4 Papertrading · 2R</a>
             <div class="sidebar-title">Data</div>
             <a class="sidebar-link @(ViewData["DataPage"] is true ? "active" : "")" href="/runs/">Denní běhy</a>
         </aside>
@@ -75,6 +77,8 @@
     <script src="~/js/zone-price-chart.js" asp-append-version="true"></script>
     <script src="~/js/fm-order-blocks.js" asp-append-version="true"></script>
     <script src="~/js/fm-trade-zones.js" asp-append-version="true"></script>
+    <script src="~/js/h4-paper.js" asp-append-version="true"></script>
+    <script src="~/js/h4-paper-ui.js" asp-append-version="true"></script>
     <script src="~/js/swing-srajer.js" asp-append-version="true"></script>
     <script src="~/js/swing-srajer-ui.js" asp-append-version="true"></script>
     <script src="~/js/fm-outlook-ui.js" asp-append-version="true"></script>

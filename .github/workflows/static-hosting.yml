@@ -19,6 +19,8 @@ on:
       - 'Tools/h4-zone-*.cjs'
       - 'Tools/H4SqlImport/**'
       - 'Tools/ZonePriceImport/**'
+      - 'Tools/PaperTradeStore/**'
+      - 'Tools/h4-paper-*.cjs'
       - 'Tools/cfd-zone-*.cjs'
       - 'Tools/fetch-zone-crypto.ps1'
       - 'Services/SeasonalityService.cs'
@@ -74,6 +76,7 @@ jobs:
           node Tools/fm-order-blocks-checks.cjs wwwroot/research/fm-outlook-pilot.json
           node Tools/fm-trade-zones-checks.cjs
           node Tools/swing-srajer-checks.cjs
+          node Tools/h4-paper-checks.cjs
           node Tools/chart-time-checks.cjs
           node Tools/market-date-checks.cjs
           node Tools/htf-retirement-checks.cjs
@@ -104,6 +107,16 @@ jobs:
           pwsh -NoProfile -File Tools/fetch-zone-crypto.ps1 -OutputDir artifacts/zone-crypto
           node Tools/cfd-zone-snapshot.cjs artifacts/public-site artifacts/cfd-zone-source.json artifacts/zone-crypto
           node Tools/cfd-zone-checks.cjs artifacts/public-site
+      - name: Persist prospective H4 paper ledger and immutable events in SQL
+        if: steps.publication.outputs.run == 'true'
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+        run: |
+          dotnet build Tools/PaperTradeStore/PaperTradeStore.csproj -c Release
+          node Tools/h4-paper-store-checks.cjs
+          dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --ensure-schema --load --output artifacts/h4-paper-previous.json
+          node Tools/h4-paper-update.cjs artifacts/public-site artifacts/h4-paper-previous.json artifacts/h4-paper-next.json
+          dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/h4-paper-next.json --output artifacts/public-site/data/h4-paper/ledger.json
       - name: Overlay this morning's report including failed runs (keep last good analytics)
         if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
         env:
