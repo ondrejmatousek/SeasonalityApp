@@ -2,11 +2,15 @@
 (() => {
     const iso=t=>typeof t==='string'?t:typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):`${t.year}-${String(t.month).padStart(2,'0')}-${String(t.day).padStart(2,'0')}`;
     const day=s=>Date.parse(s.includes('T')?s:s+'T00:00:00Z'),fmt=s=>new Date(day(s)).toLocaleDateString('cs-CZ');
-    window.ZonePriceChart={create(container,tip,{price,zone,candidate,resolution,annotations=[]}){
+    window.ZonePriceChart={create(container,tip,{price,zone,zones=[],candidate,resolution,annotations=[]}){
         const L=window.LightweightCharts;if(!L)throw Error('Knihovna cenového grafu není dostupná');
+        const shown=[zone,...zones].filter((z,i,a)=>a.findIndex(v=>v.type===z.type&&v.lower===z.lower&&v.upper===z.upper&&v.baseDate===z.baseDate)===i);
+        const minZone=Math.min(...shown.map(z=>z.lower)),maxZone=Math.max(...shown.map(z=>z.upper));
+        container.classList.add('zone-chart-surface');container.dataset.shownZones=JSON.stringify(shown.map(z=>({type:z.type,lower:z.lower,upper:z.upper,baseDate:z.baseDate})));
         const bars=resolution==='W1'?price.weekly:price.bars,intraday=resolution==='H4';
         const axisKey=t=>intraday?(typeof t==='number'?new Date(t*1000).toISOString():t):iso(t);
-        const displayTime=t=>intraday?new Date(day(axisKey(t))).toLocaleString('cs-CZ',{timeZone:'UTC',dateStyle:'short',timeStyle:'short'})+' UTC':fmt(iso(t));
+        const displayTime=t=>intraday?window.MarketChartTime.format(t):fmt(iso(t));
+        container.dataset.displayTimeZone=window.MarketChartTime.timeZone;
         const precision=price.latestClose<10?5:price.latestClose<1000?3:2;
         const number=v=>new Intl.NumberFormat('cs-CZ',{minimumFractionDigits:precision,maximumFractionDigits:precision}).format(v);
         const seasonal=candidate?.direction==='up'
@@ -17,7 +21,7 @@
             autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#aebbc3',fontSize:12,attributionLogo:true},
             grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},
             rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.12,bottom:.12},alignLabels:true},
-            timeScale:{borderColor:'#344047',timeVisible:intraday,secondsVisible:false,minBarSpacing:.001,rightOffset:8,lockVisibleTimeRangeOnResize:true},
+            timeScale:{borderColor:'#344047',timeVisible:intraday,secondsVisible:false,minBarSpacing:.001,rightOffset:8,lockVisibleTimeRangeOnResize:true,tickMarkFormatter:intraday?window.MarketChartTime.tick:undefined},
             crosshair:{mode:L.CrosshairMode.Normal,vertLine:{labelBackgroundColor:'#43515a'},horzLine:{labelBackgroundColor:'#43515a'}},
             localization:{locale:'cs-CZ',priceFormatter:number,timeFormatter:displayTime},
             handleScroll:{mouseWheel:false,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
@@ -26,7 +30,7 @@
         const series=chart.addSeries(L.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350',borderVisible:false,priceFormat:{type:'price',precision,minMove:10**-precision},
             // A primitive is not part of the default candle autoscale. Include the
             // real zone bounds even when all visible candles trade far above/below it.
-            autoscaleInfoProvider:original=>{const info=original(),range=info?.priceRange;return {...info,priceRange:{minValue:Math.min(range?.minValue??zone.lower,zone.lower),maxValue:Math.max(range?.maxValue??zone.upper,zone.upper)}};}});
+            autoscaleInfoProvider:original=>{const info=original(),range=info?.priceRange;return {...info,priceRange:{minValue:Math.min(range?.minValue??minZone,minZone),maxValue:Math.max(range?.maxValue??maxZone,maxZone)}};}});
         const data=bars.map(b=>({time:intraday?b.timestamp:b.date,open:b.open,high:b.high,low:b.low,close:b.close}));
         const setup=zone.liquiditySetup?.state==='ready'?zone.liquiditySetup:null;
         for(const key of ['rangeStart','rangeEnd','liquidityLevel'])delete container.dataset[key];
@@ -47,10 +51,10 @@
         series.setData(data);container.dataset.candleCount=bars.length;container.dataset.resolution=resolution;
         // Native price lines keep both boundary prices on the right axis during
         // zoom/pan and resize. The primitive still draws the time-bounded zone.
-        for(const boundary of [zone.lower,zone.upper])series.createPriceLine({
-            price:boundary,color:zone.type==='demand'?'#26a69a':'#ef5350',
+        for(const z of shown)for(const boundary of [z.lower,z.upper])series.createPriceLine({
+            price:boundary,color:z.type==='demand'?'#26a69a':'#ef5350',
             lineVisible:false,axisLabelVisible:true,
-            axisLabelColor:zone.type==='demand'?'#26a69a':'#ef5350',axisLabelTextColor:'#ffffff',title:''
+            axisLabelColor:z.type==='demand'?'#26a69a':'#ef5350',axisLabelTextColor:'#ffffff',title:''
         });
         const markers=annotations.length?L.createSeriesMarkers(series,annotations):null;
         const drawingTools=window.ChartDrawingTools?.create(container,chart,series,{number});
@@ -71,7 +75,7 @@
             container.dataset.paneWidth=String(width);container.dataset.paneHeight=String(height);
             ctx.save();ctx.beginPath();ctx.rect(0,0,width,height);ctx.clip();
             if(start!==null&&end!==null){ctx.fillStyle=seasonal.fill;ctx.fillRect(start,0,end-start,height);ctx.strokeStyle=seasonal.line;ctx.setLineDash([4,5]);for(const xx of[start,end]){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,height);ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=seasonal.text;ctx.font='11px sans-serif';ctx.fillText(seasonal.label,Math.max(6,Math.min(start+6,width-ctx.measureText(seasonal.label).width-6)),height-12);}
-            if(upper!==null&&lower!==null){const left=Math.max(0,base??0);ctx.fillStyle=zone.type==='demand'?'#26a69a30':'#ef535025';ctx.strokeStyle=zone.type==='demand'?'#26a69a99':'#ef535099';ctx.fillRect(left,upper,width-left,lower-upper);ctx.strokeRect(left,upper,width-left,lower-upper);ctx.fillStyle='#aebbc3';ctx.font='11px sans-serif';ctx.fillText(`${zone.timeframe} ${zone.type}`,left+6,upper-6);}
+            for(const z of shown){const top=series.priceToCoordinate(z.upper),bottom=series.priceToCoordinate(z.lower),left=Math.max(0,x(z.baseDate)??0);if(top===null||bottom===null)continue;ctx.fillStyle=z.type==='demand'?'#26a69a30':'#ef535025';ctx.strokeStyle=z.type==='demand'?'#26a69a99':'#ef535099';ctx.fillRect(left,top,width-left,bottom-top);ctx.strokeRect(left,top,width-left,bottom-top);ctx.fillStyle='#aebbc3';ctx.font='11px sans-serif';const lines=(z.chartLabel||`${z.timeframe} ${z.type}`).split('\n');lines.forEach((line,i)=>ctx.fillText(line,Math.min(left+6,Math.max(6,width-ctx.measureText(line).width-6)),Math.max(12,top-6-(lines.length-1-i)*13)));}
             if(setup){
                 ctx.font='11px sans-serif';
                 const left=x(setup.range.start),right=x(setup.range.end),top=series.priceToCoordinate(setup.range.upper),bottom=series.priceToCoordinate(setup.range.lower);
@@ -90,7 +94,7 @@
         chart.timeScale().subscribeVisibleLogicalRangeChange(recordRange);
         const reset=()=>{
             chart.priceScale('right').applyOptions({autoScale:true});
-            const baseIndex=Math.max(0,dates.findIndex(d=>d>=zone.baseDate)),rangeIndex=setup?dates.findIndex(d=>d>=setup.range.start):-1;
+            const baseIndex=Math.min(...shown.map(z=>Math.max(0,dates.findIndex(d=>d>=z.baseDate)))),rangeIndex=setup?dates.findIndex(d=>d>=setup.range.start):-1;
             const seasonalIndex=candidate?Math.max(0,dates.findIndex(d=>d>=candidate.startDate)):Infinity;
             const first=Math.min(baseIndex-8,rangeIndex>=0?rangeIndex-5:Infinity,seasonalIndex-3,Math.max(0,bars.length-(resolution==='W1'?65:130))),last=data.length-1;
             const padding=Math.max(3,(last-first)*.03);

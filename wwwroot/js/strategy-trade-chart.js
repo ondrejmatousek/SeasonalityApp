@@ -1,14 +1,15 @@
 // Rendering-only audit view. Never changes strategy settings, candles or fills.
 (()=>{
  'use strict';
- const utc=t=>new Date(t*1000).toISOString().replace('T',' ').replace('.000Z',' UTC');
+ const localTime=t=>window.MarketChartTime.format(t);
  const num=v=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(v);
  window.StrategyTradeChart={create(container,readout,{prepared:p,trade:t,config:c,resolution='M15'}){
   const L=window.LightweightCharts;if(!L)throw Error('Knihovna TradingView Lightweight Charts není dostupná.');
   const bars=resolution==='H4'?p.h4:resolution==='D1'?p.d1:p.data.m15;
   const zone=p.zones.find(z=>z.id===t.reference?.zoneId),parent=p.zones.find(z=>z.id===t.reference?.parentId);
   const precision=t.entry<10?5:3,levels=[t.entry,t.stop,t.target,t.exit,...[zone,parent].filter(Boolean).flatMap(z=>[z.lower,z.upper])].filter(Number.isFinite);
-  const chart=L.createChart(container,{autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#b9c8cf',attributionLogo:true},grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.18,bottom:.18}},timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#344047',lockVisibleTimeRangeOnResize:true},crosshair:{mode:L.CrosshairMode.Normal},localization:{locale:'cs-CZ',timeFormatter:utc},handleScroll:{mouseWheel:false,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}}});
+  container.dataset.displayTimeZone=window.MarketChartTime.timeZone;
+  const chart=L.createChart(container,{autoSize:true,layout:{background:{type:L.ColorType.Solid,color:'#101416'},textColor:'#b9c8cf',attributionLogo:true},grid:{vertLines:{color:'#20272b'},horzLines:{color:'#20272b'}},rightPriceScale:{borderColor:'#344047',scaleMargins:{top:.18,bottom:.18}},timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#344047',lockVisibleTimeRangeOnResize:true,tickMarkFormatter:window.MarketChartTime.tick},crosshair:{mode:L.CrosshairMode.Normal},localization:{locale:'cs-CZ',timeFormatter:localTime},handleScroll:{mouseWheel:false,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}}});
   const series=chart.addSeries(L.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350',borderVisible:false,priceFormat:{type:'price',precision,minMove:10**-precision},autoscaleInfoProvider:original=>{const a=original();return {...a,priceRange:{minValue:Math.min(a?.priceRange?.minValue??t.stop,...levels),maxValue:Math.max(a?.priceRange?.maxValue??t.target,...levels)}};}});
   series.setData(bars.map(b=>({time:b.t,open:b.open,high:b.high,low:b.low,close:b.close})));
   const index=time=>{let lo=0,hi=bars.length-1;while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(bars[mid].t<=time)lo=mid;else hi=mid-1;}return lo;};
@@ -43,10 +44,10 @@
   series.attachPrimitive({attached({requestUpdate}){requestDraw=requestUpdate;},paneViews:()=>[{zOrder:()=> 'bottom',renderer:()=>renderer}]});
   const focus=context=>{chart.priceScale('right').applyOptions({autoScale:true});const start=context?Math.min(t.signalAt,zone?.baseStart??t.signalAt,parent?.baseStart??t.signalAt):t.signalAt;chart.timeScale().setVisibleLogicalRange({from:index(start)-24,to:index(t.exitedAt-1)+24});};
   const zoom=f=>{const r=chart.timeScale().getVisibleLogicalRange();if(r){const mid=(r.from+r.to)/2,half=Math.max(5,(r.to-r.from)*f/2);chart.timeScale().setVisibleLogicalRange({from:mid-half,to:mid+half});}};
-  chart.subscribeCrosshairMove(e=>{if(ruler)return;const b=e.seriesData.get(series);if(b?.open!==undefined)readout.textContent=`${utc(b.time)} · O ${num(b.open)} · H ${num(b.high)} · L ${num(b.low)} · C ${num(b.close)}`;});
+  chart.subscribeCrosshairMove(e=>{if(ruler)return;const b=e.seriesData.get(series);if(b?.open!==undefined)readout.textContent=`${localTime(b.time)} · O ${num(b.open)} · H ${num(b.high)} · L ${num(b.low)} · C ${num(b.close)}`;});
   chart.subscribeClick(e=>{if(!ruler||!e.point||e.time==null)return;const price=series.coordinateToPrice(e.point.y);if(!Number.isFinite(price))return;if(measure.length===2)measure=[];measure.push({time:Number(e.time),price});if(measure.length===2){const [a,b]=measure;readout.textContent=`Měření: ${num(b.price-a.price)} (${num((b.price/a.price-1)*100)} %) · ${Math.abs(b.time-a.time)/60} minut UTC. Nejde o výsledek obchodu.`;}else readout.textContent='Vyber druhý bod měření.';requestDraw();});
   const key=e=>{if(['+','=','-','0','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();if(e.key==='0')focus(false);else if(e.key.startsWith('Arrow')){const r=chart.timeScale().getVisibleLogicalRange(),d=(r.to-r.from)*.15*(e.key==='ArrowLeft'?-1:1);chart.timeScale().setVisibleLogicalRange({from:r.from+d,to:r.to+d});}else zoom(e.key==='-'?1.25:.8);}};
   container.addEventListener('keydown',key);container.dataset.resolution=resolution;container.dataset.tradeEntry=String(t.enteredAt);focus(false);
-  return {focus:()=>focus(false),context:()=>focus(true),all:()=>{chart.priceScale('right').applyOptions({autoScale:true});chart.timeScale().fitContent();},zoom,setRuler:value=>{ruler=value;},clear:()=>{measure=[];requestDraw();readout.textContent='Měření smazáno. Časy jsou v UTC.';},image:()=>chart.takeScreenshot().toDataURL('image/png'),destroy:()=>{container.removeEventListener('keydown',key);markerPlugin.detach();chart.remove();}};
+  return {focus:()=>focus(false),context:()=>focus(true),all:()=>{chart.priceScale('right').applyOptions({autoScale:true});chart.timeScale().fitContent();},zoom,setRuler:value=>{ruler=value;},clear:()=>{measure=[];requestDraw();readout.textContent='Měření smazáno. Časy grafu jsou Europe/Prague.';},image:()=>chart.takeScreenshot().toDataURL('image/png'),destroy:()=>{container.removeEventListener('keydown',key);markerPlugin.detach();chart.remove();}};
  }};
 })();

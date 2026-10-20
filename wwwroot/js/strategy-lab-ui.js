@@ -12,7 +12,7 @@
  function closeDetail(){chart?.destroy();chart=null;selectedTrade=null;by('lab-trade-detail').hidden=true;by('lab-trade-chart').replaceChildren();}
  function draw(){
   chart?.destroy();chart=null;by('lab-trade-chart').replaceChildren();by('lab-chart-ruler').setAttribute('aria-pressed','false');
-  try{chart=StrategyTradeChart.create(by('lab-trade-chart'),by('lab-chart-readout'),{prepared,trade:selectedTrade,config:selectedResult.config,resolution:by('lab-chart-timeframe').value});by('lab-chart-readout').textContent='Časy grafu jsou v UTC. Najetím na svíčku zobrazíš OHLC.';}catch(e){by('lab-chart-readout').textContent='Graf není dostupný: '+e.message;}
+  try{chart=StrategyTradeChart.create(by('lab-trade-chart'),by('lab-chart-readout'),{prepared,trade:selectedTrade,config:selectedResult.config,resolution:by('lab-chart-timeframe').value});by('lab-chart-readout').textContent='Časy grafu jsou Europe/Prague; audit obchodů zůstává UTC. Najetím na svíčku zobrazíš OHLC.';}catch(e){by('lab-chart-readout').textContent='Graf není dostupný: '+e.message;}
  }
  function detail(t,result){
   tradeButton=document.activeElement;by('lab-trades').hidden=true;

@@ -7,9 +7,10 @@
   for(const [k,values]of [['strictness',['loose','medium','strict']],['mode',['classic','series','both']],['seriesLevel',['extreme-open','first-open']],['breakRef',['body','wick']],['zoneSrc',['full','body']]])if(!values.includes(c[k]))throw Error('Invalid FM '+k);
   if(typeof c.hideMitigated!=='boolean'||!Number.isFinite(c.mitigationPct)||c.mitigationPct<1||c.mitigationPct>100)throw Error('Invalid FM mitigation');return c;
  }
- function validate(bars){
+ function validate(bars,timeframe='H4'){
+  const duration={H4:14400,D1:86400,W1:604800}[timeframe];if(!duration)throw Error('Invalid FM timeframe');
   if(!Array.isArray(bars)||!bars.length)throw Error('Missing closed H4 bars');
-  for(let i=0;i<bars.length;i++){const b=bars[i];if(!Number.isSafeInteger(b.t)||!Number.isSafeInteger(b.end)||b.end<=b.t||b.end-b.t>14400||!['open','high','low','close'].every(k=>Number.isFinite(b[k])&&b[k]>0)||b.low>Math.min(b.open,b.close)||b.high<Math.max(b.open,b.close)||b.high<b.low||i&&b.t<bars[i-1].end)throw Error('Invalid FM OHLC/order/close time');}
+  for(let i=0;i<bars.length;i++){const b=bars[i];if(!Number.isSafeInteger(b.t)||!Number.isSafeInteger(b.end)||b.end<=b.t||b.end-b.t>duration||!['open','high','low','close'].every(k=>Number.isFinite(b[k])&&b[k]>0)||b.low>Math.min(b.open,b.close)||b.high<Math.max(b.open,b.close)||b.high<b.low||i&&b.t<bars[i-1].end)throw Error('Invalid FM OHLC/order/close time');}
  }
  function atr(bars,n){let sum=0,value=null;return bars.map((b,i)=>{const prev=i?bars[i-1].close:null,tr=prev==null?b.high-b.low:Math.max(b.high-b.low,Math.abs(b.high-prev),Math.abs(b.low-prev));if(i<n){sum+=tr;if(i===n-1)value=sum/n;}else value=tr/n+value*(1-1/n);return value;});}
  // Rightmost equal extreme wins. Tie behavior remains explicitly subject to
@@ -23,7 +24,7 @@
   if(ev)s.count++;return {ev,level};
  }
  function run(input,options={}){
-  const c=settings(options);if(input.timeframe!=='H4'||typeof input.symbol!=='string'||!input.symbol.includes(':')||!Number.isSafeInteger(input.asOf))throw Error('Exact provider symbol, H4 and asOf required');validate(input.bars);
+  const c=settings(options);if(!['H4','D1','W1'].includes(input.timeframe)||typeof input.symbol!=='string'||!input.symbol.includes(':')||!Number.isSafeInteger(input.asOf))throw Error('Exact provider symbol, supported timeframe and asOf required');validate(input.bars,input.timeframe);
   const bars=input.bars.filter(b=>b.end<=input.asOf);if(!bars.length)throw Error('No closed H4 by asOf');
   const values=atr(bars,c.atrLen),sw=structure(),internal=structure(),events=[],formations=[],transitions=[],trace=[],pruned=[];let obs=[],d=null,s=null,sd=null,ss=null,pd=null,ps=null,lastHigh=null,lastLow=null;
   const useClassic=c.mode!=='series',useSeries=c.mode!=='classic',mult=c.strictness==='loose'?0:c.strictness==='medium'?1.5:2.5;
@@ -66,7 +67,7 @@
    trace[i].retained=obs.length;trace[i].fresh=obs.filter(z=>z.fresh).length;
   }
   const close=bars.at(-1).close;const zones=obs.map(z=>{let rank=0;if(z.bot>close)rank=obs.filter(a=>a.fresh&&a.bot>close&&a.bot-close<z.bot-close).length;else if(z.top<close)rank=obs.filter(a=>a.fresh&&a.top<close&&close-a.top<close-z.top).length;return {...z,visible:!z.fresh||rank<c.maxPerSide,side:z.bot>close?'above':z.top<close?'below':'inside',rank};});
-  return {version,symbol:input.symbol,timeframe:'H4',asOf:input.asOf,settings:c,researchOnly:true,pineParityVerified:false,entryModel:null,tradeSignals:false,firstBar:bars[0].t,lastClosedAt:bars.at(-1).end,bars:bars.length,zones,formations,events,transitions,pruned,trace};
+  return {version,symbol:input.symbol,timeframe:input.timeframe,asOf:input.asOf,settings:c,researchOnly:true,pineParityVerified:false,entryModel:null,tradeSignals:false,firstBar:bars[0].t,lastClosedAt:bars.at(-1).end,bars:bars.length,zones,formations,events,transitions,pruned,trace};
  }
  return {version,defaults,settings,validate,atr,pivot,structure,stepStructure,run};
 });

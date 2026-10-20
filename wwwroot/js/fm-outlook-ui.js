@@ -1,6 +1,6 @@
 (()=>{
  'use strict';const root=document.getElementById('fm-outlook');if(!root)return;
- const by=id=>document.getElementById('fm-'+id),el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=String(text);return n;},time=t=>new Date(t*1000).toISOString().replace('T',' ').replace('.000Z',' UTC'),num=n=>Number.isFinite(n)?new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n):'—';
+ const by=id=>document.getElementById('fm-'+id),el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=String(text);return n;},time=t=>window.MarketChartTime.format(t),num=n=>Number.isFinite(n)?new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n):'—';
  let data,result,instrument,view;const modal=by('modal');by('close').onclick=()=>modal.close();modal.addEventListener('close',()=>{view?.destroy();view=null;});
  function detail(z){
   by('title').textContent=instrument.symbol+' · H4 '+z.type+' · '+z.kind;by('meta').textContent=`${num(z.bot)}–${num(z.top)} · původ ${time(z.originTime)} · známé od ${time(z.confirmedAt)}.`;
