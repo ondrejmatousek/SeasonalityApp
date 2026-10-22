@@ -107,6 +107,7 @@ jobs:
           pwsh -NoProfile -File Tools/fetch-zone-crypto.ps1 -OutputDir artifacts/zone-crypto
           node Tools/cfd-zone-snapshot.cjs artifacts/public-site artifacts/cfd-zone-source.json artifacts/zone-crypto
           node Tools/cfd-zone-checks.cjs artifacts/public-site
+          node Tools/fm-outlook-live-checks.cjs artifacts/public-site
       - name: Persist prospective H4 paper ledger and immutable events in SQL
         if: steps.publication.outputs.run == 'true'
         env:
