@@ -119,7 +119,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Backend SQL connection update failed' }
           az webapp config appsettings set --name $sites[0].name --resource-group $sites[0].group --settings "ConnectionStrings__DefaultConnection=$($env:RECOVERY_SQL_CONNECTION)" --output none
           if ($LASTEXITCODE -ne 0) { throw 'Backend SQL appsetting update failed' }
-          $actual = az webapp config connection-string list --name $sites[0].name --resource-group $sites[0].group --query '[?name==`DefaultConnection`].connectionString | [0]' --output tsv
+          $actual = az webapp config connection-string list --name $sites[0].name --resource-group $sites[0].group --query "[?name=='DefaultConnection'].value | [0]" --output tsv
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($actual)) { throw 'SQL target readback failed' }
           $readback = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($actual)
           if ($readback.get_InitialCatalog() -ne 'seasonality-free-20261022') { throw 'SQL target readback mismatch' }
