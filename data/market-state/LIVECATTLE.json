@@ -180,6 +180,78 @@
         "fetchedAt": "2026-10-20T01:08:07.865Z",
         "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
       }
+    },
+    {
+      "timestamp": 1792503000,
+      "providerTimestamp": "2026-10-20T13:30:00.000Z",
+      "providerUtcDate": "2026-10-20",
+      "date": "2026-10-20",
+      "open": 227.925,
+      "high": 230.55,
+      "low": 227.625,
+      "close": 230.175,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Operator recovery: a later original provider D1 boundary was observed; exact exchange-calendar sessionEnd remains unverified.",
+      "volume": 23983,
+      "recovery": {
+        "sourceRawSha256": "886a347fa30b897785e964fe0762ad087ad85f21ab6fb3decb1eb2617b294af4",
+        "capturedAt": "2026-10-22T13:03:16.237Z",
+        "nextProviderTimestamp": 1792589400,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "886a347fa30b897785e964fe0762ad087ad85f21ab6fb3decb1eb2617b294af4",
+        "fetchedAt": "2026-10-22T13:03:16.237Z",
+        "runId": "operator-recovery-20261022"
+      }
+    },
+    {
+      "timestamp": 1792589400,
+      "providerTimestamp": "2026-10-21T13:30:00.000Z",
+      "providerUtcDate": "2026-10-21",
+      "date": "2026-10-21",
+      "open": 230.175,
+      "high": 232.45,
+      "low": 229.5,
+      "close": 231.125,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Original regular-session D1 bar from the previous session; its conservative documented close window elapsed before the actual provider capture.",
+        "checkedAt": "2026-10-22T13:03:16.237Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "id": "session",
+            "url": "https://www.cmegroup.com/markets/agriculture/livestock/live-cattle/specs",
+            "finding": "Live Cattle regular Globex session Monday-Friday 08:30-13:05 CT; the conservative 17:00 CT completion window is later than this close."
+          },
+          {
+            "id": "calendar",
+            "url": "https://www.cmegroup.com/tools-information/holiday-calendar.html",
+            "finding": "Product-specific holiday calendar; only an already observed prior-day regular-session D1 bar is considered, never a fabricated holiday candle."
+          }
+        ]
+      },
+      "volume": 25769,
+      "recovery": {
+        "sourceRawSha256": "886a347fa30b897785e964fe0762ad087ad85f21ab6fb3decb1eb2617b294af4",
+        "capturedAt": "2026-10-22T13:03:16.237Z",
+        "nextProviderTimestamp": null,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "886a347fa30b897785e964fe0762ad087ad85f21ab6fb3decb1eb2617b294af4",
+        "fetchedAt": "2026-10-22T13:03:16.237Z",
+        "runId": "operator-recovery-20261022"
+      }
     }
-  ]
+  ],
+  "recovery": {
+    "mode": "operator-recovery-20261022",
+    "originalSqlAuditRestored": false,
+    "sourceRawSha256": "886a347fa30b897785e964fe0762ad087ad85f21ab6fb3decb1eb2617b294af4",
+    "overlapRevisions": []
+  }
 }

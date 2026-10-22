@@ -12,6 +12,9 @@ static class Checks
   string Payload(decimal close=7.75m,decimal? volume=100,string symbol="OANDA:USDHKD",string interval="1D",bool rows=false)=>JsonSerializer.Serialize(new{schemaVersion=1,fetchedAt=at.ToString("O"),captures=new[]{new{capturedAt=at.ToString("O"),rawJson=JsonSerializer.Serialize(new{success=true,symbol,interval,format=rows?"rows":"columns",count=2,bars=rows?(object)new[]{new{t=T("2026-10-14T21:00Z"),o=7.75m,h=7.8m,l=7.7m,c=close,v=volume},new{t=T("2026-10-15T21:00Z"),o=7.75m,h=7.8m,l=7.7m,c=7.75m,v=volume}}:new{t=new[]{T("2026-10-14T21:00Z"),T("2026-10-15T21:00Z")},o=new[]{7.75m,7.75m},h=new[]{7.8m,7.8m},l=new[]{7.7m,7.7m},c=new[]{close,7.75m},v=new[]{volume,volume}}})}}});
   var batch=MarketZonePrices.Parse(Payload(),at);Check(batch.Bars.Count==2,"Elapsed D1 including Thursday/Friday close");
   Check(MarketZonePrices.Parse(Payload(rows:true),at).Bars.SequenceEqual(batch.Bars),"Rows/columns parity");
+  var quarantined=MarketZonePrices.Parse(Payload(close:8m),at,true,true);
+  Check(quarantined.Bars.Count==1&&quarantined.Excluded==1,"Operator recovery quarantines invalid OHLC without rewriting raw payload");
+  try{MarketZonePrices.Parse(Payload(close:8m),at,false,true);throw new Exception("Live validation weakened");}catch(InvalidDataException){}
   Check(MarketZonePrices.Forex.Length==11&&MarketZonePrices.Forex.Distinct().Count()==11,"11 unique new FX");
   Check(!MarketZonePrices.Allowed("OANDA:EURUSD","1D")&&!MarketZonePrices.Allowed("CRYPTO:BTCUSD","4h")&&MarketZonePrices.Allowed("CRYPTO:BTCUSD","1D"),"Separate canonical and crypto identities");
   foreach(var bad in new[]{Payload(symbol:"OANDA:EURUSD"),Payload(close:8.0m),Payload(interval:"1W")}){try{MarketZonePrices.Parse(bad,at);throw new Exception("Invalid capture accepted");}catch(InvalidDataException){}}

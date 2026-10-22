@@ -119,6 +119,62 @@
         "fetchedAt": "2026-10-20T01:08:07.865Z",
         "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
       }
+    },
+    {
+      "timestamp": 1792443600,
+      "providerTimestamp": "2026-10-19T21:00:00.000Z",
+      "providerUtcDate": "2026-10-19",
+      "date": "2026-10-20",
+      "open": 1.97998,
+      "high": 1.98132,
+      "low": 1.97224,
+      "close": 1.97683,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-20T21:00:00.000Z",
+      "volume": 103629,
+      "recovery": {
+        "sourceRawSha256": "e64a0344232b0584ae4fdccda3456d994c14bae9e58c5a61a0ab4f23f282962c",
+        "capturedAt": "2026-10-22T13:01:06.355Z",
+        "nextProviderTimestamp": 1792530000,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "e64a0344232b0584ae4fdccda3456d994c14bae9e58c5a61a0ab4f23f282962c",
+        "fetchedAt": "2026-10-22T13:01:06.355Z",
+        "runId": "operator-recovery-20261022"
+      }
+    },
+    {
+      "timestamp": 1792530000,
+      "providerTimestamp": "2026-10-20T21:00:00.000Z",
+      "providerUtcDate": "2026-10-20",
+      "date": "2026-10-21",
+      "open": 1.97672,
+      "high": 1.97887,
+      "low": 1.9696,
+      "close": 1.97031,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-21T21:00:00.000Z",
+      "volume": 95322,
+      "recovery": {
+        "sourceRawSha256": "e64a0344232b0584ae4fdccda3456d994c14bae9e58c5a61a0ab4f23f282962c",
+        "capturedAt": "2026-10-22T13:01:06.355Z",
+        "nextProviderTimestamp": 1792616400,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "e64a0344232b0584ae4fdccda3456d994c14bae9e58c5a61a0ab4f23f282962c",
+        "fetchedAt": "2026-10-22T13:01:06.355Z",
+        "runId": "operator-recovery-20261022"
+      }
     }
-  ]
+  ],
+  "recovery": {
+    "mode": "operator-recovery-20261022",
+    "originalSqlAuditRestored": false,
+    "sourceRawSha256": "e64a0344232b0584ae4fdccda3456d994c14bae9e58c5a61a0ab4f23f282962c",
+    "overlapRevisions": []
+  }
 }

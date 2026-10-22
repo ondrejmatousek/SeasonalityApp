@@ -44,7 +44,7 @@ Run the resulting DLL with:
 - `--inspect-live-receipt <sha256> --config-root <repo>`: read-only comparison
   of one retained live receipt against existing H4 rows, including per-field
   differences and stored raw SHA verification. No data corrections or jobs.
-- `--import --confirm-database free-sql-db-2426953 --config-root <repo> --input <capture-dir>`:
+- `--import --confirm-database seasonality-free-20261022 --config-root <repo> --input <capture-dir>`:
   explicit production storage import, no analytical activation.
 - `--verify --config-root <repo> --input <capture-dir>`: read-only committed check.
 

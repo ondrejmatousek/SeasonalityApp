@@ -22,7 +22,7 @@ public static class MarketZonePrices
     public static bool Allowed(string symbol,string interval) =>
         (interval is "1D" or "4h" && Forex.Any(k=>symbol=="OANDA:"+k)) ||
         (interval=="1D" && (symbol=="OANDA:XPTUSD" || Crypto.Any(k=>symbol=="CRYPTO:"+k)));
-    public static Batch Parse(string text,DateTimeOffset now,bool bootstrap=false)
+    public static Batch Parse(string text,DateTimeOffset now,bool bootstrap=false,bool recoveryQuarantineInvalid=false)
     {
         var bytes=Encoding.UTF8.GetBytes(text);
         if(bytes.Length is 0 || bytes.Length>(bootstrap?24*1024*1024:262144))throw new InvalidDataException("Zone payload size.");
@@ -48,7 +48,7 @@ public static class MarketZonePrices
                 var t=Cell("t",i).GetInt64();if(t<=previous||t>at.ToUnixTimeSeconds())throw new InvalidDataException("Zone chronology.");previous=t;
                 decimal Number(string k){var v=Cell(k,i).GetDecimal();if(decimal.Round(v,10)!=v)throw new InvalidDataException("Zone precision.");return v;}
                 var o=Number("o");var h=Number("h");var l=Number("l");var c=Number("c");decimal? v=Cell("v",i).ValueKind==JsonValueKind.Null?null:Number("v");
-                if(o<=0||l<=0||c<=0||h<Math.Max(o,c)||l>Math.Min(o,c)||v<0)throw new InvalidDataException("Zone OHLCV bounds.");
+                if(o<=0||l<=0||c<=0||h<Math.Max(o,c)||l>Math.Min(o,c)||v<0){if(bootstrap&&recoveryQuarantineInvalid){excluded++;continue;}throw new InvalidDataException("Zone OHLCV bounds.");}
                 long? next=i+1<n?Cell("t",i+1).GetInt64():null;
                 var complete=interval=="4h"?MarketH4Ingestion.Completion(t,next,at)==null:DailyComplete(s,t,next,at);
                 if(complete)bars.Add(new(s,interval,t,o,h,l,c,v));else excluded++;
@@ -101,7 +101,7 @@ public static class MarketZonePrices
             }else insert.Add(b);
         }
         var status=conflict?"Conflict":"Accepted";var count=conflict?0:insert.Count;
-        await Scalar("INSERT market_zones.Receipts VALUES(@id,@raw,@at,@status,@n,@d,@e,@volume)",Id(),new("@raw",SqlDbType.VarBinary,-1){Value=batch.Utf8},new("@at",SqlDbType.DateTimeOffset){Value=DateTimeOffset.UtcNow},new("@status",SqlDbType.VarChar,24){Value=status},new("@n",SqlDbType.Int){Value=count},new("@d",SqlDbType.Int){Value=duplicates},new("@e",SqlDbType.Int){Value=batch.Excluded},new("@volume",SqlDbType.NVarChar,-1){Value=JsonSerializer.Serialize(volume)});
+        await Scalar("INSERT market_zones.Receipts(ReceiptId,PayloadUtf8,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars,VolumeAudit) VALUES(@id,@raw,@at,@status,@n,@d,@e,@volume)",Id(),new("@raw",SqlDbType.VarBinary,-1){Value=batch.Utf8},new("@at",SqlDbType.DateTimeOffset){Value=DateTimeOffset.UtcNow},new("@status",SqlDbType.VarChar,24){Value=status},new("@n",SqlDbType.Int){Value=count},new("@d",SqlDbType.Int){Value=duplicates},new("@e",SqlDbType.Int){Value=batch.Excluded},new("@volume",SqlDbType.NVarChar,-1){Value=JsonSerializer.Serialize(volume)});
         if(!conflict&&insert.Count>0)
         {
             var table=new DataTable();table.Columns.Add("Symbol",typeof(string));table.Columns.Add("Interval",typeof(string));table.Columns.Add("StartUnix",typeof(long));

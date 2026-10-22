@@ -105,6 +105,26 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_71B0AFE26429422AB6CC3D81C63576A4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5AB6A357FD164277B9EFF94C03CF8964 }}
 
+      - name: Route backend and MCP to the restored free SQL database
+        shell: pwsh
+        env:
+          RECOVERY_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sql = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($env:RECOVERY_SQL_CONNECTION)
+          if ($sql.get_InitialCatalog() -ne 'seasonality-free-20261022' -or $sql.get_DataSource() -notin @('seasonality.database.windows.net','tcp:seasonality.database.windows.net','seasonality.database.windows.net,1433','tcp:seasonality.database.windows.net,1433')) { throw 'Unexpected SQL target; no settings changed' }
+          $sites = @(az resource list --resource-type Microsoft.Web/sites --name Seasonality --query '[].{name:name,group:resourceGroup}' --output json | ConvertFrom-Json)
+          if ($LASTEXITCODE -ne 0 -or $sites.Count -ne 1) { throw 'Could not resolve the existing Seasonality app uniquely' }
+          az webapp config connection-string set --name $sites[0].name --resource-group $sites[0].group --connection-string-type SQLAzure --settings "DefaultConnection=$($env:RECOVERY_SQL_CONNECTION)" --output none
+          if ($LASTEXITCODE -ne 0) { throw 'Backend SQL connection update failed' }
+          az webapp config appsettings set --name $sites[0].name --resource-group $sites[0].group --settings "ConnectionStrings__DefaultConnection=$($env:RECOVERY_SQL_CONNECTION)" --output none
+          if ($LASTEXITCODE -ne 0) { throw 'Backend SQL appsetting update failed' }
+          $actual = az webapp config connection-string list --name $sites[0].name --resource-group $sites[0].group --query '[?name==`DefaultConnection`].connectionString | [0]' --output tsv
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($actual)) { throw 'SQL target readback failed' }
+          $readback = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($actual)
+          if ($readback.get_InitialCatalog() -ne 'seasonality-free-20261022') { throw 'SQL target readback mismatch' }
+          Write-Host 'Backend/MCP SQL target verified: seasonality-free-20261022. Secrets withheld.'
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3

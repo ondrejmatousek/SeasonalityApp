@@ -220,6 +220,114 @@
         "fetchedAt": "2026-10-20T01:08:07.865Z",
         "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
       }
+    },
+    {
+      "timestamp": 1792447200,
+      "providerTimestamp": "2026-10-19T22:00:00.000Z",
+      "providerUtcDate": "2026-10-19",
+      "date": "2026-10-19",
+      "open": 3.043,
+      "high": 3.046,
+      "low": 2.957,
+      "close": 2.963,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Operator recovery: a later original provider D1 boundary was observed; exact exchange-calendar sessionEnd remains unverified.",
+      "volume": 178622,
+      "recovery": {
+        "sourceRawSha256": "f19daad95f92072d1384e6f05546ef2c2a99c54fb2b743317a96a43cde47f70e",
+        "capturedAt": "2026-10-22T13:03:12.209Z",
+        "nextProviderTimestamp": 1792533600,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "f19daad95f92072d1384e6f05546ef2c2a99c54fb2b743317a96a43cde47f70e",
+        "fetchedAt": "2026-10-22T13:03:12.209Z",
+        "runId": "operator-recovery-20261022"
+      }
+    },
+    {
+      "timestamp": 1792533600,
+      "providerTimestamp": "2026-10-20T22:00:00.000Z",
+      "providerUtcDate": "2026-10-20",
+      "date": "2026-10-20",
+      "open": 3,
+      "high": 3.004,
+      "low": 2.766,
+      "close": 2.79,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Operator recovery: a later original provider D1 boundary was observed; exact exchange-calendar sessionEnd remains unverified.",
+      "volume": 222463,
+      "recovery": {
+        "sourceRawSha256": "f19daad95f92072d1384e6f05546ef2c2a99c54fb2b743317a96a43cde47f70e",
+        "capturedAt": "2026-10-22T13:03:12.209Z",
+        "nextProviderTimestamp": 1792620000,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "f19daad95f92072d1384e6f05546ef2c2a99c54fb2b743317a96a43cde47f70e",
+        "fetchedAt": "2026-10-22T13:03:12.209Z",
+        "runId": "operator-recovery-20261022"
+      }
     }
-  ]
+  ],
+  "recovery": {
+    "mode": "operator-recovery-20261022",
+    "originalSqlAuditRestored": false,
+    "sourceRawSha256": "f19daad95f92072d1384e6f05546ef2c2a99c54fb2b743317a96a43cde47f70e",
+    "overlapRevisions": [
+      {
+        "timestamp": 1792360800,
+        "kept": {
+          "timestamp": 1792360800,
+          "providerTimestamp": "2026-10-18T22:00:00.000Z",
+          "providerUtcDate": "2026-10-18",
+          "date": "2026-10-18",
+          "open": 3.09,
+          "high": 3.184,
+          "low": 3.029,
+          "close": 3.04,
+          "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+          "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+          "documentedCompletion": {
+            "method": "documented_session_and_bar_timestamp",
+            "reason": "Documented NYMEX:NG1! D1 session and original bar timestamp identify trade date 2026-10-19. At 2026-10-20T01:08:07.865Z local 2026-10-19 20:08:07 is after conservative completion cutoff 17:00:00. CME 2026 Globex holiday schedule: 19 October outside holiday dates. Cutoff is not asserted as exact feed time_close. History/next bar not used as proof.",
+            "checkedAt": "2026-10-20T01:08:07.865Z",
+            "timezone": "America/Chicago",
+            "sources": [
+              {
+                "url": "https://www.cmegroup.com/cn-s/markets/energy/natural-gas/natural-gas.contractSpecs.html",
+                "finding": "Natural gas Globex 18:00-17:00 Eastern, equivalent 17:00-16:00 Chicago."
+              },
+              {
+                "url": "https://www.cmegroup.com/trading-hours.html",
+                "finding": "2026 product holiday calendar: October 19 is a regular trading day; all times Chicago unless specified."
+              },
+              {
+                "url": "https://www.cmegroup.com/articles/whitepapers/leveraging-cme-group-asia-trading-hours-liquidity-for-cross-commodity-trading.html",
+                "finding": "CME Globex energy/metals 17:00-16:00 CT; grains 19:00-07:45 and08:30-13:20 CT."
+              }
+            ]
+          },
+          "ingestion": {
+            "inputSha256": "47714e448e8a6423551d708f495f1e4bc48971966bbf54237aeb9e75e195c0e1",
+            "fetchedAt": "2026-10-20T01:08:07.865Z",
+            "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
+          }
+        },
+        "incoming": {
+          "timestamp": 1792360800,
+          "providerTimestamp": "2026-10-18T22:00:00.000Z",
+          "providerUtcDate": "2026-10-18",
+          "date": "2026-10-18",
+          "open": 3.09,
+          "high": 3.184,
+          "low": 3.029,
+          "close": 3.039,
+          "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+          "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable"
+        },
+        "decision": "Retain previously admitted immutable value; revision preserved for explicit source review"
+      }
+    ]
+  }
 }

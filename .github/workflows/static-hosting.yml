@@ -117,6 +117,11 @@ jobs:
           dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --ensure-schema --load --output artifacts/h4-paper-previous.json
           node Tools/h4-paper-update.cjs artifacts/public-site artifacts/h4-paper-previous.json artifacts/h4-paper-next.json
           dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/h4-paper-next.json --output artifacts/public-site/data/h4-paper/ledger.json
+      - name: Exclude obsolete generated JSON from the free hosting bundle
+        if: steps.publication.outputs.run == 'true'
+        run: |
+          node Tools/prune-static-output.cjs artifacts/public-site artifacts/unpublished-json
+          node Tools/static-site-checks.cjs artifacts/public-site
       - name: Overlay this morning's report including failed runs (keep last good analytics)
         if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
         env:

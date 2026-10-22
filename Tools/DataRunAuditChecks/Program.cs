@@ -11,7 +11,7 @@ if(args.Contains("--read-production"))
  var root=Path.GetFullPath(args[index+1]);if(!File.Exists(Path.Combine(root,"SeasonalityApp.csproj")))throw new Exception("Unexpected config root");
  using var settings=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"appsettings.Development.json")));
  var target=new SqlConnectionStringBuilder(settings.RootElement.GetProperty("ConnectionStrings").GetProperty("DefaultConnection").GetString());
- if(target.InitialCatalog!="free-sql-db-2426953"||!target.DataSource.Contains("seasonality.database.windows.net",StringComparison.OrdinalIgnoreCase))throw new Exception("Unexpected SQL target");
+ if(target.InitialCatalog!="seasonality-free-20261022"||!target.DataSource.Contains("seasonality.database.windows.net",StringComparison.OrdinalIgnoreCase))throw new Exception("Unexpected SQL target");
  var config=new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>{{"ConnectionStrings:DefaultConnection",target.ConnectionString}}).Build();
  using var memory=new MemoryCache(new MemoryCacheOptions());var snapshot=await new DataRunAudit(config,memory).Read(default);
  Console.WriteLine(JsonSerializer.Serialize(new{snapshot.Ready,snapshot.AsOf,readOnly=true,d1=snapshot.Runs.Count(r=>r.Timeframes.Contains("D1")),h4=snapshot.Runs.Count(r=>r.Timeframes.Contains("H4")),sources=snapshot.Runs.GroupBy(r=>r.Source).Select(g=>new{source=g.Key,count=g.Count(),last=g.Max(r=>r.ReceivedAt)})}));

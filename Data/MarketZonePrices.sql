@@ -15,3 +15,7 @@ CREATE TABLE market_zones.Bars (
  ReceiptId char(64) NOT NULL REFERENCES market_zones.Receipts(ReceiptId),
  CONSTRAINT PK_market_zones_Bars PRIMARY KEY(Symbol,Interval,StartUnix)
 );
+-- Operator-only historical reconstruction keeps actual SQL ReceivedAt separate
+-- from the original provider validation time. MCP submissions never set this.
+IF COL_LENGTH('market_zones.Receipts','RecoveryValidatedAt') IS NULL
+ ALTER TABLE market_zones.Receipts ADD RecoveryValidatedAt datetimeoffset NULL;

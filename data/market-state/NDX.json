@@ -211,6 +211,78 @@
         "fetchedAt": "2026-10-20T01:08:07.865Z",
         "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
       }
+    },
+    {
+      "timestamp": 1792503000,
+      "providerTimestamp": "2026-10-20T13:30:00.000Z",
+      "providerUtcDate": "2026-10-20",
+      "date": "2026-10-20",
+      "open": 29393.9641,
+      "high": 29711.5293,
+      "low": 29208.8276,
+      "close": 29490.2834,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Operator recovery: a later original provider D1 boundary was observed; exact exchange-calendar sessionEnd remains unverified.",
+      "volume": 1170388140,
+      "recovery": {
+        "sourceRawSha256": "aaf2273975ee741454f0dc1ed112266d88b254d6b12c7e035690e18b3f2e27c2",
+        "capturedAt": "2026-10-22T13:03:18.212Z",
+        "nextProviderTimestamp": 1792589400,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "aaf2273975ee741454f0dc1ed112266d88b254d6b12c7e035690e18b3f2e27c2",
+        "fetchedAt": "2026-10-22T13:03:18.212Z",
+        "runId": "operator-recovery-20261022"
+      }
+    },
+    {
+      "timestamp": 1792589400,
+      "providerTimestamp": "2026-10-21T13:30:00.000Z",
+      "providerUtcDate": "2026-10-21",
+      "date": "2026-10-21",
+      "open": 29707.0021,
+      "high": 29928.313,
+      "low": 29593.6958,
+      "close": 29822.5179,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Original regular-session D1 bar from the previous session; its conservative documented close window elapsed before the actual provider capture.",
+        "checkedAt": "2026-10-22T13:03:18.212Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "id": "session",
+            "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+            "finding": "US regular cash session 09:30-16:00 ET; source response is regular-session only. Conservative completion window 18:00 ET is later than the close."
+          },
+          {
+            "id": "close",
+            "url": "https://www.nasdaqtrader.com/trader.aspx?id=openclose",
+            "finding": "Nasdaq Closing Cross occurs at 16:00 ET. Observed prior-day regular-session bar is evaluated after the conservative completion window."
+          }
+        ]
+      },
+      "volume": 1344316199,
+      "recovery": {
+        "sourceRawSha256": "aaf2273975ee741454f0dc1ed112266d88b254d6b12c7e035690e18b3f2e27c2",
+        "capturedAt": "2026-10-22T13:03:18.212Z",
+        "nextProviderTimestamp": null,
+        "exchangeCalendarValidated": false
+      },
+      "ingestion": {
+        "inputSha256": "aaf2273975ee741454f0dc1ed112266d88b254d6b12c7e035690e18b3f2e27c2",
+        "fetchedAt": "2026-10-22T13:03:18.212Z",
+        "runId": "operator-recovery-20261022"
+      }
     }
-  ]
+  ],
+  "recovery": {
+    "mode": "operator-recovery-20261022",
+    "originalSqlAuditRestored": false,
+    "sourceRawSha256": "aaf2273975ee741454f0dc1ed112266d88b254d6b12c7e035690e18b3f2e27c2",
+    "overlapRevisions": []
+  }
 }

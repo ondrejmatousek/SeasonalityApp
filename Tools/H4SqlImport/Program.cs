@@ -27,7 +27,7 @@ try
         cs=cfg.RootElement.GetProperty("ConnectionStrings").GetProperty("DefaultConnection").GetString();
     }
     var connection=new SqlConnectionStringBuilder(cs) {ConnectTimeout=120};
-    if(connection.InitialCatalog!="free-sql-db-2426953" || !new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(connection.DataSource,StringComparer.OrdinalIgnoreCase))
+    if(connection.InitialCatalog!="seasonality-free-20261022" || !new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(connection.DataSource,StringComparer.OrdinalIgnoreCase))
         throw new InvalidOperationException("Refusing unexpected production SQL target.");
     Console.WriteLine(JsonSerializer.Serialize(new{configuredDatabase=connection.InitialCatalog,authentication=connection.Authentication.ToString(),integratedSecurity=connection.IntegratedSecurity,sqlUserConfigured=!string.IsNullOrWhiteSpace(connection.UserID),passwordConfigured=!string.IsNullOrWhiteSpace(connection.Password)}));
     await using var db=new SqlConnection(connection.ConnectionString);
@@ -35,14 +35,14 @@ try
     await using(var inspect=new SqlCommand("SELECT DB_NAME(), CAST(DATABASEPROPERTYEX(DB_NAME(),'Updateability') AS nvarchar(60)), OBJECT_ID('dbo.SeasonalityPrices'), OBJECT_ID('market_h4.Bars');",db))
     await using(var reader=await inspect.ExecuteReaderAsync())
     {
-        await reader.ReadAsync(); if(reader.GetString(0)!="free-sql-db-2426953")throw new InvalidOperationException("SQL target identity mismatch.");
+        await reader.ReadAsync(); if(reader.GetString(0)!="seasonality-free-20261022")throw new InvalidOperationException("SQL target identity mismatch.");
         Console.WriteLine(JsonSerializer.Serialize(new{database=reader.GetString(0),updateability=reader.GetString(1),d1TablePresent=!reader.IsDBNull(2),h4TablePresent=!reader.IsDBNull(3)}));
     }
     if(args.Contains("--inspect"))return;
     if(args.Contains("--inspect-live-receipt")){await H4ReceiptAudit.Run(db,Arg("--inspect-live-receipt"));return;}
     if(args.Contains("--install-h4-live-schema"))
     {
-        if(Arg("--confirm-database")!="free-sql-db-2426953")throw new InvalidOperationException("Explicit database confirmation required.");
+        if(Arg("--confirm-database")!="seasonality-free-20261022")throw new InvalidOperationException("Explicit database confirmation required.");
         await using var schema=new SqlCommand(File.ReadAllText(Path.Combine(configRoot,"Data/MarketH4Live.sql")),db){CommandTimeout=120};await schema.ExecuteNonQueryAsync();
         Console.WriteLine("H4 live schema installed additively; no D1/COT writes.");return;
     }
@@ -52,7 +52,7 @@ try
     Console.WriteLine(JsonSerializer.Serialize(new{source.BatchId,source.SymbolCount,source.BarCount,validation="Structure and hash verified; session/calendar acceptance PENDING",productionChanged=false}));
     if(args.Contains("--verify")){Console.WriteLine(JsonSerializer.Serialize(await Importer.Verify(db,source)));return;}
     if(args.Contains("--validate"))return;
-    if(!args.Contains("--import")||Arg("--confirm-database")!="free-sql-db-2426953")throw new ArgumentException("Explicit import and database confirmation required.");
+    if(!args.Contains("--import")||Arg("--confirm-database")!="seasonality-free-20261022")throw new ArgumentException("Explicit import and database confirmation required.");
     Console.WriteLine(JsonSerializer.Serialize(await Importer.Run(db,source)));
 }
 catch(Exception ex)

@@ -45,7 +45,7 @@ static class Store
             string Arg(string k){var i=Array.IndexOf(args,k);return i>=0&&i+1<args.Length?args[i+1]:throw new ArgumentException("Missing "+k);}
             if(args.Contains("--validate")){using var j=JsonDocument.Parse(await File.ReadAllTextAsync(Arg("--validate")));using var old=args.Contains("--previous")?JsonDocument.Parse(await File.ReadAllTextAsync(Arg("--previous"))):null;Validate(j.RootElement.GetProperty("state"),old?.RootElement.GetProperty("state"));Console.WriteLine("Paper state validation passed.");return 0;}
             var cs=Environment.GetEnvironmentVariable("SEASONALITY_H4_SQL_CONNECTION")??throw new InvalidOperationException("Paper SQL connection required.");var target=new SqlConnectionStringBuilder(cs){ConnectTimeout=120};
-            if(target.InitialCatalog!="free-sql-db-2426953"||!new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(target.DataSource,StringComparer.OrdinalIgnoreCase))throw new InvalidOperationException("Unexpected paper SQL target.");
+            if(target.InitialCatalog!="seasonality-free-20261022"||!new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(target.DataSource,StringComparer.OrdinalIgnoreCase))throw new InvalidOperationException("Unexpected paper SQL target.");
             await using var db=new SqlConnection(target.ConnectionString);await db.OpenAsync();
             if(args.Contains("--ensure-schema"))
             {

@@ -1,5 +1,7 @@
 {
   "routes": [
+    { "route": "/paper-trading*", "rewrite": "/paper-trading/index.html", "headers": { "Cache-Control": "no-cache" } },
+    { "route": "/data/h4-paper/*", "headers": { "Cache-Control": "no-store" } },
     { "route": "/daily-outlook*", "rewrite": "/daily-outlook/index.html", "headers": { "Cache-Control": "no-cache" } },
     { "route": "/strategy-lab*", "rewrite": "/strategy-lab/index.html", "headers": { "Cache-Control": "no-cache" } },
     { "route": "/runs*", "rewrite": "/runs/index.html", "headers": { "Cache-Control": "no-cache" } },
