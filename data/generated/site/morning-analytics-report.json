@@ -1,0 +1,3521 @@
+{
+  "builtAt": "2026-10-22T13:50:51.616Z",
+  "mode": "fresh SQL stock/COT export",
+  "ingestion": {
+    "schemaVersion": 1,
+    "runId": "77c3118b-2033-47ef-b300-2ae252b74e9b",
+    "startedAt": "2026-10-22T13:32:46.626Z",
+    "input": "C:\\Users\\ondre\\.codex\\worktrees\\market-sql-rollout\\SeasonalityApp\\data\\market-daily\\latest.json",
+    "inputSha256": "c6e1e04dc051c7dabcd45921d0b5940d29f34c9887411d4f2fea9dd950cc04b2",
+    "mode": "all-test-and-research",
+    "fetchedAt": "2026-10-14T01:03:49Z",
+    "productionChanged": false,
+    "providerSplice": false,
+    "inserted": 0,
+    "plannedInsertions": 0,
+    "skipped": 39,
+    "failed": 0,
+    "notEnabled": 0,
+    "instruments": [
+      {
+        "symbol": "EURUSD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "GBPUSD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:GBPUSD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "USDJPY",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:USDJPY:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "USDCHF",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:USDCHF:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "AUDUSD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:AUDUSD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "NZDUSD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:NZDUSD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "USDCAD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:USDCAD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "EURGBP",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:EURGBP:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "EURJPY",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:EURJPY:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "EURCHF",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:EURCHF:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "EURAUD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "conditional-test",
+        "canonicalTestId": "OANDA_TRADINGVIEW:EURAUD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "EURCAD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:EURCAD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "EURNZD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:EURNZD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "GBPJPY",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:GBPJPY:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "GBPCHF",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:GBPCHF:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "GBPAUD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:GBPAUD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "GBPCAD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:GBPCAD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "GBPNZD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:GBPNZD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "AUDJPY",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:AUDJPY:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "AUDNZD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:AUDNZD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "AUDCAD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:AUDCAD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "AUDCHF",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:AUDCHF:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "NZDJPY",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:NZDJPY:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "NZDCAD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:NZDCAD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "NZDCHF",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "conditional-test",
+        "canonicalTestId": "OANDA_TRADINGVIEW:NZDCHF:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "CADJPY",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "conditional-test",
+        "canonicalTestId": "OANDA_TRADINGVIEW:CADJPY:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "CADCHF",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "conditional-test",
+        "canonicalTestId": "OANDA_TRADINGVIEW:CADCHF:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "CHFJPY",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "OANDA_TRADINGVIEW:CHFJPY:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "XAUUSD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "XAGUSD",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "OANDA_TRADINGVIEW:XAGUSD:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792530000,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792530000,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "NDX",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "initial-test-candidate",
+        "canonicalTestId": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792589400,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792589400,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "SPX",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "restricted-history-test",
+        "canonicalTestId": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792589400,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792589400,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "WTI",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792533600,
+        "beforeLastDate": "2026-10-20",
+        "afterLastTimestamp": 1792533600,
+        "afterLastDate": "2026-10-20",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "BRENT",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "ICEEUR_TRADINGVIEW:BRENT:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792540800,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792540800,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "NATGAS",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "NYMEX_TRADINGVIEW:NATGAS:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792533600,
+        "beforeLastDate": "2026-10-20",
+        "afterLastTimestamp": 1792533600,
+        "afterLastDate": "2026-10-20",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "COPPER",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "COMEX_TRADINGVIEW:COPPER:D1:backfill-test-v1",
+        "beforeLastTimestamp": 1792533600,
+        "beforeLastDate": "2026-10-20",
+        "afterLastTimestamp": 1792533600,
+        "afterLastDate": "2026-10-20",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "WHEAT",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "commodity:WHEAT:CBOT:ZW1!:tv-research:v1",
+        "beforeLastTimestamp": 1792540800,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792540800,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "LIVECATTLE",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "commodity:LIVECATTLE:CME:LE1!:tv-research:v1",
+        "beforeLastTimestamp": 1792589400,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792589400,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      },
+      {
+        "symbol": "SOYBEANS",
+        "received": 1,
+        "inserted": 0,
+        "skipped": 1,
+        "failed": 0,
+        "scope": "research-test",
+        "canonicalTestId": "commodity:SOYBEANS:CBOT:ZS1!:tv-research:v1",
+        "beforeLastTimestamp": 1792540800,
+        "beforeLastDate": "2026-10-21",
+        "afterLastTimestamp": 1792540800,
+        "afterLastDate": "2026-10-21",
+        "appendedAfterHistoricalTail": false
+      }
+    ],
+    "rawEvidence": "daily-ingestion\\evidence\\c6e1e04dc051c7dabcd45921d0b5940d29f34c9887411d4f2fea9dd950cc04b2.json",
+    "completionAuditSha256": "1b36af513bb546cb55d3470ceaa4be58e85a91672cc586d1e0398e957395ccbc"
+  },
+  "representatives": [
+    {
+      "key": "AAPL",
+      "provider": "Yahoo",
+      "sourceIdentity": "existing-stock-sql",
+      "dailySource": "existing Yahoo stock refresh → SQL → fresh static export",
+      "pricePolicy": "Existing stock/ETF ingestion retained; no TradingView migration",
+      "actualPricePath": "/data/prices/AAPL.8fed720702331b6d7e11.json",
+      "count": 11557,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EURUSD",
+      "schemaVersion": 1,
+      "assetKey": "EURUSD",
+      "logicalSymbol": "EURUSD",
+      "id": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
+      "provider": "OANDA",
+      "providerSymbol": "OANDA:EURUSD",
+      "sourceIdentity": "OANDA_TRADINGVIEW",
+      "timeframe": "1D",
+      "assetClass": "forex",
+      "instrumentKind": "spot/OTC",
+      "status": "canonical-test-candidate",
+      "review": false,
+      "historicalSource": "validated-v2/series/EURUSD.json",
+      "dailySource": "data/market-daily/latest.json",
+      "overlaySource": "daily-ingestion/EURUSD.json",
+      "historicalSha256": "f1b263207d0686876e0d85e194ed4c06a3db38f20e11add78af58e91f498f1bd",
+      "ingestionRunId": "77c3118b-2033-47ef-b300-2ae252b74e9b",
+      "dailyStatus": "unchanged or updated",
+      "seasonalityFrom": null,
+      "htfFrom": null,
+      "timezone": "America/New_York",
+      "sessionContract": "NY17 start/end; exceptional metal cutoffs retain review",
+      "dateContract": "NY17 session end date",
+      "file": "EURUSD.eac2123433f8db10ff12.json",
+      "count": 6354,
+      "lastDate": "2026-10-21",
+      "actualPricePath": "/data/prices/EURUSD.7da1ec984b1304da3705.json"
+    },
+    {
+      "key": "NDX",
+      "schemaVersion": 1,
+      "assetKey": "NDX",
+      "logicalSymbol": "NDX",
+      "id": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
+      "provider": "NASDAQ",
+      "providerSymbol": "NASDAQ:NDX",
+      "sourceIdentity": "NASDAQ_TRADINGVIEW",
+      "timeframe": "1D",
+      "assetClass": "index",
+      "instrumentKind": "cash index",
+      "status": "canonical-test-candidate",
+      "review": false,
+      "historicalSource": "validated-v2/series/NDX.json",
+      "dailySource": "data/market-daily/latest.json",
+      "overlaySource": "daily-ingestion/NDX.json",
+      "historicalSha256": "eb1c0734fd1c6ca9d3b69915ddc6a631f9bc3696b88f067b2d24d8b4e7a1340a",
+      "ingestionRunId": "77c3118b-2033-47ef-b300-2ae252b74e9b",
+      "dailyStatus": "unchanged or updated",
+      "seasonalityFrom": null,
+      "htfFrom": null,
+      "timezone": "America/New_York",
+      "sessionContract": "Provider D1 timestamps; exchange completion evidence required for new bars",
+      "dateContract": "Provider timestamp UTC date, matching backfill (not assumed session end)",
+      "file": "NDX.873919f920e2c8577a81.json",
+      "count": 10512,
+      "lastDate": "2026-10-21",
+      "actualPricePath": "/data/prices/NDX.e93c9578d45979e7c037.json"
+    },
+    {
+      "key": "SPX",
+      "schemaVersion": 1,
+      "assetKey": "SPX",
+      "logicalSymbol": "SPX",
+      "id": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
+      "provider": "S&P",
+      "providerSymbol": "SP:SPX",
+      "sourceIdentity": "SP_TRADINGVIEW",
+      "timeframe": "1D",
+      "assetClass": "index",
+      "instrumentKind": "cash index",
+      "status": "canonical-test-candidate-with-history-restriction",
+      "review": true,
+      "historicalSource": "validated-v2/series/SPX.json",
+      "dailySource": "data/market-daily/latest.json",
+      "overlaySource": "daily-ingestion/SPX.json",
+      "historicalSha256": "15d7dca2974c84e1f7ab0ae3d590467ae776230a2752a522928b91a07201c81d",
+      "ingestionRunId": "77c3118b-2033-47ef-b300-2ae252b74e9b",
+      "dailyStatus": "unchanged or updated",
+      "seasonalityFrom": null,
+      "htfFrom": "1962-01-01",
+      "timezone": "America/New_York",
+      "sessionContract": "Provider D1 timestamps; exchange completion evidence required for new bars",
+      "dateContract": "Provider timestamp UTC date, matching backfill (not assumed session end)",
+      "file": "SPX.a51bb4d5da2ac1c16fff.json",
+      "count": 25341,
+      "lastDate": "2026-10-21",
+      "actualPricePath": "/data/prices/SPX.de00a74416b4ba163e05.json"
+    },
+    {
+      "key": "XAUUSD",
+      "schemaVersion": 1,
+      "assetKey": "XAUUSD",
+      "logicalSymbol": "XAUUSD",
+      "id": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
+      "provider": "OANDA",
+      "providerSymbol": "OANDA:XAUUSD",
+      "sourceIdentity": "OANDA_TRADINGVIEW",
+      "timeframe": "1D",
+      "assetClass": "metal",
+      "instrumentKind": "spot/OTC",
+      "status": "needs_source_review",
+      "review": true,
+      "historicalSource": "validated-v2/series/XAUUSD.json",
+      "dailySource": "data/market-daily/latest.json",
+      "overlaySource": "daily-ingestion/XAUUSD.json",
+      "historicalSha256": "d085bbc545cc2903c20b3ea0c397c2aa14568d288b685ead78210cf1af0795d1",
+      "ingestionRunId": "77c3118b-2033-47ef-b300-2ae252b74e9b",
+      "dailyStatus": "unchanged or updated",
+      "seasonalityFrom": "1977-01-01",
+      "htfFrom": "1977-01-01",
+      "timezone": "America/New_York",
+      "sessionContract": "NY17 start/end; exceptional metal cutoffs retain review",
+      "dateContract": "NY17 session end date",
+      "file": "XAUUSD.fd4eef147e27e5d33059.json",
+      "count": 12480,
+      "lastDate": "2026-10-21",
+      "actualPricePath": "/data/prices/XAUUSD.14693fd425c4d1eb387f.json"
+    },
+    {
+      "key": "WTI",
+      "schemaVersion": 1,
+      "assetKey": "WTI",
+      "logicalSymbol": "WTI",
+      "id": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
+      "provider": "NYMEX",
+      "providerSymbol": "NYMEX:CL1!",
+      "sourceIdentity": "NYMEX_TRADINGVIEW",
+      "timeframe": "1D",
+      "assetClass": "commodity",
+      "instrumentKind": "continuous futures",
+      "status": "needs_source_review",
+      "review": true,
+      "historicalSource": "validated-v2/series/WTI.json",
+      "dailySource": "data/market-daily/latest.json",
+      "overlaySource": "daily-ingestion/WTI.json",
+      "historicalSha256": "d012c0067a217c2761e6bebfbf6f0a771aa123561baedabfe41756731510a228",
+      "ingestionRunId": "77c3118b-2033-47ef-b300-2ae252b74e9b",
+      "dailyStatus": "unchanged or updated",
+      "seasonalityFrom": null,
+      "htfFrom": null,
+      "timezone": "America/New_York",
+      "sessionContract": "Provider D1 timestamps; exchange completion evidence required for new bars",
+      "dateContract": "Provider timestamp UTC date, matching backfill (not assumed session end)",
+      "file": "WTI.a7a81c01e3bea9d672b4.json",
+      "count": 10951,
+      "lastDate": "2026-10-20",
+      "actualPricePath": "/data/prices/WTI.61d3f1109f623e8eb6f6.json"
+    }
+  ],
+  "stockRowsPreserved": [
+    {
+      "key": "DBC",
+      "path": "/data/prices/DBC.9e6906c52c3e4063bb32.json",
+      "count": 5210,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PDBC",
+      "path": "/data/prices/PDBC.5478807ed190c140ce3e.json",
+      "count": 3005,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DBA",
+      "path": "/data/prices/DBA.d2f2fbe9971cb043d1dc.json",
+      "count": 4980,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DBE",
+      "path": "/data/prices/DBE.e37e0d25304d0e35ef20.json",
+      "count": 4980,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DBB",
+      "path": "/data/prices/DBB.011c7f34f3c314127b7d.json",
+      "count": 4980,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CPER",
+      "path": "/data/prices/CPER.777718a1c92401303859.json",
+      "count": 3754,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "WEAT",
+      "path": "/data/prices/WEAT.1cf73128b7452d011a9b.json",
+      "count": 3795,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CORNETF",
+      "path": "/data/prices/CORNETF.49baf0eca46b1b2fe3f6.json",
+      "count": 4118,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SOYBETF",
+      "path": "/data/prices/SOYBETF.e47f96c7b602af9dcfd5.json",
+      "count": 3795,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CANE",
+      "path": "/data/prices/CANE.fc135bc012cc77496704.json",
+      "count": 3795,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BTCUSD",
+      "path": "/data/prices/BTCUSD.51f1bb900e335c098f56.json",
+      "count": 4418,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ETHUSD",
+      "path": "/data/prices/ETHUSD.566a8cdb9b214faee9fa.json",
+      "count": 3269,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SOLUSD",
+      "path": "/data/prices/SOLUSD.68447f941337a729233c.json",
+      "count": 2386,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XRPUSD",
+      "path": "/data/prices/XRPUSD.e1d0fbca7823e5a54c36.json",
+      "count": 3269,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BNBUSD",
+      "path": "/data/prices/BNBUSD.bc8cea3db618cb53654d.json",
+      "count": 3269,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SPY",
+      "path": "/data/prices/SPY.c1ce589c73e6093c9e3f.json",
+      "count": 8490,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "QQQ",
+      "path": "/data/prices/QQQ.48233f86bbb673415b53.json",
+      "count": 6948,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DIA",
+      "path": "/data/prices/DIA.2b6744779bae009e6e1d.json",
+      "count": 7234,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IWM",
+      "path": "/data/prices/IWM.be1791a2fe5e02f5a26e.json",
+      "count": 6640,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "VTI",
+      "path": "/data/prices/VTI.9cbe0d4a7f8ec823b54a.json",
+      "count": 6375,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "VT",
+      "path": "/data/prices/VT.9f515ba05d0151edc682.json",
+      "count": 4609,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EFA",
+      "path": "/data/prices/EFA.a5f0204f15ed0e2f418b.json",
+      "count": 6325,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EEM",
+      "path": "/data/prices/EEM.2f67a211dc52caf4be22.json",
+      "count": 5919,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "TLT",
+      "path": "/data/prices/TLT.083794ef994c888c98d6.json",
+      "count": 6097,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IEF",
+      "path": "/data/prices/IEF.46e8df586c054c50ee04.json",
+      "count": 6097,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GLD",
+      "path": "/data/prices/GLD.f7f432e9a45bf27ac231.json",
+      "count": 5515,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SLV",
+      "path": "/data/prices/SLV.d72bb8a591e9c58cd8c5.json",
+      "count": 5153,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "USO",
+      "path": "/data/prices/USO.16ded96a7e1be20b665a.json",
+      "count": 5166,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "UNG",
+      "path": "/data/prices/UNG.05bcc2cb1a09a4ce7d49.json",
+      "count": 4910,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLE",
+      "path": "/data/prices/XLE.0696e9b695fff035908c.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLF",
+      "path": "/data/prices/XLF.812b30d06b08579299ff.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLK",
+      "path": "/data/prices/XLK.d6483e87c63af8d1c8c4.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLV",
+      "path": "/data/prices/XLV.9b165d7d9546ea2926c6.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLY",
+      "path": "/data/prices/XLY.bdc36e1cda09859e4ad4.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLP",
+      "path": "/data/prices/XLP.00dcba96e0c6fea718e5.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLI",
+      "path": "/data/prices/XLI.638d2c6e0f500410284f.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLU",
+      "path": "/data/prices/XLU.19466389c323c3e436cb.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XLB",
+      "path": "/data/prices/XLB.86aa011a4b8803c0bb18.json",
+      "count": 7000,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "VNQ",
+      "path": "/data/prices/VNQ.09315c5069fa85d023d4.json",
+      "count": 5551,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ARKK",
+      "path": "/data/prices/ARKK.a8b589d09a59cc3e63ba.json",
+      "count": 3010,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AAPL",
+      "path": "/data/prices/AAPL.8fed720702331b6d7e11.json",
+      "count": 11557,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MSFT",
+      "path": "/data/prices/MSFT.7083fb5c9ea0df8514cc.json",
+      "count": 10231,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NVDA",
+      "path": "/data/prices/NVDA.f5abb980566185fea5dc.json",
+      "count": 6980,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AMZN",
+      "path": "/data/prices/AMZN.7552a37f702cb274c6ee.json",
+      "count": 7405,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GOOGL",
+      "path": "/data/prices/GOOGL.9fa723154edf0c800bd6.json",
+      "count": 5579,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "META",
+      "path": "/data/prices/META.5b11c9a8bcdbdc4d7794.json",
+      "count": 3627,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "TSLA",
+      "path": "/data/prices/TSLA.e03f267e07523c94b59c.json",
+      "count": 4104,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AVGO",
+      "path": "/data/prices/AVGO.c691a12e6698c7ee4d49.json",
+      "count": 4329,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ORCL",
+      "path": "/data/prices/ORCL.4bdcff574d11fb9ac19a.json",
+      "count": 10232,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AMD",
+      "path": "/data/prices/AMD.f1cbc1b9f770f2a4e0cc.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "INTC",
+      "path": "/data/prices/INTC.793d41289643564e3be3.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "QCOM",
+      "path": "/data/prices/QCOM.4d18470c22d013845ef2.json",
+      "count": 8775,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CSCO",
+      "path": "/data/prices/CSCO.31343555293e2a01ac15.json",
+      "count": 9236,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ADBE",
+      "path": "/data/prices/ADBE.f183692f4a93c14d8a2e.json",
+      "count": 10125,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CRM",
+      "path": "/data/prices/CRM.787907ce94bb75b4a318.json",
+      "count": 5619,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NFLX",
+      "path": "/data/prices/NFLX.80c07087592944f8e4d2.json",
+      "count": 6143,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NOW",
+      "path": "/data/prices/NOW.12e0721ffdce30cecf66.json",
+      "count": 3598,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IBM",
+      "path": "/data/prices/IBM.899b1edb9719860d1003.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SHOP",
+      "path": "/data/prices/SHOP.edfd78c43edaac849621.json",
+      "count": 2873,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "UBER",
+      "path": "/data/prices/UBER.c4950c6b978414b13ebb.json",
+      "count": 1873,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PANW",
+      "path": "/data/prices/PANW.d8d62883b8f86ea737c5.json",
+      "count": 3584,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SNOW",
+      "path": "/data/prices/SNOW.3caa70e8126db1330a48.json",
+      "count": 1532,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PLTR",
+      "path": "/data/prices/PLTR.8f0121b44605f983709e.json",
+      "count": 1522,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MU",
+      "path": "/data/prices/MU.66d662868086111c4eb3.json",
+      "count": 10680,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "TSM",
+      "path": "/data/prices/TSM.79cb076c372bffc1203f.json",
+      "count": 7303,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "JPM",
+      "path": "/data/prices/JPM.3d7a598a0e24add6d8c2.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BAC",
+      "path": "/data/prices/BAC.4c1d49feac4640ca6779.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GS",
+      "path": "/data/prices/GS.a3dc2d97df76c7fd8032.json",
+      "count": 6910,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "V",
+      "path": "/data/prices/V.e309d7cfb06ce929c3bd.json",
+      "count": 4678,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MA",
+      "path": "/data/prices/MA.c5af07ed6910cbe51027.json",
+      "count": 5134,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "UNH",
+      "path": "/data/prices/UNH.ff9ce1ed96defaf038d1.json",
+      "count": 10584,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "JNJ",
+      "path": "/data/prices/JNJ.fa5b8e6dd80c0c425f50.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LLY",
+      "path": "/data/prices/LLY.5819d1b650d9dc4f7c3b.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PFE",
+      "path": "/data/prices/PFE.80ab9d745d6efd7b6ea5.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XOM",
+      "path": "/data/prices/XOM.43838ec12887106388a6.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CVX",
+      "path": "/data/prices/CVX.9789359493fea6efd0c9.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "COST",
+      "path": "/data/prices/COST.cab78442abbf4b56cb8f.json",
+      "count": 10150,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "WMT",
+      "path": "/data/prices/WMT.433f803db98ee7a45cd1.json",
+      "count": 13651,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MCD",
+      "path": "/data/prices/MCD.fd5e7de9dca3fa46226c.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DIS",
+      "path": "/data/prices/DIS.d4e52c3978389d838def.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MMM",
+      "path": "/data/prices/MMM.33c475aa5e387c38df58.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AOS",
+      "path": "/data/prices/AOS.f5b117abfc98194dd0f9.json",
+      "count": 10849,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ABT",
+      "path": "/data/prices/ABT.7d4028b45add39c68eca.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ABBV",
+      "path": "/data/prices/ABBV.53da0c34c3570dd10fed.json",
+      "count": 3472,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ACN",
+      "path": "/data/prices/ACN.e566bfa544870435a409.json",
+      "count": 6352,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AES",
+      "path": "/data/prices/AES.4a5b131576f204caf1a0.json",
+      "count": 8894,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AFL",
+      "path": "/data/prices/AFL.e4c468b49f833794e32e.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "A",
+      "path": "/data/prices/A.d133cb20d0ed7de31c8d.json",
+      "count": 6771,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "APD",
+      "path": "/data/prices/APD.95e447da64acf0da6989.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ABNB",
+      "path": "/data/prices/ABNB.0d1e7f114891e88e912f.json",
+      "count": 1472,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AKAM",
+      "path": "/data/prices/AKAM.84f1da6f7d9b7c7a3052.json",
+      "count": 6785,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ALB",
+      "path": "/data/prices/ALB.b38f2de105d1f2ad8fb7.json",
+      "count": 8221,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ARE",
+      "path": "/data/prices/ARE.adf0b6f0602fe429d99c.json",
+      "count": 7397,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ALGN",
+      "path": "/data/prices/ALGN.fa7e133ab48886c081ee.json",
+      "count": 6470,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ALLE",
+      "path": "/data/prices/ALLE.7d3d7af5a2db6108ae0a.json",
+      "count": 3250,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LNT",
+      "path": "/data/prices/LNT.8212f9e3f2bffe2ccd45.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ALL",
+      "path": "/data/prices/ALL.78e456d69f0fcb7f2a20.json",
+      "count": 8404,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GOOG",
+      "path": "/data/prices/GOOG.bf6b62a37681a1da3337.json",
+      "count": 5579,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MO",
+      "path": "/data/prices/MO.99eeabd1d5a433c95a59.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AMCR",
+      "path": "/data/prices/AMCR.5dc5d0bf8c6b9ed506ae.json",
+      "count": 3630,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AEE",
+      "path": "/data/prices/AEE.5934eafef6ac9163e083.json",
+      "count": 7245,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AEP",
+      "path": "/data/prices/AEP.451e8b49033780e03c83.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AXP",
+      "path": "/data/prices/AXP.828267359de4a385c2c5.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AIG",
+      "path": "/data/prices/AIG.6787cb6832afb7634c9c.json",
+      "count": 13565,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AMT",
+      "path": "/data/prices/AMT.0248ba2142d359ce5990.json",
+      "count": 7207,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AWK",
+      "path": "/data/prices/AWK.dcbc9ae98134fffea093.json",
+      "count": 4654,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AMP",
+      "path": "/data/prices/AMP.c995b39cf9ea56029f68.json",
+      "count": 5308,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AME",
+      "path": "/data/prices/AME.387a3966957643f0cc68.json",
+      "count": 10647,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AMGN",
+      "path": "/data/prices/AMGN.829fc8eeb7b62844ab81.json",
+      "count": 10922,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "APH",
+      "path": "/data/prices/APH.e9bcf38e409f539c356a.json",
+      "count": 8799,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ADI",
+      "path": "/data/prices/ADI.1e051d623ca50766f394.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AON",
+      "path": "/data/prices/AON.262748379c2f2ddaab2f.json",
+      "count": 11692,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "APA",
+      "path": "/data/prices/APA.cdb79f59a201a24906e9.json",
+      "count": 11957,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "APO",
+      "path": "/data/prices/APO.6b1f5349ac9b64f364a8.json",
+      "count": 3914,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AMAT",
+      "path": "/data/prices/AMAT.64bf73174f8063d204ac.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "APP",
+      "path": "/data/prices/APP.e38b6f6b27c6c9d59a57.json",
+      "count": 1387,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "APTV",
+      "path": "/data/prices/APTV.9745d7eb8c89eeb061a7.json",
+      "count": 3752,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ACGL",
+      "path": "/data/prices/ACGL.45456ff107f42fb40513.json",
+      "count": 7827,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ADM",
+      "path": "/data/prices/ADM.1790df0cc8e42753c2ca.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ARES",
+      "path": "/data/prices/ARES.0637a51700bab4878855.json",
+      "count": 3137,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ANET",
+      "path": "/data/prices/ANET.299bf7f1ea6e355a5fce.json",
+      "count": 3113,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AJG",
+      "path": "/data/prices/AJG.cbdcb7e3e9476dce37e0.json",
+      "count": 10667,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AIZ",
+      "path": "/data/prices/AIZ.eaddf7086ac784592299.json",
+      "count": 5714,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "T",
+      "path": "/data/prices/T.4ba625cca9f07de4b536.json",
+      "count": 10813,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ATO",
+      "path": "/data/prices/ATO.032dda7603e469ead1c0.json",
+      "count": 10788,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ADSK",
+      "path": "/data/prices/ADSK.41bbb166f5dc51221a61.json",
+      "count": 10408,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ADP",
+      "path": "/data/prices/ADP.7d1b5f76f734c06d30eb.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AZO",
+      "path": "/data/prices/AZO.9599a4f7c67606561923.json",
+      "count": 8954,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AVY",
+      "path": "/data/prices/AVY.a768fdc23f0c98e8da11.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "AXON",
+      "path": "/data/prices/AXON.edc6bad03c62fa2d8691.json",
+      "count": 6373,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BKR",
+      "path": "/data/prices/BKR.e786a4700c8f6b1d4939.json",
+      "count": 9962,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BALL",
+      "path": "/data/prices/BALL.b3606ae31c2dfcba42c9.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BAX",
+      "path": "/data/prices/BAX.b1e3f9f13fff4aa5932a.json",
+      "count": 11337,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BDX",
+      "path": "/data/prices/BDX.a92cfe3eb9d679ce12df.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BRKB",
+      "path": "/data/prices/BRKB.3083fba88d6e2f257253.json",
+      "count": 7662,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BBY",
+      "path": "/data/prices/BBY.906d5566b4e9bd3121f2.json",
+      "count": 10458,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "TECH",
+      "path": "/data/prices/TECH.9cf36e2eb5c7687d8038.json",
+      "count": 9494,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BIIB",
+      "path": "/data/prices/BIIB.87a9b52504ec0b6e65a0.json",
+      "count": 8837,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BLK",
+      "path": "/data/prices/BLK.3c0192f0081ff5bed6be.json",
+      "count": 6805,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BX",
+      "path": "/data/prices/BX.c71b46ab6593eed04a0a.json",
+      "count": 4864,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "XYZ",
+      "path": "/data/prices/XYZ.88b78e1d5faeaef4770e.json",
+      "count": 2745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BNY",
+      "path": "/data/prices/BNY.7dec4517a19709cf711d.json",
+      "count": 13481,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BA",
+      "path": "/data/prices/BA.661878feebf07ee2e3a9.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BKNG",
+      "path": "/data/prices/BKNG.0fe08c03e099f1c6ade5.json",
+      "count": 6933,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BSX",
+      "path": "/data/prices/BSX.dd9472962fe7193e1443.json",
+      "count": 8667,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BMY",
+      "path": "/data/prices/BMY.699d9d6480ef06911311.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BR",
+      "path": "/data/prices/BR.18cb747dbd023326d956.json",
+      "count": 4928,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BRO",
+      "path": "/data/prices/BRO.e6206353f0c136196370.json",
+      "count": 11516,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BFB",
+      "path": "/data/prices/BFB.88eeaa90429135c70d4d.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BLDR",
+      "path": "/data/prices/BLDR.1684b7d3b1a7c10515c3.json",
+      "count": 5363,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BG",
+      "path": "/data/prices/BG.359834374dfe99e42094.json",
+      "count": 6342,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BXP",
+      "path": "/data/prices/BXP.0c1db0a78e24c7ca2d69.json",
+      "count": 7382,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CHRW",
+      "path": "/data/prices/CHRW.38b9d8ad0073f28bc65e.json",
+      "count": 7298,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CDNS",
+      "path": "/data/prices/CDNS.67a4cdd2f7205823d96a.json",
+      "count": 9917,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CPT",
+      "path": "/data/prices/CPT.d604e382c3f58f7c5362.json",
+      "count": 8370,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "COF",
+      "path": "/data/prices/COF.e9a76c3a80d21355041f.json",
+      "count": 8035,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CAH",
+      "path": "/data/prices/CAH.f0d70ef04a7f2842fdae.json",
+      "count": 10889,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CCL",
+      "path": "/data/prices/CCL.45aca8920e27d91dc483.json",
+      "count": 9886,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CARR",
+      "path": "/data/prices/CARR.2e88747392e3c7b996f6.json",
+      "count": 1657,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CVNA",
+      "path": "/data/prices/CVNA.ca6339c787c091e0bcdc.json",
+      "count": 2384,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CASY",
+      "path": "/data/prices/CASY.484d12fea65cecc19af9.json",
+      "count": 10835,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CAT",
+      "path": "/data/prices/CAT.cd4b5f33e1c8d4ea2245.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CBOE",
+      "path": "/data/prices/CBOE.949b5cd61e6adef293db.json",
+      "count": 4114,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CBRE",
+      "path": "/data/prices/CBRE.8d4f76b15ad8391b313c.json",
+      "count": 5627,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CDW",
+      "path": "/data/prices/CDW.a1816ad9101b34a998c1.json",
+      "count": 3350,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "COR",
+      "path": "/data/prices/COR.7d0d994dd78b0e0ef307.json",
+      "count": 7940,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CNC",
+      "path": "/data/prices/CNC.c0052ff0aaba83be736a.json",
+      "count": 6253,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CNP",
+      "path": "/data/prices/CNP.b124de2b6fafa3c95ea4.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CF",
+      "path": "/data/prices/CF.3d98fc861be404a88382.json",
+      "count": 5332,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CRL",
+      "path": "/data/prices/CRL.8ddda56a57b1d83b220e.json",
+      "count": 6621,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SCHW",
+      "path": "/data/prices/SCHW.5d90e0810168c5090ee9.json",
+      "count": 9845,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CHTR",
+      "path": "/data/prices/CHTR.9bb1fb9d0820c89c07dd.json",
+      "count": 4225,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CMG",
+      "path": "/data/prices/CMG.35bbf422b6845dd9247a.json",
+      "count": 5217,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CB",
+      "path": "/data/prices/CB.e3b081a74c403b754c33.json",
+      "count": 8452,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CHD",
+      "path": "/data/prices/CHD.3c918780ed8c5361e6f1.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CIEN",
+      "path": "/data/prices/CIEN.928fa0212def04711c24.json",
+      "count": 7472,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CI",
+      "path": "/data/prices/CI.b5d395b848547b0f3558.json",
+      "count": 11230,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CINF",
+      "path": "/data/prices/CINF.a94b373185bf1fbe3b1e.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CTAS",
+      "path": "/data/prices/CTAS.2b2b7354d1cfc1579316.json",
+      "count": 10878,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "C",
+      "path": "/data/prices/C.5f4816a3602ba2d837c8.json",
+      "count": 12554,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CFG",
+      "path": "/data/prices/CFG.7b1d6705edefa6415153.json",
+      "count": 3037,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CLX",
+      "path": "/data/prices/CLX.cba0a3b42e91b5c243f6.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CME",
+      "path": "/data/prices/CME.2c34c2176435a14cbc8b.json",
+      "count": 6006,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CMS",
+      "path": "/data/prices/CMS.b27c9e9a35ce42506ca9.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KO",
+      "path": "/data/prices/KO.be45f06531e64dc1c72e.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CTSH",
+      "path": "/data/prices/CTSH.0fa8b2f61285d11c5dd0.json",
+      "count": 7129,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "COHR",
+      "path": "/data/prices/COHR.f4801ea17c15792488e3.json",
+      "count": 9837,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "COIN",
+      "path": "/data/prices/COIN.8cb5ced1009960af8efd.json",
+      "count": 1388,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CL",
+      "path": "/data/prices/CL.9eaae1d70560d8b61408.json",
+      "count": 13482,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CMCSA",
+      "path": "/data/prices/CMCSA.69d64d0ae947899998fb.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FIX",
+      "path": "/data/prices/FIX.5a1e7ab902329d2ad32e.json",
+      "count": 7375,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "COP",
+      "path": "/data/prices/COP.ebad311301a661dcc71f.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ED",
+      "path": "/data/prices/ED.62a3f511c720a358b0cc.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "STZ",
+      "path": "/data/prices/STZ.80db98ccbc83743bb321.json",
+      "count": 8711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CEG",
+      "path": "/data/prices/CEG.aaa6e64a689fd04b39a0.json",
+      "count": 1194,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "COO",
+      "path": "/data/prices/COO.15aeaaa4b0b12a2270ba.json",
+      "count": 11024,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CPRT",
+      "path": "/data/prices/CPRT.f1af5e4a42f16a8a8e74.json",
+      "count": 8204,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GLW",
+      "path": "/data/prices/GLW.12e492fc09121e474126.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CPAY",
+      "path": "/data/prices/CPAY.f64abb5da2df66a2d91e.json",
+      "count": 3986,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CTVA",
+      "path": "/data/prices/CTVA.ba8aef540cc480b2f1ce.json",
+      "count": 1863,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CSGP",
+      "path": "/data/prices/CSGP.f4703677cd6d27b21b55.json",
+      "count": 7121,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CRH",
+      "path": "/data/prices/CRH.8c2a53a2971490c1ef1f.json",
+      "count": 9388,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CRWD",
+      "path": "/data/prices/CRWD.55fcd6c05d7df00e2d84.json",
+      "count": 1851,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CCI",
+      "path": "/data/prices/CCI.445d089d908f28ec9e9d.json",
+      "count": 7088,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CSX",
+      "path": "/data/prices/CSX.d4dba13314dd735303dc.json",
+      "count": 11584,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CMI",
+      "path": "/data/prices/CMI.4759f9741015e52c9cc5.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "CVS",
+      "path": "/data/prices/CVS.ec69672ce650dd718170.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DHR",
+      "path": "/data/prices/DHR.a47455ccac722c41c667.json",
+      "count": 12051,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DRI",
+      "path": "/data/prices/DRI.19ddd68905fb497bb2ac.json",
+      "count": 7916,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DDOG",
+      "path": "/data/prices/DDOG.06fcd2cb8729d5e1bf5f.json",
+      "count": 1782,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DVA",
+      "path": "/data/prices/DVA.e5cb863428b238faea89.json",
+      "count": 7794,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DECK",
+      "path": "/data/prices/DECK.e545b70d1964de90c439.json",
+      "count": 8310,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DE",
+      "path": "/data/prices/DE.8e7722528677cf90e8d8.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DELL",
+      "path": "/data/prices/DELL.0392ddd9f5733c004a58.json",
+      "count": 2559,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DAL",
+      "path": "/data/prices/DAL.ee04229861dc80499f32.json",
+      "count": 4899,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DVN",
+      "path": "/data/prices/DVN.3e3c7a013ca8c2ec1aa0.json",
+      "count": 10393,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DXCM",
+      "path": "/data/prices/DXCM.6b7bcfafc858849b6d50.json",
+      "count": 5415,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FANG",
+      "path": "/data/prices/FANG.423de254d3dd59cb0270.json",
+      "count": 3525,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DLR",
+      "path": "/data/prices/DLR.6c1d29f1661f4af588de.json",
+      "count": 5529,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DG",
+      "path": "/data/prices/DG.40b06c98c5528b5cb0e5.json",
+      "count": 4259,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DLTR",
+      "path": "/data/prices/DLTR.9c69ab31a6f65f3f8216.json",
+      "count": 7960,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "D",
+      "path": "/data/prices/D.f48fd07911f64a8900e1.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DPZ",
+      "path": "/data/prices/DPZ.3f29fd9b59ff015fe804.json",
+      "count": 5606,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DASH",
+      "path": "/data/prices/DASH.c1e1fbd6bd719d41f2e8.json",
+      "count": 1473,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DOV",
+      "path": "/data/prices/DOV.e1555b5a4a72c9256b5f.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DOW",
+      "path": "/data/prices/DOW.e15758848d73df5c3e60.json",
+      "count": 1909,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DHI",
+      "path": "/data/prices/DHI.7afc554063fe03f1d65a.json",
+      "count": 8655,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DTE",
+      "path": "/data/prices/DTE.688b10f238718a1ca422.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DUK",
+      "path": "/data/prices/DUK.fe85c6e00fa3cc0143f8.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DD",
+      "path": "/data/prices/DD.2aa9a9cea3be95ffa926.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ETN",
+      "path": "/data/prices/ETN.cb4bda8c04a8d4333a5c.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EBAY",
+      "path": "/data/prices/EBAY.cf45f3203d8202903291.json",
+      "count": 7062,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ECHO",
+      "path": "/data/prices/ECHO.b27084f122b02e4fcb90.json",
+      "count": 4731,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ECL",
+      "path": "/data/prices/ECL.3a3cef79b86f5d86b6db.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EIX",
+      "path": "/data/prices/EIX.ec01139701bb15460a7e.json",
+      "count": 13481,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EW",
+      "path": "/data/prices/EW.427e948991ccf4c99179.json",
+      "count": 6683,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ELV",
+      "path": "/data/prices/ELV.43b75ebfce4d8c2832ee.json",
+      "count": 6284,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EME",
+      "path": "/data/prices/EME.959893f420dd0207fd4a.json",
+      "count": 7999,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EMR",
+      "path": "/data/prices/EMR.5be911b25652d1de1958.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ETR",
+      "path": "/data/prices/ETR.59556f61f47fcf242e8b.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EOG",
+      "path": "/data/prices/EOG.732d7ef4493b5b2b2e7f.json",
+      "count": 9330,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EQT",
+      "path": "/data/prices/EQT.f78a51f700a7c4eacd5b.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EFX",
+      "path": "/data/prices/EFX.10b0daafb6d0e33c3b74.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EQIX",
+      "path": "/data/prices/EQIX.47cb04bf7ea2a4bb135c.json",
+      "count": 6587,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ERIE",
+      "path": "/data/prices/ERIE.970b43309e6851d4b909.json",
+      "count": 7815,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ESS",
+      "path": "/data/prices/ESS.cc4991c40eeef1adbb9b.json",
+      "count": 8149,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EL",
+      "path": "/data/prices/EL.efb63ec2bb85c78c7655.json",
+      "count": 7781,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EG",
+      "path": "/data/prices/EG.3203a9650a408e60eb48.json",
+      "count": 7814,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EVRG",
+      "path": "/data/prices/EVRG.69f31b9f4fe06b2cc56c.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ES",
+      "path": "/data/prices/ES.d002e68f8cf267f3ebb9.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EXC",
+      "path": "/data/prices/EXC.89746e1d13c9fb781aa1.json",
+      "count": 13482,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EXE",
+      "path": "/data/prices/EXE.f6f7bee1499f6f7103d5.json",
+      "count": 1431,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EXPE",
+      "path": "/data/prices/EXPE.71c879cd9aa8a298e50e.json",
+      "count": 5347,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EXPD",
+      "path": "/data/prices/EXPD.a3d28424fc0bbdc6db20.json",
+      "count": 10599,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "EXR",
+      "path": "/data/prices/EXR.bed7242b95f9d798d591.json",
+      "count": 5582,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FFIV",
+      "path": "/data/prices/FFIV.332a6376cbbd482cd9d1.json",
+      "count": 6888,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FDS",
+      "path": "/data/prices/FDS.4dea314ba6103c4165f1.json",
+      "count": 7627,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FICO",
+      "path": "/data/prices/FICO.3185ba0b38a321358473.json",
+      "count": 9888,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FAST",
+      "path": "/data/prices/FAST.2c0703eb3d9537282e53.json",
+      "count": 9867,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FRT",
+      "path": "/data/prices/FRT.8a36b3a1637416d36483.json",
+      "count": 13481,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FDX",
+      "path": "/data/prices/FDX.035076eb62439312dcf8.json",
+      "count": 12233,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FDXF",
+      "path": "/data/prices/FDXF.2ed2f5bf54958e01a5bb.json",
+      "count": 103,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FERG",
+      "path": "/data/prices/FERG.8fc7199ae920b65de656.json",
+      "count": 4225,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FIS",
+      "path": "/data/prices/FIS.59bfbac5bd8d7a66458e.json",
+      "count": 6372,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FITB",
+      "path": "/data/prices/FITB.e6a87b9f9163c4e9ba5e.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FSLR",
+      "path": "/data/prices/FSLR.87aa691095550786d5f7.json",
+      "count": 5011,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FE",
+      "path": "/data/prices/FE.28db1f6608a5bd4f5c79.json",
+      "count": 7281,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FISV",
+      "path": "/data/prices/FISV.80ed36f36f6e6de1e720.json",
+      "count": 10094,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FLEX",
+      "path": "/data/prices/FLEX.d2303035e7bbb2a45a84.json",
+      "count": 8203,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "F",
+      "path": "/data/prices/F.9cb37d012c03bf3c342e.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FTNT",
+      "path": "/data/prices/FTNT.76ffa97d0ca1a1be4bf6.json",
+      "count": 4256,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FTV",
+      "path": "/data/prices/FTV.1991f2ac35b69d67a447.json",
+      "count": 2590,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FOXA",
+      "path": "/data/prices/FOXA.b6c53365fbf85993d6c9.json",
+      "count": 1915,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FOX",
+      "path": "/data/prices/FOX.cfde12e3315cfde60848.json",
+      "count": 1914,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "BEN",
+      "path": "/data/prices/BEN.65aeca98782f76539589.json",
+      "count": 10854,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "FCX",
+      "path": "/data/prices/FCX.f39d332e637a6b18f5de.json",
+      "count": 7874,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GRMN",
+      "path": "/data/prices/GRMN.d4be2bf0fbe7d69dc645.json",
+      "count": 6504,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IT",
+      "path": "/data/prices/IT.fd8ed29f32ab291ca62d.json",
+      "count": 8318,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GE",
+      "path": "/data/prices/GE.45003dd33e8effe1d3b6.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GEHC",
+      "path": "/data/prices/GEHC.50be92909849f4622c30.json",
+      "count": 965,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GEV",
+      "path": "/data/prices/GEV.1f53e8f4c7f60a1f391a.json",
+      "count": 645,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GEN",
+      "path": "/data/prices/GEN.77071993650e615f53aa.json",
+      "count": 9401,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GNRC",
+      "path": "/data/prices/GNRC.cdaf04791d98c14bf365.json",
+      "count": 4199,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GD",
+      "path": "/data/prices/GD.a6b3e6b05d99085a1549.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GIS",
+      "path": "/data/prices/GIS.5b8851560ae9a2bf17a7.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GM",
+      "path": "/data/prices/GM.a7b8d1d05422444e7c74.json",
+      "count": 4004,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GPC",
+      "path": "/data/prices/GPC.a347a9f1f4561b702c88.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GILD",
+      "path": "/data/prices/GILD.5dc06b4a4b84a92539b2.json",
+      "count": 8749,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GPN",
+      "path": "/data/prices/GPN.57cea497f99a1e869b90.json",
+      "count": 6480,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GL",
+      "path": "/data/prices/GL.1faf625381d5e5830fe8.json",
+      "count": 11607,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "GDDY",
+      "path": "/data/prices/GDDY.ee2a256b524edbf79962.json",
+      "count": 2908,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HAL",
+      "path": "/data/prices/HAL.720e61cfe9e1ba2c23e6.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HIG",
+      "path": "/data/prices/HIG.26d2dcc6b277321a684a.json",
+      "count": 7762,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HAS",
+      "path": "/data/prices/HAS.bc82144c5657c05d8d5a.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HCA",
+      "path": "/data/prices/HCA.bb686b81e89cb68a450c.json",
+      "count": 3928,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DOC",
+      "path": "/data/prices/DOC.91a722ed99afa488382d.json",
+      "count": 10433,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HSIC",
+      "path": "/data/prices/HSIC.1b009234199bd4be986a.json",
+      "count": 7791,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HSY",
+      "path": "/data/prices/HSY.53d4e7fe5c6fb56c1144.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HPE",
+      "path": "/data/prices/HPE.47133cfbd65d625a9f09.json",
+      "count": 2768,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HLT",
+      "path": "/data/prices/HLT.cd11c493e27033d4629b.json",
+      "count": 3233,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HD",
+      "path": "/data/prices/HD.a58566a0ddcc596157d0.json",
+      "count": 11362,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HONA",
+      "path": "/data/prices/HONA.f82f68d2ed2ab040cc7f.json",
+      "count": 90,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HON",
+      "path": "/data/prices/HON.771fb50d89168926282e.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HRL",
+      "path": "/data/prices/HRL.84d64b2a12dd288c0f98.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HST",
+      "path": "/data/prices/HST.08281e4834bc263105ef.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HWM",
+      "path": "/data/prices/HWM.bf0276b1c2d516b171f2.json",
+      "count": 2506,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HPQ",
+      "path": "/data/prices/HPQ.1d9baf0ed2a2df8dc385.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HUBB",
+      "path": "/data/prices/HUBB.bae8ce230b98c0a1dcf5.json",
+      "count": 13588,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HUM",
+      "path": "/data/prices/HUM.46017277112b7a6cdf9d.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HBAN",
+      "path": "/data/prices/HBAN.70f4ad70d5bcecf94c30.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HII",
+      "path": "/data/prices/HII.f15480f401b07c4eded5.json",
+      "count": 3920,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IEX",
+      "path": "/data/prices/IEX.393bceb9ad3fdddbcec6.json",
+      "count": 9416,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IDXX",
+      "path": "/data/prices/IDXX.a9308e2bffc360e0f51a.json",
+      "count": 8897,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ITW",
+      "path": "/data/prices/ITW.00bbd010d621a1897932.json",
+      "count": 13517,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "INCY",
+      "path": "/data/prices/INCY.bd3ff76972cff31eb2bd.json",
+      "count": 8296,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IR",
+      "path": "/data/prices/IR.392bff76649f3b2672c5.json",
+      "count": 2374,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PODD",
+      "path": "/data/prices/PODD.bb51357e6170f2480dce.json",
+      "count": 4891,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IBKR",
+      "path": "/data/prices/IBKR.e005617946e6bf9584c4.json",
+      "count": 4898,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ICE",
+      "path": "/data/prices/ICE.634f4af581a32b580ddc.json",
+      "count": 5264,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IFF",
+      "path": "/data/prices/IFF.a4bc85a62e372ae85017.json",
+      "count": 13070,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IP",
+      "path": "/data/prices/IP.2ba26f290875d448e11e.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "INTU",
+      "path": "/data/prices/INTU.48c050210946aed3a373.json",
+      "count": 8461,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ISRG",
+      "path": "/data/prices/ISRG.3082cd3727d019efda79.json",
+      "count": 6626,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IVZ",
+      "path": "/data/prices/IVZ.83962b0667f8e23dd1bd.json",
+      "count": 7840,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "INVH",
+      "path": "/data/prices/INVH.a7a05fdb4c7d6fe2fff2.json",
+      "count": 2444,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IQV",
+      "path": "/data/prices/IQV.7ea3b0506b5ea2a388cf.json",
+      "count": 3384,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "IRM",
+      "path": "/data/prices/IRM.dce2019e96f2b1da369a.json",
+      "count": 7730,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "JBHT",
+      "path": "/data/prices/JBHT.d6f29a9b32bb415f97d4.json",
+      "count": 10812,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "JBL",
+      "path": "/data/prices/JBL.289f138767be3cda9139.json",
+      "count": 8426,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "JKHY",
+      "path": "/data/prices/JKHY.f81334be8d3fdd18c314.json",
+      "count": 10308,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "J",
+      "path": "/data/prices/J.21e6b75416a3961fdd79.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "JCI",
+      "path": "/data/prices/JCI.3d881922dc67311130bf.json",
+      "count": 9841,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KVUE",
+      "path": "/data/prices/KVUE.2e2c16bd4cebfba2083b.json",
+      "count": 870,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KDP",
+      "path": "/data/prices/KDP.52e41910b3ac80ad1e56.json",
+      "count": 4644,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KEY",
+      "path": "/data/prices/KEY.47eec88a18d1fddb262a.json",
+      "count": 9813,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KEYS",
+      "path": "/data/prices/KEYS.bf84e20c56176e5e63f3.json",
+      "count": 3019,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KMB",
+      "path": "/data/prices/KMB.83c58c8fad6b1a3c1b27.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KIM",
+      "path": "/data/prices/KIM.6f1341f30b58a39ba79e.json",
+      "count": 8789,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KMI",
+      "path": "/data/prices/KMI.eebd61af051563ad1e37.json",
+      "count": 3946,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KKR",
+      "path": "/data/prices/KKR.1095dfa9270dbf2b126b.json",
+      "count": 4093,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KLAC",
+      "path": "/data/prices/KLAC.31d4a5f88e4753781172.json",
+      "count": 11602,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KHC",
+      "path": "/data/prices/KHC.9ace1a365740eb421b22.json",
+      "count": 2842,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "KR",
+      "path": "/data/prices/KR.64bc6c20b978b2705f5c.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LHX",
+      "path": "/data/prices/LHX.c55aadea53bc3ada2c03.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LH",
+      "path": "/data/prices/LH.eee591c13186fbf99d78.json",
+      "count": 9208,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LRCX",
+      "path": "/data/prices/LRCX.882266d99b2beb3beb19.json",
+      "count": 10699,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LVS",
+      "path": "/data/prices/LVS.5492fb63f416248093b3.json",
+      "count": 5497,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LDOS",
+      "path": "/data/prices/LDOS.5c1295108793ab700b80.json",
+      "count": 5034,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LEN",
+      "path": "/data/prices/LEN.4ab67f80408e5342ffac.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LII",
+      "path": "/data/prices/LII.8764cde30eba93da443c.json",
+      "count": 6850,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LIN",
+      "path": "/data/prices/LIN.5617deba83c392db31c8.json",
+      "count": 8647,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LYV",
+      "path": "/data/prices/LYV.cdded1df31c2f587aabd.json",
+      "count": 5240,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LMT",
+      "path": "/data/prices/LMT.7dc993e5d2c1a9212628.json",
+      "count": 14322,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "L",
+      "path": "/data/prices/L.406b4cc68cadab02d628.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LOW",
+      "path": "/data/prices/LOW.d55daeb89c86d61b72b9.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LULU",
+      "path": "/data/prices/LULU.625561ccc3dfc3f568bd.json",
+      "count": 4840,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LITE",
+      "path": "/data/prices/LITE.c38e3df8bba156742991.json",
+      "count": 2829,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "LYB",
+      "path": "/data/prices/LYB.b41e7764eb20ee839063.json",
+      "count": 4147,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MTB",
+      "path": "/data/prices/MTB.92e48e066b753aec6042.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MPC",
+      "path": "/data/prices/MPC.a8af90324b98f72a52c0.json",
+      "count": 3854,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MAR",
+      "path": "/data/prices/MAR.aa258935ec51bccb0e93.json",
+      "count": 7191,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MRSH",
+      "path": "/data/prices/MRSH.1a1c8f7f2d7ea9bb9046.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MLM",
+      "path": "/data/prices/MLM.82e35e3d6bdb5871d93a.json",
+      "count": 8223,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MRVL",
+      "path": "/data/prices/MRVL.2e6dbe8ea374832a2300.json",
+      "count": 6616,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MAS",
+      "path": "/data/prices/MAS.18cd7e408ab11b7f2942.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MKC",
+      "path": "/data/prices/MKC.fd5b554f67280e060ad9.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MCK",
+      "path": "/data/prices/MCK.8b4310929f511354d655.json",
+      "count": 8039,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MDT",
+      "path": "/data/prices/MDT.a3e9e0916d3ecc1d30f7.json",
+      "count": 13482,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MRK",
+      "path": "/data/prices/MRK.50f1ac682e12bc0499c8.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MET",
+      "path": "/data/prices/MET.5ab019e09467bdf4f2fd.json",
+      "count": 6676,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MTD",
+      "path": "/data/prices/MTD.6c686208d102e8160a8d.json",
+      "count": 7277,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MGM",
+      "path": "/data/prices/MGM.85c19702b444c13660d3.json",
+      "count": 9691,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MCHP",
+      "path": "/data/prices/MCHP.082851b326ed2c6d7b12.json",
+      "count": 8456,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MAA",
+      "path": "/data/prices/MAA.64d3e0a2ea898e06de36.json",
+      "count": 8237,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MRNA",
+      "path": "/data/prices/MRNA.3f4450ae2b1ca6259ff1.json",
+      "count": 1978,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "TAP",
+      "path": "/data/prices/TAP.8f0aa18bcc2121926fc9.json",
+      "count": 12948,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MDLZ",
+      "path": "/data/prices/MDLZ.151b1463300c118b0602.json",
+      "count": 6377,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MPWR",
+      "path": "/data/prices/MPWR.04cd65ba4b26a5f523f1.json",
+      "count": 5514,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MNST",
+      "path": "/data/prices/MNST.7190d7d066590eab671a.json",
+      "count": 10296,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MCO",
+      "path": "/data/prices/MCO.f2065699cdc3834bd604.json",
+      "count": 8047,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MS",
+      "path": "/data/prices/MS.0b56919df118c689abb6.json",
+      "count": 8474,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MOS",
+      "path": "/data/prices/MOS.978c3aa3113e0da9ba63.json",
+      "count": 9758,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MSI",
+      "path": "/data/prices/MSI.1d6232607a61b3490b92.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "MSCI",
+      "path": "/data/prices/MSCI.2dec8b9807179c041fa8.json",
+      "count": 4762,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NDAQ",
+      "path": "/data/prices/NDAQ.a820db75b4b37e9aa537.json",
+      "count": 6117,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NTAP",
+      "path": "/data/prices/NTAP.d0fddfeed3ca07222034.json",
+      "count": 7779,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NEM",
+      "path": "/data/prices/NEM.db7bea0d5ec36a2faf15.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NWSA",
+      "path": "/data/prices/NWSA.03d9e3e9112d6d2b38ef.json",
+      "count": 3356,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NWS",
+      "path": "/data/prices/NWS.6f0e035d96563418bfee.json",
+      "count": 3356,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NEE",
+      "path": "/data/prices/NEE.8c6ff685a1e58373c419.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NKE",
+      "path": "/data/prices/NKE.2194bccb731dd735b92d.json",
+      "count": 11565,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NI",
+      "path": "/data/prices/NI.c1d3a0651bbf31603456.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NDSN",
+      "path": "/data/prices/NDSN.23ea879b649611646fda.json",
+      "count": 11744,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NSC",
+      "path": "/data/prices/NSC.daa39673e6edf2548dcb.json",
+      "count": 11187,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NTRS",
+      "path": "/data/prices/NTRS.3164837d80000851c8b6.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NOC",
+      "path": "/data/prices/NOC.9d6e9900a9e9781e7994.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NCLH",
+      "path": "/data/prices/NCLH.22d68e6dd2e8e4ca679e.json",
+      "count": 3460,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NRG",
+      "path": "/data/prices/NRG.c3564e1763b998127f42.json",
+      "count": 5758,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NUE",
+      "path": "/data/prices/NUE.bf87255a6195dbb47f5a.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NVR",
+      "path": "/data/prices/NVR.bdda86bc2ef4cc132f58.json",
+      "count": 10393,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "NXPI",
+      "path": "/data/prices/NXPI.2704ce8b9c3b57ae3cf0.json",
+      "count": 4077,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ORLY",
+      "path": "/data/prices/ORLY.9882d4e63083f0086da3.json",
+      "count": 8432,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "OXY",
+      "path": "/data/prices/OXY.b0c0bad7ca99029ffd1c.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ODFL",
+      "path": "/data/prices/ODFL.ee1f877d3e34e9a14774.json",
+      "count": 8810,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "OMC",
+      "path": "/data/prices/OMC.7ac3ffe4b96eb6772bc1.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ON",
+      "path": "/data/prices/ON.9e47496cb1cfb2f35486.json",
+      "count": 6658,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "OKE",
+      "path": "/data/prices/OKE.b75807b772e714cf17ee.json",
+      "count": 11607,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "OTIS",
+      "path": "/data/prices/OTIS.505c7785deacb1f9340a.json",
+      "count": 1657,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PCAR",
+      "path": "/data/prices/PCAR.cb8724f33188d9ecf23b.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PKG",
+      "path": "/data/prices/PKG.89f913ec56f0ea146c25.json",
+      "count": 6723,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PSKY",
+      "path": "/data/prices/PSKY.c0115ee137533e9e482c.json",
+      "count": 5249,
+      "lastDate": "2026-10-16"
+    },
+    {
+      "key": "PH",
+      "path": "/data/prices/PH.646fef233a6496d3a695.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PAYX",
+      "path": "/data/prices/PAYX.b181715ee8b67f0d16f3.json",
+      "count": 10873,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PYPL",
+      "path": "/data/prices/PYPL.09cafed459fbf03922c2.json",
+      "count": 2842,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PNR",
+      "path": "/data/prices/PNR.a0f43b94748ae648b90d.json",
+      "count": 13481,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PEP",
+      "path": "/data/prices/PEP.a3b8b8bc84d85c15de74.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PCG",
+      "path": "/data/prices/PCG.319d9a49e4aa3de7c56b.json",
+      "count": 13711,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PM",
+      "path": "/data/prices/PM.b282bbba83b0f00e5268.json",
+      "count": 4680,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PSX",
+      "path": "/data/prices/PSX.8563c2f17f17f17b3e77.json",
+      "count": 3653,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PNW",
+      "path": "/data/prices/PNW.fe85201aa7fb06da19ed.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PNC",
+      "path": "/data/prices/PNC.bf9b71fc95b5ba1dc777.json",
+      "count": 12838,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PPG",
+      "path": "/data/prices/PPG.b9511d6aa512024a3481.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PPL",
+      "path": "/data/prices/PPL.7a4bdc548838d34670bd.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PFG",
+      "path": "/data/prices/PFG.95b7e31e1e7c3ec7a1dc.json",
+      "count": 6289,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PG",
+      "path": "/data/prices/PG.5665e39258f253b42fa7.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PGR",
+      "path": "/data/prices/PGR.f74976fc9f857d72de7d.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PLD",
+      "path": "/data/prices/PLD.c58d5fedd3116a54735c.json",
+      "count": 7272,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PRU",
+      "path": "/data/prices/PRU.02d146ffa55a98a654cb.json",
+      "count": 6253,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PEG",
+      "path": "/data/prices/PEG.d188e7c5ce6f86917cde.json",
+      "count": 11797,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PTC",
+      "path": "/data/prices/PTC.52fb92071a78d43ccf3a.json",
+      "count": 9284,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PSA",
+      "path": "/data/prices/PSA.11f0c477d0fa22b852d9.json",
+      "count": 11574,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PHM",
+      "path": "/data/prices/PHM.dc4d4a824a8d05f17f25.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "PWR",
+      "path": "/data/prices/PWR.e01a1250f0a3661aebba.json",
+      "count": 7217,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "DGX",
+      "path": "/data/prices/DGX.578d0e9a1ebd5757b76e.json",
+      "count": 7508,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "Q",
+      "path": "/data/prices/Q.1c8f88bffc5b37630518.json",
+      "count": 248,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RL",
+      "path": "/data/prices/RL.96e316fe55f0c1049cff.json",
+      "count": 7386,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RJF",
+      "path": "/data/prices/RJF.72c0999790913b0bb0f3.json",
+      "count": 10912,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RDDT",
+      "path": "/data/prices/RDDT.99e1ad7447ad88152df1.json",
+      "count": 649,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RTX",
+      "path": "/data/prices/RTX.be19518a1228304f9374.json",
+      "count": 14323,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "O",
+      "path": "/data/prices/O.aa14793f42ed3eed12d6.json",
+      "count": 8056,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "REG",
+      "path": "/data/prices/REG.6d4aad42700a21d54103.json",
+      "count": 8300,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "REGN",
+      "path": "/data/prices/REGN.c7efa209bc277992d4e6.json",
+      "count": 8954,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RF",
+      "path": "/data/prices/RF.1396b10d6b50939f165c.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RSG",
+      "path": "/data/prices/RSG.3fa420c3949b5d747dd9.json",
+      "count": 7121,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RMD",
+      "path": "/data/prices/RMD.de07ec9272bb7a9871ff.json",
+      "count": 7899,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RVTY",
+      "path": "/data/prices/RVTY.e963ba437034f31e4b77.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "HOOD",
+      "path": "/data/prices/HOOD.b23ad41cb50207f66ce0.json",
+      "count": 1314,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ROK",
+      "path": "/data/prices/ROK.09bb5b67dc449cbb51ca.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ROL",
+      "path": "/data/prices/ROL.899c94477b96d9661644.json",
+      "count": 11745,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ROP",
+      "path": "/data/prices/ROP.323ef38e8116e2b94aae.json",
+      "count": 8733,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "ROST",
+      "path": "/data/prices/ROST.68725e6c53c90be7408a.json",
+      "count": 10380,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "RCL",
+      "path": "/data/prices/RCL.7bc6387b55ad85702502.json",
+      "count": 8429,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SPGI",
+      "path": "/data/prices/SPGI.3f77e4ef5c690f92943e.json",
+      "count": 13531,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SNDK",
+      "path": "/data/prices/SNDK.aee874f7257c7c74e848.json",
+      "count": 424,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SBAC",
+      "path": "/data/prices/SBAC.921e0674ede602ce5737.json",
+      "count": 6880,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "SLB",
+      "path": "/data/prices/SLB.e6f9a74a83a016d3e8fc.json",
+      "count": 11292,
+      "lastDate": "2026-10-21"
+    },
+    {
+      "key": "STX",
+      "path": "/data/prices/STX.5ffec03220e5575fa266.json",
+      "count": 6003,
+      "lastDate": "2026-10-21"
+    }
+  ],
+  "unsupported": [
+    "USDHKD",
+    "EURNOK",
+    "EURPLN",
+    "EURSEK",
+    "USDMXN",
+    "USDNOK",
+    "USDPLN",
+    "USDSEK",
+    "USDZAR",
+    "SGDJPY",
+    "USDSGD",
+    "DXY",
+    "PLATINUM",
+    "PALLADIUM",
+    "CORN",
+    "KCWHEAT",
+    "COFFEE",
+    "SUGAR",
+    "GASOLINE",
+    "HEATINGOIL",
+    "COTTON",
+    "COCOA",
+    "OATS",
+    "RICE",
+    "SOYBEANOIL",
+    "SOYBEANMEAL",
+    "FEEDERCATTLE",
+    "LEANHOGS",
+    "MILK",
+    "BUTTER",
+    "CHEESE",
+    "ORANGEJUICE",
+    "LUMBER",
+    "DJI",
+    "RUT",
+    "VIX",
+    "DAX",
+    "FTSE100",
+    "NIKKEI225",
+    "HSI",
+    "STOXX50E"
+  ],
+  "productionDeployment": false,
+  "schedulingChanged": false
+}

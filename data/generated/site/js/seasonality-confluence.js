@@ -1,0 +1,74 @@
+(function(root,factory){
+    if(typeof module==='object'&&module.exports)module.exports=factory(require('./seasonality-reliability.js'),require('./cot-availability.js'));
+    else root.SeasonalityConfluence=factory(root.SeasonalityReliability,root.CotAvailability);
+}(typeof globalThis==='object'?globalThis:this,function(reliability,availability){
+    const day=86400000,z=1.959963984540054;
+    const time=date=>Date.parse(date+'T00:00:00Z');
+    const validIndex=value=>Number.isFinite(value)&&value>=0&&value<=100;
+
+    // Binomial Wilson interval: sampling uncertainty, NOT a prediction interval.
+    function wilson(successes,count){
+        if(!Number.isInteger(count)||!Number.isInteger(successes)||count<0||successes<0||successes>count)
+            throw new Error('Invalid binomial counts');
+        if(!count)return null;
+        const p=successes/count,denominator=1+z*z/count;
+        const center=(p+z*z/(2*count))/denominator;
+        const radius=z*Math.sqrt(p*(1-p)/count+z*z/(4*count*count))/denominator;
+        return [100*Math.max(0,center-radius),100*Math.min(1,center+radius)];
+    }
+
+    function summarize(samples,direction){
+        const returns=samples.map(s=>s.returnPct),count=samples.length;
+        const successes=returns.filter(v=>direction==='up'?v>0:v<0).length;
+        const adverse=samples.map(s=>direction==='up'?-s.maxDrop:s.maxRise);
+        return {count,successes,flat:returns.filter(v=>v===0).length,rate:count?100*successes/count:null,
+            uncertainty:wilson(successes,count),mean:count?returns.reduce((a,b)=>a+b,0)/count:null,
+            median:reliability.quantile(returns,.5),q25:reliability.quantile(returns,.25),q75:reliability.quantile(returns,.75),
+            medianAdverse:reliability.quantile(adverse,.5),worstAdverse:count?Math.max(...adverse):null};
+    }
+
+    function analyze(reports,prices,{startDay,endDay,asOf,evaluationAt=asOf,group='commercial',direction='up',tolerance=10,historyYears=null,selectedYears=null,comparison='entry',lookback=52,historical=false}={}){
+        if(!['commercial','nonCommercial','nonReportable'].includes(group)||!['up','down'].includes(direction)
+            ||!Number.isFinite(tolerance)||tolerance<0||tolerance>100||!Number.isFinite(time(asOf))
+            ||!Number.isInteger(startDay)||!Number.isInteger(endDay)||startDay<0||endDay>364||startDay>=endDay
+            ||!(historyYears===null||(Number.isInteger(historyYears)&&historyYears>0))
+            ||!['entry','snapshot'].includes(comparison))throw new Error('Invalid confluence settings');
+        const cutoff=time(asOf),year=Number(asOf.slice(0,4));
+        // Never reference a report without documented availability at this evaluation time.
+        if(!Number.isFinite(availability.cutoff(evaluationAt))||evaluationAt.slice(0,10)!==asOf)throw new Error('Evaluation timestamp must match calendar asOf');
+        const ordered=availability.known(reports,evaluationAt);
+        const latest=ordered.at(-1),target=availability.indexAt(reports,latest,evaluationAt,group,lookback);
+        const reference=latest?{date:latest.date,index:target,ageDays:(cutoff-time(latest.date))/day}:null;
+        const referenceUsable=!!reference&&reference.ageDays<=21&&validIndex(target);
+        const range=referenceUsable?[Math.max(0,target-tolerance),Math.min(100,target+tolerance)]:null;
+        const seasonal=reliability.samples(prices,startDay,endDay,asOf).filter(s=>(historyYears===null||s.year>=year-historyYears)
+            &&(selectedYears===null||selectedYears.includes(s.year)));
+        const covered=[],matched=[];
+        let missing=0,stale=0,missingIndex=0;
+        for(const sample of seasonal){
+            // Latest estimated-known report at this year's actual entry close, never inside the outcome window.
+            // Snapshot mode matches the daily screener: same anniversary of today's forecast,
+            // never a report available only at a later prospective entry.
+            const anniversary=new Date(Date.UTC(sample.year,Number(asOf.slice(5,7))-1,Number(asOf.slice(8,10))));
+            if(anniversary.getUTCMonth()!==Number(asOf.slice(5,7))-1)anniversary.setUTCDate(0);
+            const forecastDate=anniversary.toISOString().slice(0,10);
+            const signalDate=comparison==='snapshot'&&forecastDate<sample.start?forecastDate:sample.start;
+            const entry=time(signalDate),report=historical?availability.positionsKnown(reports,signalDate).at(-1):availability.latest(ordered,signalDate);
+            if(!report){missing++;continue;}
+            if(entry-time(report.date)>21*day){stale++;continue;}
+            const index=(historical?availability.positionsIndexAt:availability.indexAt)(reports,report,signalDate,group,lookback);
+            // Do not substitute an older index if the latest report has no valid index.
+            if(!validIndex(index)){missingIndex++;continue;}
+            const row={...sample,signalDate,reportDate:report.date,index,matched:!!range&&index>=range[0]&&index<=range[1]};
+            covered.push(row);if(row.matched)matched.push(row);
+        }
+        const baseline=summarize(covered,direction),conditional=summarize(matched,direction);
+        const recentYear=year-5;
+        return {reference,referenceUsable,range,seasonal:summarize(seasonal,direction),baseline,conditional,
+            delta:baseline.count&&conditional.count?conditional.rate-baseline.rate:null,
+            missing,stale,missingIndex,cases:covered,
+            recentYear,older:summarize(matched.filter(s=>s.year<recentYear),direction),
+            recent:summarize(matched.filter(s=>s.year>=recentYear),direction)};
+    }
+    return {analyze,summarize,wilson};
+}));
