@@ -44,7 +44,7 @@
  const badge=status=>el('span',labels[status]||'Nedoloženo','run-badge is-'+(Object.hasOwn(labels,status)?status:'unknown'));
  const state=document.getElementById('runs-state'),history=document.getElementById('runs-history'),detail=document.getElementById('runs-detail'),refresh=document.getElementById('runs-refresh');
  const auditState=document.getElementById('runs-audit-state'),prev=document.getElementById('runs-prev'),next=document.getElementById('runs-next'),pageLabel=document.getElementById('runs-page');
- let runs=[],manifest=null,selected=null,frame='D1',latest=null,saved={runs:[]},audit=null;
+ let runs=[],manifest=null,selected=null,frame='D1',latest=null,saved={runs:[]},audit=null,auditSource=null,auditPending=false,dailyStateText='Načítám D1 reporty…';
  const views={D1:{page:1,selected:null},H4:{page:1,selected:null}};
  function receiptDetail(h){
   detail.append(el('h3',frame+' · '+time(h.receivedAt)),badge(h.status),el('p',h.source==='market_h4'?'Příjem H4 · původní forexové páry':'Příjem rozšíření · CFD / porovnávací krypto'));
@@ -76,37 +76,40 @@
   for(const [label,url]of sources){const a=el('a',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';links.append(a,document.createTextNode(' · '));}detail.append(links);
  }
  function render(){
+  state.textContent=frame==='D1'?dailyStateText:'H4 příjmy mají samostatný SQL audit. Datum poslední D1 analytiky neurčuje aktuálnost H4.';
   runs=auditRuns(latest,saved,audit,frame);const page=paginate(runs,views[frame].page);views[frame].page=page.page;
   history.replaceChildren();detail.replaceChildren();
   document.getElementById('runs-history-heading').textContent='Historie '+frame;
   for(const f of ['D1','H4'])document.getElementById('runs-'+f.toLowerCase()).setAttribute('aria-pressed',String(f===frame));
   for(const h of page.items){const b=el('button',null,'run-day');b.type='button';b.dataset.day=h.id;b.append(el('strong',h.kind==='receipt'?time(h.receivedAt):h.runDate),badge(h.status),el('small',h.kind==='receipt'?(h.source==='market_h4'?'H4 · původní FX':'Rozšíření · '+h.timeframes.join(' / ')):'D1 · analytika · '+time(h.runFinishedAt)));b.addEventListener('click',()=>show(h.id));history.append(b);}
-  prev.disabled=page.page===1;next.disabled=page.page===page.pages;pageLabel.textContent=page.page+' / '+page.pages+' · '+runs.length+' záznamů';
+  prev.disabled=page.page===1;next.disabled=page.page===page.pages;pageLabel.textContent=!runs.length&&auditPending?'Načítám záznamy…':page.page+' / '+page.pages+' · '+runs.length+' záznamů';
   selected=views[frame].selected;
   if(page.items.length)show(page.items.some(h=>h.id===selected)?selected:page.items[0].id);
-  else detail.append(el('p',frame==='H4'&&audit?.ready!==true?'Audit H4 není dostupný. Nelze z toho vyvozovat, zda sběr proběhl.':'Pro tento timeframe zatím nejsou uložené záznamy.'));
+  else detail.append(el('p',frame==='H4'&&audit?.ready!==true?(auditPending?'Načítám uložené H4 příjmy. Server se může probouzet; zatím nejde o potvrzení nulového počtu běhů.':'Audit H4 není dostupný. Nelze z toho vyvozovat, zda sběr proběhl.'):'Pro tento timeframe zatím nejsou uložené záznamy.'));
  }
  async function load(){
   if(refresh.disabled)return;refresh.disabled=true;
-  const pending=[true,true,true,true],errors=['','','',''];
+  if(audit)auditSource='cached';
+  const pending=[true,true,true,true,true],errors=['','','','',''];
   function update(){
    const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date());
-   state.textContent=(latest?(latest.runDate!==today?'Pro dnešní den zatím není uložený report analytiky. ':'')+(displayState(latest)==='failed'&&latest.status!=='failed'?'Pozor: poslední report je neaktuální. ':'')+'Poslední D1 analytika: '+time(latest.runFinishedAt)+'. ':pending[0]||pending[1]?'Načítám D1 reporty… ':'')+errors.filter(Boolean).join(' ')+(pending[2]?' Ověřuji manifest publikace…':'');
-   auditState.textContent=pending[3]?'Načítám SQL audit D1/H4… Dostupné D1 reporty lze prohlížet už nyní.':audit?.ready?'SQL audit k '+time(audit.asOf)+' · nejvýše '+audit.limitPerSource+' posledních dávek z každého SQL zdroje. Údaje se obnovují i bez publikace nových cen.':'SQL audit D1/H4 není dostupný. Stav sběru není ověřený. '+errors[3];
+   dailyStateText=(latest?(latest.runDate!==today?'Pro dnešní den zatím není uložený report analytiky. ':'')+(displayState(latest)==='failed'&&latest.status!=='failed'?'Pozor: poslední report je neaktuální. ':'')+'Poslední D1 analytika: '+time(latest.runFinishedAt)+'. ':pending[0]||pending[1]?'Načítám D1 reporty… ':'')+errors.slice(0,3).filter(Boolean).join(' ')+(pending[2]?' Ověřuji manifest publikace…':'');
+   auditPending=pending[3]||pending[4];
+   auditState.textContent=audit?.ready?(auditSource==='live'?'Živý SQL audit k ':auditSource==='published'?'Uložená zveřejněná kopie SQL auditu k ':'Poslední načtená kopie SQL auditu k ')+time(audit.asOf)+' · nejvýše '+audit.limitPerSource+' dávek z každého zdroje.'+(auditSource==='live'?'':pending[3]?' Živé API se ještě načítá.':' Živé API není dostupné; tato kopie nepotvrzuje novější příjmy. '+errors[3]):auditPending?'Načítám SQL audit D1/H4… Dostupné D1 reporty lze prohlížet už nyní.':'SQL audit D1/H4 není dostupný. Stav sběru není ověřený. '+errors.slice(3).filter(Boolean).join(' ');
    render();
   }
-  const urls=['/artifacts/daily-health/latest.json','/artifacts/daily-health/history.json','/data/manifest.json',root.dataset.auditUrl];
+  const urls=['/artifacts/daily-health/latest.json','/artifacts/daily-health/history.json','/data/manifest.json',root.dataset.auditUrl,'/data/data-runs/receipts.json'];
   update();
   try{await Promise.allSettled(urls.map(async(url,i)=>{
    try{
-    const data=await json(url);
+    const data=await json(url,i===3?35000:12000);
     if(i===0){if(data.schemaVersion!==1)throw Error('Nepodporovaný formát reportu.');latest=data;}
     if(i===1){if(data.schemaVersion!==1||!Array.isArray(data.runs))throw Error('Nepodporovaný formát historie.');saved=data;}
     if(i===2)manifest=data;
-    if(i===3){if(data.schemaVersion!==1||data.ready!==true||!Array.isArray(data.runs))throw Error('SQL audit není dostupný.');audit=data;}
+    if(i===3||i===4){if(data.schemaVersion!==1||data.ready!==true||!Array.isArray(data.runs)||!Number.isFinite(Date.parse(data.asOf)))throw Error('SQL audit není dostupný.');if(i===3){audit=data;auditSource='live';}else if(auditSource!=='live'&&(!audit||Date.parse(data.asOf)>=Date.parse(audit.asOf))){audit=data;auditSource='published';}}
    }catch(e){
     errors[i]=i===2?'Dostupnost publikované generace nelze ověřit.':e.message;
-    if(i===0)latest=null;if(i===1)saved={runs:[]};if(i===2)manifest=null;if(i===3)audit=null;
+    if(i===0)latest=null;if(i===1)saved={runs:[]};if(i===2)manifest=null;
    }finally{pending[i]=false;update();}
   }));}finally{refresh.disabled=false;}
  }

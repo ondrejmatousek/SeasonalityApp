@@ -118,6 +118,11 @@ jobs:
           dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --ensure-schema --load --output artifacts/h4-paper-previous.json
           node Tools/h4-paper-update.cjs artifacts/public-site artifacts/h4-paper-previous.json artifacts/h4-paper-next.json
           dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/h4-paper-next.json --output artifacts/public-site/data/h4-paper/ledger.json
+      - name: Publish read-only SQL receipt audit for same-origin fallback
+        if: steps.publication.outputs.run == 'true'
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --export-data-run-audit --output artifacts/public-site/data/data-runs/receipts.json
       - name: Exclude obsolete generated JSON from the free hosting bundle
         if: steps.publication.outputs.run == 'true'
         run: |

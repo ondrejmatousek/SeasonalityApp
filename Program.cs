@@ -126,6 +126,19 @@ builder.Services.AddControllersWithViews().ConfigureApplicationPartManager(parts
 });
 
 var app = builder.Build();
+if (args.Contains("--export-data-run-audit", StringComparer.Ordinal))
+{
+    var index = Array.IndexOf(args, "--output");
+    if(index<0||index+1>=args.Length)throw new ArgumentException("Audit output required.");
+    var output=Path.GetFullPath(args[index+1]);
+    if(!output.StartsWith(Path.GetFullPath("artifacts")+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||Path.GetExtension(output)!=".json")throw new ArgumentException("Audit output must be staged under artifacts.");
+    var snapshot=await app.Services.GetRequiredService<DataRunAudit>().Read(CancellationToken.None);
+    if(!snapshot.Ready)throw new InvalidOperationException("Cannot publish unavailable SQL audit.");
+    Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+    await File.WriteAllTextAsync(output,System.Text.Json.JsonSerializer.Serialize(snapshot,new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)));
+    Console.WriteLine($"Published audit snapshot: {snapshot.Runs.Count} actual SQL receipts; no SQL writes.");
+    return;
+}
 if (args.Contains("--render-static-shell", StringComparer.OrdinalIgnoreCase))
 {
     var outputIndex = Array.IndexOf(args, "--output");
