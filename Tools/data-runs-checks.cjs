@@ -14,6 +14,7 @@ const fresh={...old,runFinishedAt:'2026-10-14T04:00:00Z',status:'failed'};
 assert.equal(ui.mergeRuns(fresh,{runs:[old]}).length,1);assert.equal(ui.mergeRuns(fresh,{runs:[old]})[0].status,'failed');
 const audit={ready:true,runs:Array.from({length:19},(_,i)=>({id:String(i),source:'market_h4',timeframes:['H4'],receivedAt:new Date(Date.UTC(2026,9,19,0,i)).toISOString(),status:i===0?'Conflict':'Accepted',inserted:0,duplicates:12,volumeWarnings:0}))};
 const h4=ui.auditRuns(h,{runs:[old]},audit,'H4');assert.equal(h4.length,19);assert.ok(h4.every(x=>x.kind==='receipt'));assert.equal(h4.at(-1).status,'failed');
+const partial=ui.auditRuns(null,{}, {ready:true,runs:[{...audit.runs[0],status:'PartialConflict',inserted:27,blockedSymbols:['OANDA:EURUSD']}]},'H4')[0];assert.equal(partial.status,'warning');assert.equal(partial.partialAcceptance,true);assert.equal(partial.inserted,27);assert.deepEqual(partial.blockedSymbols,['OANDA:EURUSD']);
 assert.equal(ui.paginate(h4,1).items.length,8);assert.equal(ui.paginate(h4,3).items.length,3);assert.equal(ui.paginate(h4,99).page,3);assert.equal(ui.paginate([],1).pages,1);
 assert.equal(ui.auditRuns(h,{runs:[]},audit,'D1').length,1,'H4 never enters D1 history');
 assert.equal(ui.auditRuns(h,{runs:[]},{...audit,ready:false},'H4').length,0,'Unavailable SQL is not treated as successful receipts');

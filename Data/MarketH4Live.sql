@@ -8,7 +8,24 @@ CREATE TABLE market_h4.LiveReceipts(
  InsertedBars int NOT NULL,
  DuplicateBars int NOT NULL,
  ExcludedBars int NOT NULL,
- Status varchar(24) NOT NULL CHECK(Status IN ('Accepted','Conflict')));
+ Status varchar(24) NOT NULL CHECK(Status IN ('Accepted','Conflict','PartialConflict')));
+-- Preserve existing receipts; permit explicit per-symbol partial admission.
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+IF COL_LENGTH('market_h4.LiveReceipts','OhlcConflictsJson') IS NULL
+ ALTER TABLE market_h4.LiveReceipts ADD OhlcConflictsJson nvarchar(max) NULL;
+DECLARE @oldStatusCheck sysname;
+SELECT @oldStatusCheck=name FROM sys.check_constraints
+ WHERE parent_object_id=OBJECT_ID('market_h4.LiveReceipts')
+ AND definition LIKE '%Accepted%' AND definition NOT LIKE '%PartialConflict%';
+IF @oldStatusCheck IS NOT NULL
+BEGIN
+ DECLARE @changeStatusCheck nvarchar(max)='ALTER TABLE market_h4.LiveReceipts DROP CONSTRAINT '+QUOTENAME(@oldStatusCheck);
+ EXEC(@changeStatusCheck);
+ ALTER TABLE market_h4.LiveReceipts ADD CONSTRAINT CK_H4LiveReceipts_Status
+ CHECK(Status IN ('Accepted','Conflict','PartialConflict'));
+END;
+COMMIT;
 -- Nullable additions preserve legacy receipts and their original decisions.
 IF COL_LENGTH('market_h4.LiveReceipts','ComparisonPolicy') IS NULL
  ALTER TABLE market_h4.LiveReceipts ADD ComparisonPolicy varchar(48) NULL;

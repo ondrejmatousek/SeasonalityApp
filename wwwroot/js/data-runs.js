@@ -28,7 +28,7 @@
  function time(value){const n=Date.parse(value);return Number.isFinite(n)?new Date(n).toLocaleString('cs-CZ',{timeZone:'Europe/Prague'}):'—';}
  function auditRuns(latest,history,audit,frame){
   const daily=frame==='D1'?mergeRuns(latest,history).map(h=>({...h,id:h.runDate,kind:'analytics'})):[];
-  const receipts=(audit?.ready===true?audit.runs||[]:[]).filter(r=>r.timeframes?.includes(frame)).map(r=>({...r,id:r.source+':'+r.id,receiptId:r.id,kind:'receipt',runFinishedAt:r.receivedAt,status:r.status==='Accepted'?(r.volumeWarnings?'warning':'ok'):'failed'}));
+  const receipts=(audit?.ready===true?audit.runs||[]:[]).filter(r=>r.timeframes?.includes(frame)).map(r=>({...r,id:r.source+':'+r.id,receiptId:r.id,kind:'receipt',partialAcceptance:r.status==='PartialConflict',runFinishedAt:r.receivedAt,status:r.status==='Accepted'?(r.volumeWarnings?'warning':'ok'):r.status==='PartialConflict'?'warning':'failed'}));
   return [...daily,...receipts].sort((a,b)=>(Date.parse(b.runFinishedAt)||0)-(Date.parse(a.runFinishedAt)||0)||a.id.localeCompare(b.id));
  }
  function paginate(items,page,size=8){const pages=Math.max(1,Math.ceil(items.length/size)),current=Math.max(1,Math.min(pages,page));return {page:current,pages,items:items.slice((current-1)*size,current*size)};}
@@ -51,6 +51,7 @@
   const meta=el('dl',null,'runs-meta');
   for(const [k,v]of [['Čas přijetí do SQL',time(h.receivedAt)],['Timeframe dávky',h.timeframes.join(' + ')],['Symboly',h.symbols],['Vstupní bary',h.receivedBars],['Nově vloženo',h.inserted],['Duplicity',h.duplicates],['Vyřazeno',h.excluded],['Volume upozornění',h.volumeWarnings],['Typ',h.historical?'Historické doplnění':'SQL příjem'],['Receipt ID',h.receiptId]])meta.append(el('dt',k),el('dd',v));
   detail.append(meta,el('p','Počty platí pro celou SQL dávku. Jedna úloha Work může odeslat více samostatných dávek.','runs-note'));
+  if(h.partialAcceptance)detail.append(el('p','Částečné přijetí: bezkonfliktní páry byly zpracovány. Zablokované páry: '+(h.blockedSymbols||[]).join(', ')+'. Žádné jejich nové bary z této dávky nebyly uloženy; původní ceny zůstaly beze změny.','runs-warning'));
   if(h.source==='market_h4'){meta.querySelector('dt').textContent='Uložený čas kolekce';detail.append(el('p','Starší H4 příjem ukládal do časového údaje čas kolekce z obálky. Nejde o nezávisle změřený začátek nebo konec úlohy Work.'));}
   detail.append(el('p',h.status==='failed'?'Dávka obsahovala konflikt; přijetí nových svíček není potvrzené.':h.inserted===0?'Dávka neobsahovala žádné nové uložené svíčky. Duplicity nejsou chyba.':'Nové svíčky byly uloženy do SQL.'));
   detail.append(el('p','Tento záznam potvrzuje pouze výsledek SQL příjmu, nikoli dokončení celé úlohy Work, výpočtů nebo publikace. Neodeslaný či přeskočený běh zde nemá receipt. H4 se používá pouze pro obchodní zóny; porovnávací krypto nenahrazuje Yahoo.','runs-note'));

@@ -51,8 +51,19 @@ static class H4LiveChecks
    string Mixed(decimal firstClose)=>JsonSerializer.Serialize(new{schemaVersion=1,fetchedAt=at.AddHours(4).ToString("O"),captures=new[]{new{capturedAt=at.AddHours(4).ToString("O"),rawJson=JsonSerializer.Serialize(new{success=true,symbol="OANDA:EURUSD",interval="4h",format="rows",count=4,bars=Enumerable.Range(0,4).Select(i=>new{t=t+i*14400,o=1.1m,h=1.2m,l=1.0m,c=i==0?firstClose:1.1m,v=i==0?(int?)101:i==1?null:120}).ToArray()})}}});
    var mixedConflict=await store.Receive(MarketH4Ingestion.Parse(Mixed(1.11m),at.AddHours(4),allowed),default);Check(mixedConflict.Status=="Conflict"&&mixedConflict.InsertedBars==0,"One OHLC conflict blocks the whole batch including new bars");
    var mixed=await store.Receive(MarketH4Ingestion.Parse(Mixed(1.1m),at.AddHours(4),allowed),default);Check(mixed.Status=="Accepted"&&mixed.InsertedBars==1&&mixed.DuplicateBars==2&&mixed.VolumeDifferences?.Length==1,"Volume warning does not block new unrelated bars");
+   using(var one=JsonDocument.Parse(Mixed(1.11m)))
+   {
+    var capture=one.RootElement.GetProperty("captures")[0];
+    using var healthy=JsonDocument.Parse(Mixed(1.1m));
+    var multi=JsonSerializer.Serialize(new{schemaVersion=1,fetchedAt=at.AddHours(4).ToString("O"),captures=new[]{capture.Clone(),JsonSerializer.SerializeToElement(new{capturedAt=at.AddHours(4).ToString("O"),rawJson=healthy.RootElement.GetProperty("captures")[0].GetProperty("rawJson").GetString()!.Replace("EURUSD","GBPUSD")})}});
+    var partialBatch=MarketH4Ingestion.Parse(multi,at.AddHours(4),new HashSet<string>{"OANDA:EURUSD","OANDA:GBPUSD"});
+    var partial=await store.Receive(partialBatch,default);
+    Check(partial.Status=="PartialConflict"&&partial.InsertedBars==1&&partial.DuplicateBars==5&&partial.OhlcConflicts?.Single().Symbol=="OANDA:EURUSD","Only conflicted symbol quarantined; healthy GBPUSD inserted");
+    var replay=await store.Receive(partialBatch,default);
+    Check(replay.Duplicate&&replay.Status==partial.Status&&replay.InsertedBars==partial.InsertedBars&&replay.OhlcConflicts!.SequenceEqual(partial.OhlcConflicts!)&&replay.Admission==MarketH4Store.AdmissionPolicy,"Partial receipt and conflict evidence immutable on exact retry");
+   }
    await H4ReceiptAudit.Run(db,conflict.ReceiptId); // Read-only audit must leave all counts and D1 unchanged below.
-   await using var count=new SqlCommand($"SELECT (SELECT COUNT(*) FROM market_h4.LiveBars),(SELECT COUNT(*) FROM market_h4.LiveReceipts),(SELECT SUM(Value) FROM dbo.D1Sentinel),(SELECT COUNT(*) FROM market_h4.LiveBars WHERE Volume IS NULL),(SELECT Volume FROM market_h4.LiveBars WHERE Symbol='OANDA:EURUSD' AND StartUnix={t}),(SELECT Volume FROM market_h4.Bars WHERE Symbol='OANDA:GBPUSD' AND StartUnix={t})",db);await using var r=await count.ExecuteReaderAsync();await r.ReadAsync();Check(r.GetInt32(0)==3&&r.GetInt32(1)==10&&r.GetInt32(2)==39&&r.GetInt32(3)==1&&r.GetDecimal(4)==100&&r.GetDecimal(5)==100,"SQL isolation/idempotency and unchanged live/historical volumes including null");
+   await using var count=new SqlCommand($"SELECT (SELECT COUNT(*) FROM market_h4.LiveBars),(SELECT COUNT(*) FROM market_h4.LiveReceipts),(SELECT SUM(Value) FROM dbo.D1Sentinel),(SELECT COUNT(*) FROM market_h4.LiveBars WHERE Volume IS NULL),(SELECT Volume FROM market_h4.LiveBars WHERE Symbol='OANDA:EURUSD' AND StartUnix={t}),(SELECT Volume FROM market_h4.Bars WHERE Symbol='OANDA:GBPUSD' AND StartUnix={t})",db);await using var r=await count.ExecuteReaderAsync();await r.ReadAsync();Check(r.GetInt32(0)==4&&r.GetInt32(1)==11&&r.GetInt32(2)==39&&r.GetInt32(3)==1&&r.GetDecimal(4)==100&&r.GetDecimal(5)==100,"SQL isolation/idempotency and unchanged live/historical volumes including null");
   }
   finally{await Exec(admin,$"ALTER DATABASE [{name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{name}]");}
   Console.WriteLine("PASS: real isolated H4 SQL, durable volume-only audits and retries, unchanged historical/live volumes including null, mixed-batch admission, strict OHLC conflicts, immutable legacy decisions, raw hashes and unchanged D1 sentinel.");

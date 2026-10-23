@@ -8,6 +8,10 @@ const raw={success:true,symbol:'OANDA:EURUSD',interval:'4h',format:'columns',cou
 const payloadText=JSON.stringify({schemaVersion:1,fetchedAt:new Date(at).toISOString(),captures:[{capturedAt:new Date(at).toISOString(),rawJson:JSON.stringify(raw)}]}),receiptId=crypto.createHash('sha256').update(payloadText).digest('hex');
 const receipt={receiptId,payloadText,receivedAt:new Date(at).toISOString()},row={receiptId,symbol:raw.symbol,timestamp:t,open:1,high:2,low:.5,close:1.5,volume:null},live={rule:'oanda-h4-boundary-v1',rows:[row],receipts:[receipt]};
 const prices=()=>({EURUSD:{symbol:raw.symbol,bars:[],validatedBarCount:0}});const p=prices();V.merge(p,live);assert.equal(p.EURUSD.bars.length,1);assert.equal(p.EURUSD.liveRule,live.rule);assert.equal(p.EURUSD.latestClose,1.5);
+const partial={...live,receipts:[{...receipt,status:'PartialConflict',blockedSymbols:['OANDA:GBPUSD']}]};assert.equal(V.merge(prices(),partial).acceptedRows,1);
+assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,status:'PartialConflict',blockedSymbols:['OANDA:EURUSD']}]}),/Conflicted symbol/);
+assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,status:'PartialConflict'}]}),/blocked symbols/);
+assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,status:'Conflict'}]}),/Unaccepted/);
 assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,close:1.6}]}),/mismatch/);
 assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,payloadText:payloadText+' '}]}),/equal/);
 assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,timestamp:t+14400}]}),/boundary/);
