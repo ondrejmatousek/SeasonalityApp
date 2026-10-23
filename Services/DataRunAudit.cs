@@ -12,7 +12,7 @@ public sealed class DataRunAudit(IConfiguration config, IMemoryCache cache)
     private readonly SemaphoreSlim gate = new(1, 1);
     public sealed record Entry(string Id, string Source, string[] Timeframes, DateTimeOffset ReceivedAt,
         string Status, int Inserted, int Duplicates, int Excluded, int Symbols, int ReceivedBars,
-        int VolumeWarnings, bool Historical, string[]? BlockedSymbols = null, int OhlcConflictRows = 0);
+        int VolumeWarnings, bool Historical, string[]? BlockedSymbols = null, int? OhlcConflictRows = null);
     public sealed record Snapshot(int SchemaVersion, bool Ready, DateTimeOffset AsOf, int LimitPerSource,
         List<Entry> Runs, string? Code = null);
     public static void Register(IServiceCollection services)
@@ -74,7 +74,7 @@ public sealed class DataRunAudit(IConfiguration config, IMemoryCache cache)
                     var conflicts=reader.IsDBNull(8)?null:JsonSerializer.Deserialize<MarketH4Store.OhlcConflict[]>(reader.GetString(8));
                     entries.Add(new(reader.GetString(0), source, frames.Order().ToArray(), reader.GetDateTimeOffset(1),
                         reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4), reader.GetInt32(5), symbols.Count, received, warnings, historical,
-                        conflicts?.Select(c=>c.Symbol).Distinct().Order().ToArray(),conflicts?.Length??0));
+                        conflicts?.Select(c=>c.Symbol).Distinct().Order().ToArray(),conflicts?.Length));
                 }
             }
             var snapshot = new Snapshot(1, true, DateTimeOffset.UtcNow, 200, entries);
