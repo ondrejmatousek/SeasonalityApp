@@ -61,15 +61,20 @@ for(const p of Object.values(h.prices).filter(p=>p.status==='ready'))for(const t
  const found=Z.detect(p,tf,h.asOf,options),keys=found.map(z=>JSON.stringify([z.timeframe,z.type,z.lower,z.upper,z.confirmedAt]));assert.equal(new Set(keys).size,keys.length,'No duplicate physical zones for any instrument/timeframe/parameter variant');
 }
 const cad=Z.detect(h.prices.CADJPY,'D1',h.asOf).filter(z=>z.baseDate==='2025-12-04'&&z.confirmedAt==='2025-12-09'&&z.type==='demand');assert.equal(cad.length,0,'CADJPY screenshot zone already mitigated by a wick must be absent');
-const nzd=Z.detect(h.prices.NZDCHF,'D1',h.asOf).filter(z=>z.type==='supply'&&z.confirmedAt==='2026-10-02');
+// The screenshot was captured after October 16. Future live candles may correctly
+// invalidate this zone; they must not change the historical screenshot regression.
+// Live-snapshot invariants above/below still exercise ALL current provider bars.
+const screenshotAsOf='2026-10-17',screenshotBars=h.prices.NZDCHF.bars.filter(b=>b.date<screenshotAsOf);
+const screenshotNzd={...h.prices.NZDCHF,weekly:undefined,bars:screenshotBars,latestClose:screenshotBars.at(-1).close};
+const nzd=Z.detect(screenshotNzd,'D1',screenshotAsOf).filter(z=>z.type==='supply'&&z.confirmedAt==='2026-10-02');
 assert.equal(nzd.length,1,'NZDCHF screenshot: only one zone for the September 30 origin');
 assert.equal(nzd[0].baseDate,'2026-09-30');assert.equal(nzd[0].baseEnd,'2026-09-30');
 assert.equal(nzd[0].lower,.47008);assert.equal(nzd[0].upper,.4718);assert.deepEqual(nzd[0].kinds,['origin']);
-const mirroredNzd={...h.prices.NZDCHF,weekly:undefined,bars:h.prices.NZDCHF.bars.map(b=>({...b,open:1-b.open,high:1-b.low,low:1-b.high,close:1-b.close})),latestClose:1-h.prices.NZDCHF.latestClose};
-const demandNzd=Z.detect(mirroredNzd,'D1',h.asOf).filter(z=>z.type==='demand'&&z.confirmedAt==='2026-10-02');
+const mirroredNzd={...screenshotNzd,bars:screenshotBars.map(b=>({...b,open:1-b.open,high:1-b.low,low:1-b.high,close:1-b.close})),latestClose:1-screenshotNzd.latestClose};
+const demandNzd=Z.detect(mirroredNzd,'D1',screenshotAsOf).filter(z=>z.type==='demand'&&z.confirmedAt==='2026-10-02');
 assert.equal(demandNzd.length,1);assert.equal(demandNzd[0].baseDate,'2026-09-30');assert.equal(demandNzd[0].lower,1-.4718);assert.equal(demandNzd[0].upper,1-.47008);
-const hitNzd={...h.prices.NZDCHF,bars:[...h.prices.NZDCHF.bars,{date:h.asOf,open:.466,high:.47051,low:.465,close:.466,volume:100}],latestClose:.466};
-const afterHit=Z.detect(hitNzd,'D1',new Date(Date.parse(h.asOf)+86400000).toISOString().slice(0,10));
+const hitNzd={...screenshotNzd,bars:[...screenshotBars,{date:screenshotAsOf,open:.466,high:.47051,low:.465,close:.466,volume:100}],latestClose:.466};
+const afterHit=Z.detect(hitNzd,'D1','2026-10-18');
 assert.ok(!afterHit.some(z=>z.type==='supply'&&['2026-09-29','2026-09-30'].includes(z.baseDate)&&z.confirmedAt==='2026-10-02'),'A 25% hit of the selected candle never resurrects the wider base');
 assert.ok(rows.some(z=>z.kind==='base'),'Continuation bases without opposing candles remain supported');
 const cadLife=Z.lifecycle(h.prices.CADJPY.bars,'demand',110.604,111.401,'2025-12-09');assert.equal(cadLife.invalid,true);assert.equal(cadLife.invalidatedAt,'2026-08-03','First invalidating wick in the screenshot is on August 3');
