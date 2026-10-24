@@ -228,12 +228,72 @@
         "fetchedAt": "2026-10-22T13:03:14.603Z",
         "runId": "operator-recovery-20261022"
       }
+    },
+    {
+      "timestamp": 1792627200,
+      "providerTimestamp": "2026-10-22T00:00:00.000Z",
+      "providerUtcDate": "2026-10-22",
+      "date": "2026-10-22",
+      "open": 1258,
+      "high": 1272.25,
+      "low": 1255,
+      "close": 1264.75,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 22 October 2026: original raw timestamp 2026-10-22T00:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:41.861Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/markets/agriculture/oilseeds/soybean/specs?videoId=6396076970112",
+            "finding": "Globex ZS futures hours 19:00-07:45 CT and weekdays 08:30-13:20 CT; original 00:00 UTC timestamp maps to preceding 19:00 Chicago session start."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "Read 2026 CME Globex Trading Schedule: holiday ranges run September 6-8 then November 26-28; neither October 22 nor 23 is listed as a holiday exception. Chicago daylight saving applies on both dates."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "03e3dcede8f533b337085870ab78117c2d0fd437dbca3f654e65fed880f319c4",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "6e02f46a-4a13-4f9b-ad8a-219e94575e85"
+      }
+    },
+    {
+      "timestamp": 1792713600,
+      "providerTimestamp": "2026-10-23T00:00:00.000Z",
+      "providerUtcDate": "2026-10-23",
+      "date": "2026-10-23",
+      "open": 1264.75,
+      "high": 1275.5,
+      "low": 1263.5,
+      "close": 1268.5,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 23 October 2026: original raw timestamp 2026-10-23T00:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:41.861Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/markets/agriculture/oilseeds/soybean/specs?videoId=6396076970112",
+            "finding": "Globex ZS futures hours 19:00-07:45 CT and weekdays 08:30-13:20 CT; original 00:00 UTC timestamp maps to preceding 19:00 Chicago session start."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "Read 2026 CME Globex Trading Schedule: holiday ranges run September 6-8 then November 26-28; neither October 22 nor 23 is listed as a holiday exception. Chicago daylight saving applies on both dates."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "25d3fa08-4d8c-469e-9d3e-2ffde7d7cb12"
+      }
     }
-  ],
-  "recovery": {
-    "mode": "operator-recovery-20261022",
-    "originalSqlAuditRestored": false,
-    "sourceRawSha256": "dbee0b04ba711292b0d5ab1c55cb81ba66a5e70ab0a98bdaf6f52a3df624c895",
-    "overlapRevisions": []
-  }
+  ]
 }

@@ -268,66 +268,72 @@
         "fetchedAt": "2026-10-22T13:03:12.209Z",
         "runId": "operator-recovery-20261022"
       }
-    }
-  ],
-  "recovery": {
-    "mode": "operator-recovery-20261022",
-    "originalSqlAuditRestored": false,
-    "sourceRawSha256": "f19daad95f92072d1384e6f05546ef2c2a99c54fb2b743317a96a43cde47f70e",
-    "overlapRevisions": [
-      {
-        "timestamp": 1792360800,
-        "kept": {
-          "timestamp": 1792360800,
-          "providerTimestamp": "2026-10-18T22:00:00.000Z",
-          "providerUtcDate": "2026-10-18",
-          "date": "2026-10-18",
-          "open": 3.09,
-          "high": 3.184,
-          "low": 3.029,
-          "close": 3.04,
-          "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
-          "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
-          "documentedCompletion": {
-            "method": "documented_session_and_bar_timestamp",
-            "reason": "Documented NYMEX:NG1! D1 session and original bar timestamp identify trade date 2026-10-19. At 2026-10-20T01:08:07.865Z local 2026-10-19 20:08:07 is after conservative completion cutoff 17:00:00. CME 2026 Globex holiday schedule: 19 October outside holiday dates. Cutoff is not asserted as exact feed time_close. History/next bar not used as proof.",
-            "checkedAt": "2026-10-20T01:08:07.865Z",
-            "timezone": "America/Chicago",
-            "sources": [
-              {
-                "url": "https://www.cmegroup.com/cn-s/markets/energy/natural-gas/natural-gas.contractSpecs.html",
-                "finding": "Natural gas Globex 18:00-17:00 Eastern, equivalent 17:00-16:00 Chicago."
-              },
-              {
-                "url": "https://www.cmegroup.com/trading-hours.html",
-                "finding": "2026 product holiday calendar: October 19 is a regular trading day; all times Chicago unless specified."
-              },
-              {
-                "url": "https://www.cmegroup.com/articles/whitepapers/leveraging-cme-group-asia-trading-hours-liquidity-for-cross-commodity-trading.html",
-                "finding": "CME Globex energy/metals 17:00-16:00 CT; grains 19:00-07:45 and08:30-13:20 CT."
-              }
-            ]
+    },
+    {
+      "timestamp": 1792620000,
+      "providerTimestamp": "2026-10-21T22:00:00.000Z",
+      "providerUtcDate": "2026-10-21",
+      "date": "2026-10-21",
+      "open": 2.78,
+      "high": 2.838,
+      "low": 2.726,
+      "close": 2.796,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 22 October 2026: original raw timestamp 2026-10-21T22:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:27.179Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/markets/energy/natural-gas/natural-gas.timeAndSales.html?gad=1",
+            "finding": "Contract highlights identify Globex NG futures Sun-Fri 17:00-16:00 CT with daily 60-minute break at 16:00, separate TAS schedule."
           },
-          "ingestion": {
-            "inputSha256": "47714e448e8a6423551d708f495f1e4bc48971966bbf54237aeb9e75e195c0e1",
-            "fetchedAt": "2026-10-20T01:08:07.865Z",
-            "runId": "a0a95132-29eb-480b-9857-5f0071d67b22"
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "Read 2026 CME Globex Trading Schedule: holiday ranges run September 6-8 then November 26-28; neither October 22 nor 23 is listed as a holiday exception. Chicago daylight saving applies on both dates."
           }
-        },
-        "incoming": {
-          "timestamp": 1792360800,
-          "providerTimestamp": "2026-10-18T22:00:00.000Z",
-          "providerUtcDate": "2026-10-18",
-          "date": "2026-10-18",
-          "open": 3.09,
-          "high": 3.184,
-          "low": 3.029,
-          "close": 3.039,
-          "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
-          "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable"
-        },
-        "decision": "Retain previously admitted immutable value; revision preserved for explicit source review"
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "03e3dcede8f533b337085870ab78117c2d0fd437dbca3f654e65fed880f319c4",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "6e02f46a-4a13-4f9b-ad8a-219e94575e85"
       }
-    ]
-  }
+    },
+    {
+      "timestamp": 1792706400,
+      "providerTimestamp": "2026-10-22T22:00:00.000Z",
+      "providerUtcDate": "2026-10-22",
+      "date": "2026-10-22",
+      "open": 2.787,
+      "high": 2.792,
+      "low": 2.62,
+      "close": 2.64,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 23 October 2026: original raw timestamp 2026-10-22T22:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:27.179Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/markets/energy/natural-gas/natural-gas.timeAndSales.html?gad=1",
+            "finding": "Contract highlights identify Globex NG futures Sun-Fri 17:00-16:00 CT with daily 60-minute break at 16:00, separate TAS schedule."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "Read 2026 CME Globex Trading Schedule: holiday ranges run September 6-8 then November 26-28; neither October 22 nor 23 is listed as a holiday exception. Chicago daylight saving applies on both dates."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "25d3fa08-4d8c-469e-9d3e-2ffde7d7cb12"
+      }
+    }
+  ]
 }

@@ -268,12 +268,72 @@
         "fetchedAt": "2026-10-22T13:03:10.753Z",
         "runId": "operator-recovery-20261022"
       }
+    },
+    {
+      "timestamp": 1792620000,
+      "providerTimestamp": "2026-10-21T22:00:00.000Z",
+      "providerUtcDate": "2026-10-21",
+      "date": "2026-10-21",
+      "open": 97.78,
+      "high": 100.17,
+      "low": 97.72,
+      "close": 99.47,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 22 October 2026: original raw timestamp 2026-10-21T22:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:27.210Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/education/courses/introduction-to-crude-oil/product-overview/wti-overview",
+            "finding": "The Contract explicitly identifies CL WTI futures trading Sun-Fri 17:00-16:00 Central with one-hour break beginning 16:00; not OANDA CFD or options."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "Read 2026 CME Globex Trading Schedule: holiday ranges run September 6-8 then November 26-28; neither October 22 nor 23 is listed as a holiday exception. Chicago daylight saving applies on both dates."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "03e3dcede8f533b337085870ab78117c2d0fd437dbca3f654e65fed880f319c4",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "6e02f46a-4a13-4f9b-ad8a-219e94575e85"
+      }
+    },
+    {
+      "timestamp": 1792706400,
+      "providerTimestamp": "2026-10-22T22:00:00.000Z",
+      "providerUtcDate": "2026-10-22",
+      "date": "2026-10-22",
+      "open": 99.1,
+      "high": 103.92,
+      "low": 98.84,
+      "close": 103.27,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 23 October 2026: original raw timestamp 2026-10-22T22:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:27.210Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/Chicago",
+        "sources": [
+          {
+            "url": "https://www.cmegroup.com/education/courses/introduction-to-crude-oil/product-overview/wti-overview",
+            "finding": "The Contract explicitly identifies CL WTI futures trading Sun-Fri 17:00-16:00 Central with one-hour break beginning 16:00; not OANDA CFD or options."
+          },
+          {
+            "url": "https://www.cmegroup.com/trading-hours.html",
+            "finding": "Read 2026 CME Globex Trading Schedule: holiday ranges run September 6-8 then November 26-28; neither October 22 nor 23 is listed as a holiday exception. Chicago daylight saving applies on both dates."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "25d3fa08-4d8c-469e-9d3e-2ffde7d7cb12"
+      }
     }
-  ],
-  "recovery": {
-    "mode": "operator-recovery-20261022",
-    "originalSqlAuditRestored": false,
-    "sourceRawSha256": "31a2be09ae4c76c135e57143c1b0a9a4bd7052f86368aaf2c50f987e9b2d66d0",
-    "overlapRevisions": []
-  }
+  ]
 }

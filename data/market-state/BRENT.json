@@ -227,12 +227,72 @@
         "fetchedAt": "2026-10-22T13:03:12.357Z",
         "runId": "operator-recovery-20261022"
       }
+    },
+    {
+      "timestamp": 1792627200,
+      "providerTimestamp": "2026-10-22T00:00:00.000Z",
+      "providerUtcDate": "2026-10-22",
+      "date": "2026-10-22",
+      "open": 110.04,
+      "high": 113.5,
+      "low": 109.81,
+      "close": 113.17,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 22 October 2026: original raw timestamp 2026-10-22T00:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:27.889Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "Europe/London",
+        "sources": [
+          {
+            "url": "https://www.ice.com/products/219/Brent-Crude-Futures",
+            "finding": "ICE Europe Brent logical code BRN, London trading 01:00-23:00; 19:28 settlement window is not close. Original 00:00 UTC equals 01:00 London BST."
+          },
+          {
+            "url": "https://www.ice.com/publicdocs/Trading_Schedule.pdf",
+            "finding": "Read July 2026 IFEU trading schedule: September 7 followed by November 6 exceptions; no October 22/23 exception for Brent."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "03e3dcede8f533b337085870ab78117c2d0fd437dbca3f654e65fed880f319c4",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "6e02f46a-4a13-4f9b-ad8a-219e94575e85"
+      }
+    },
+    {
+      "timestamp": 1792713600,
+      "providerTimestamp": "2026-10-23T00:00:00.000Z",
+      "providerUtcDate": "2026-10-23",
+      "date": "2026-10-23",
+      "open": 113.15,
+      "high": 117.45,
+      "low": 112.74,
+      "close": 116.72,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 23 October 2026: original raw timestamp 2026-10-23T00:00:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:27.889Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "Europe/London",
+        "sources": [
+          {
+            "url": "https://www.ice.com/products/219/Brent-Crude-Futures",
+            "finding": "ICE Europe Brent logical code BRN, London trading 01:00-23:00; 19:28 settlement window is not close. Original 00:00 UTC equals 01:00 London BST."
+          },
+          {
+            "url": "https://www.ice.com/publicdocs/Trading_Schedule.pdf",
+            "finding": "Read July 2026 IFEU trading schedule: September 7 followed by November 6 exceptions; no October 22/23 exception for Brent."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "25d3fa08-4d8c-469e-9d3e-2ffde7d7cb12"
+      }
     }
-  ],
-  "recovery": {
-    "mode": "operator-recovery-20261022",
-    "originalSqlAuditRestored": false,
-    "sourceRawSha256": "b480758e940ee11940aab1b9d98e691b0ff9205cf5b9a9778ec6929de5392efb",
-    "overlapRevisions": []
-  }
+  ]
 }

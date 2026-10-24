@@ -277,12 +277,72 @@
         "fetchedAt": "2026-10-22T13:03:18.212Z",
         "runId": "operator-recovery-20261022"
       }
+    },
+    {
+      "timestamp": 1792675800,
+      "providerTimestamp": "2026-10-22T13:30:00.000Z",
+      "providerUtcDate": "2026-10-22",
+      "date": "2026-10-22",
+      "open": 29304.3017,
+      "high": 29411.7621,
+      "low": 28855.0993,
+      "close": 28958.6878,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 22 October 2026: original raw timestamp 2026-10-22T13:30:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:16.149Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "url": "https://beta.indexes.nasdaq.com/docs/methodology_NDX.pdf",
+            "finding": "2026 methodology calculates on weekdays except US closures; dissemination 09:30:01-17:16 ET, closing corrections possible until 17:15 ET."
+          },
+          {
+            "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+            "finding": "2026 holiday table contains no October 22/23 closure or early close; regular market 09:30-16:00 Eastern."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "03e3dcede8f533b337085870ab78117c2d0fd437dbca3f654e65fed880f319c4",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "6e02f46a-4a13-4f9b-ad8a-219e94575e85"
+      }
+    },
+    {
+      "timestamp": 1792762200,
+      "providerTimestamp": "2026-10-23T13:30:00.000Z",
+      "providerUtcDate": "2026-10-23",
+      "date": "2026-10-23",
+      "open": 28847.8158,
+      "high": 29161.0295,
+      "low": 28825.7245,
+      "close": 28957.5283,
+      "dateLabel": "provider timestamp UTC calendar date (session-end not verified)",
+      "completionEvidence": "Documented session/calendar audit; exact provider sessionEnd unavailable",
+      "documentedCompletion": {
+        "method": "documented_session_and_bar_timestamp",
+        "reason": "Session 23 October 2026: original raw timestamp 2026-10-23T13:30:00.000Z and OHLC matched without alteration. Product-specific documented session and calendar findings below establish elapsed session at actual Saturday capture 2026-10-24T13:42:16.149Z; applicable IANA DST: New York UTC-4, Chicago UTC-5, London UTC+1. Conservative contract audit window has also elapsed. Not independent calendar certification; exact feed sessionEnd left null. Continuous futures roll/back-adjustment unknown.",
+        "checkedAt": "2026-10-24T13:44:06.894Z",
+        "timezone": "America/New_York",
+        "sources": [
+          {
+            "url": "https://beta.indexes.nasdaq.com/docs/methodology_NDX.pdf",
+            "finding": "2026 methodology calculates on weekdays except US closures; dissemination 09:30:01-17:16 ET, closing corrections possible until 17:15 ET."
+          },
+          {
+            "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule",
+            "finding": "2026 holiday table contains no October 22/23 closure or early close; regular market 09:30-16:00 Eastern."
+          }
+        ]
+      },
+      "ingestion": {
+        "inputSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "25d3fa08-4d8c-469e-9d3e-2ffde7d7cb12"
+      }
     }
-  ],
-  "recovery": {
-    "mode": "operator-recovery-20261022",
-    "originalSqlAuditRestored": false,
-    "sourceRawSha256": "aaf2273975ee741454f0dc1ed112266d88b254d6b12c7e035690e18b3f2e27c2",
-    "overlapRevisions": []
-  }
+  ]
 }

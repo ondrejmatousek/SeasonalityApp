@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ok",
-  "runDate": "2026-10-20",
-  "runStartedAt": "2026-10-20T01:11:59.168Z",
-  "runFinishedAt": "2026-10-20T01:24:02.329Z",
-  "sourceCommit": "9aead185fe8cd0bdb870c28e13e8a49a1b9a5834",
-  "workflowUrl": "https://github.com/ondrejmatousek/SeasonalityApp/actions/runs/39351960682",
-  "marketDailyFetchedAt": "2026-10-20T01:08:07.865Z",
+  "runDate": "2026-10-24",
+  "runStartedAt": "2026-10-24T13:53:36.279Z",
+  "runFinishedAt": "2026-10-24T14:06:36.096Z",
+  "sourceCommit": "1d72aa14244e374dcb9f7f0ff16fbb0916c8b414",
+  "workflowUrl": "https://github.com/ondrejmatousek/SeasonalityApp/actions/runs/40099984150",
+  "marketDailyFetchedAt": "2026-10-24T13:44:06.894Z",
   "market": {
     "status": "ok",
     "received": 39,
@@ -14,13 +14,13 @@
     "duplicates": 39,
     "failed": 0,
     "failedSymbols": [],
-    "inputSha256": "47714e448e8a6423551d708f495f1e4bc48971966bbf54237aeb9e75e195c0e1"
+    "inputSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a"
   },
   "stocks": {
     "status": "ok",
     "refresh": {
-      "startedAt": "2026-10-20T01:12:04.8671597+00:00",
-      "finishedAt": "2026-10-20T01:22:02.404488+00:00",
+      "startedAt": "2026-10-24T13:53:42.1355065+00:00",
+      "finishedAt": "2026-10-24T14:04:35.6386004+00:00",
       "attempted": 457,
       "yahooSucceeded": [
         "DBC",
@@ -486,12 +486,12 @@
       "fallbackSucceeded": [],
       "failedSymbols": []
     },
-    "snapshotAt": "2026-10-20T01:23:07.980Z",
-    "lastBarDate": "2026-10-16"
+    "snapshotAt": "2026-10-24T14:05:41.979Z",
+    "lastBarDate": "2026-10-23"
   },
   "cot": {
     "status": "ok",
-    "latestPositionsDate": "2026-10-13",
+    "latestPositionsDate": "2026-10-20",
     "contracts": 62
   },
   "seasonality": {
@@ -506,15 +506,15 @@
   "staticExport": {
     "status": "ok"
   },
-  "seasonalityCandidates": 121,
-  "zoneCandidates": 180,
-  "screenerRows": 121,
+  "seasonalityCandidates": 120,
+  "zoneCandidates": 175,
+  "screenerRows": 120,
   "instrumentChecks": [
     {
       "symbol": "AAPL",
       "historicalSource": "existing-stock-sql",
       "dailySource": "existing Yahoo stock refresh → SQL → fresh static export",
-      "lastBarDate": "2026-10-16",
+      "lastBarDate": "2026-10-23",
       "seasonalitySource": "existing-stock-sql",
       "htfSource": null,
       "provider": "Yahoo",
@@ -523,8 +523,8 @@
     {
       "symbol": "EURUSD",
       "historicalSource": "validated-v2/series/EURUSD.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 04f73a28d95223b2dc6c8a374765c0e0fcb85fa1b68a7a12d480d0e2cae6e314",
-      "lastBarDate": "2026-10-19",
+      "dailySource": "Azure SQL market_daily.Inbox / 946394ba9c1bcdea9b83af00d18ed4b0d9731de582b06f33a4ef2a70602af0c2",
+      "lastBarDate": "2026-10-23",
       "seasonalitySource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:EURUSD:D1:backfill-test-v1",
       "provider": "OANDA",
@@ -534,8 +534,8 @@
     {
       "symbol": "NDX",
       "historicalSource": "validated-v2/series/NDX.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 04f73a28d95223b2dc6c8a374765c0e0fcb85fa1b68a7a12d480d0e2cae6e314",
-      "lastBarDate": "2026-10-19",
+      "dailySource": "Azure SQL market_daily.Inbox / 946394ba9c1bcdea9b83af00d18ed4b0d9731de582b06f33a4ef2a70602af0c2",
+      "lastBarDate": "2026-10-23",
       "seasonalitySource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
       "htfSource": "NASDAQ_TRADINGVIEW:NDX:D1:backfill-test-v1",
       "provider": "NASDAQ",
@@ -545,8 +545,8 @@
     {
       "symbol": "SPX",
       "historicalSource": "validated-v2/series/SPX.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 04f73a28d95223b2dc6c8a374765c0e0fcb85fa1b68a7a12d480d0e2cae6e314",
-      "lastBarDate": "2026-10-19",
+      "dailySource": "Azure SQL market_daily.Inbox / 946394ba9c1bcdea9b83af00d18ed4b0d9731de582b06f33a4ef2a70602af0c2",
+      "lastBarDate": "2026-10-23",
       "seasonalitySource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
       "htfSource": "SP_TRADINGVIEW:SPX:D1:backfill-test-v1",
       "provider": "S&P",
@@ -556,8 +556,8 @@
     {
       "symbol": "XAUUSD",
       "historicalSource": "validated-v2/series/XAUUSD.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 04f73a28d95223b2dc6c8a374765c0e0fcb85fa1b68a7a12d480d0e2cae6e314",
-      "lastBarDate": "2026-10-19",
+      "dailySource": "Azure SQL market_daily.Inbox / 946394ba9c1bcdea9b83af00d18ed4b0d9731de582b06f33a4ef2a70602af0c2",
+      "lastBarDate": "2026-10-23",
       "seasonalitySource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
       "htfSource": "OANDA_TRADINGVIEW:XAUUSD:D1:backfill-test-v1",
       "provider": "OANDA",
@@ -567,11 +567,11 @@
     {
       "symbol": "WTI",
       "historicalSource": "validated-v2/series/WTI.json",
-      "dailySource": "Azure SQL market_daily.Inbox / 04f73a28d95223b2dc6c8a374765c0e0fcb85fa1b68a7a12d480d0e2cae6e314",
-      "lastBarDate": "2026-10-18",
-      "lastSessionDate": "2026-10-19",
+      "dailySource": "Azure SQL market_daily.Inbox / 946394ba9c1bcdea9b83af00d18ed4b0d9731de582b06f33a4ef2a70602af0c2",
+      "lastBarDate": "2026-10-22",
+      "lastSessionDate": "2026-10-23",
       "sessionDateBasis": "Odvozeno ze začátku v 17:00 America/Chicago; sváteční výjimky nejsou tímto přepočtem ověřeny.",
-      "lastBarTimestamp": "2026-10-18T22:00:00.000Z",
+      "lastBarTimestamp": "2026-10-22T22:00:00.000Z",
       "seasonalitySource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
       "htfSource": "NYMEX_TRADINGVIEW:WTI:D1:backfill-test-v1",
       "provider": "NYMEX",
@@ -584,17 +584,17 @@
   "published": true,
   "mode": "live",
   "eligibleForPublication": true,
-  "durationSeconds": 723,
-  "staleAfter": "2026-10-21T13:24:02.329Z",
+  "durationSeconds": 780,
+  "staleAfter": "2026-10-26T02:06:36.096Z",
   "marketDailySql": {
     "schemaVersion": 1,
-    "generationId": 7,
-    "receiptId": "04f73a28d95223b2dc6c8a374765c0e0fcb85fa1b68a7a12d480d0e2cae6e314",
-    "payloadSha256": "47714e448e8a6423551d708f495f1e4bc48971966bbf54237aeb9e75e195c0e1",
-    "auditSha256": "f327a562b9d4551668ba7e6e4962dbabc333ff15380bbe766155e8f70f4e290b",
-    "stateSha256": "aa8ea75b872b01793a5ddc2cfa2ecf408c2f07f61b46a6ad6984967e90fde537",
+    "generationId": 1000001,
+    "receiptId": "946394ba9c1bcdea9b83af00d18ed4b0d9731de582b06f33a4ef2a70602af0c2",
+    "payloadSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a",
+    "auditSha256": "05fe053b316be72e0106e42f6462ba21471f10265033857656035a786690894b",
+    "stateSha256": "9b5fcb34fdb48ad83a515069e18e76349de1a3ef9dfcca19e58e99c9e3d97c1e",
     "baselineFingerprint": "d127c81826f29861a6cf17d336dde497e7ac544e2ee455ed7ec96977e93cff9e",
-    "runDate": "2026-10-20"
+    "runDate": "2026-10-24"
   },
   "publication": "Generated files prepared for commit; hosting remains separate"
 }

@@ -169,12 +169,42 @@
         "fetchedAt": "2026-10-22T13:03:08.723Z",
         "runId": "operator-recovery-20261022"
       }
+    },
+    {
+      "timestamp": 1792616400,
+      "providerTimestamp": "2026-10-21T21:00:00.000Z",
+      "providerUtcDate": "2026-10-21",
+      "date": "2026-10-22",
+      "open": 4139.38,
+      "high": 4140.07,
+      "low": 4021.165,
+      "close": 4024.51,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-22T21:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "03e3dcede8f533b337085870ab78117c2d0fd437dbca3f654e65fed880f319c4",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "6e02f46a-4a13-4f9b-ad8a-219e94575e85"
+      }
+    },
+    {
+      "timestamp": 1792702800,
+      "providerTimestamp": "2026-10-22T21:00:00.000Z",
+      "providerUtcDate": "2026-10-22",
+      "date": "2026-10-23",
+      "open": 4027.5,
+      "high": 4034.085,
+      "low": 3975.65,
+      "close": 3995.81,
+      "dateLabel": "timestamp-derived NY17 session-end date",
+      "completionEvidence": "Timestamp-derived NY17 session end, elapsed by fetchedAt; status ok",
+      "sessionEnd": "2026-10-23T21:00:00.000Z",
+      "ingestion": {
+        "inputSha256": "aebb30de7d0a81e1acfd750d4b07709aa0528d2671e10dacff9a77e1941ecc9a",
+        "fetchedAt": "2026-10-24T13:44:06.894Z",
+        "runId": "25d3fa08-4d8c-469e-9d3e-2ffde7d7cb12"
+      }
     }
-  ],
-  "recovery": {
-    "mode": "operator-recovery-20261022",
-    "originalSqlAuditRestored": false,
-    "sourceRawSha256": "6391b8c3a5578cf229451e57299877073e203d8b623e377623d152c7c6f18616",
-    "overlapRevisions": []
-  }
+  ]
 }
