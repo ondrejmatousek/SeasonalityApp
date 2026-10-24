@@ -116,6 +116,12 @@ public static class MarketDailyProbe
             var provider = Text(bar, "provider");
             if (logical == "SPX" && provider == "SP") provider = "S&P";
             Check(provider == Text(source, "provider"), "Provider mismatch");
+            if(bar.TryGetProperty("assetClass",out var assetClass))
+            {
+                var canonical=Text(source,"assetClass");
+                var legacy=canonical switch { "forex"=>"fx", "metal"=>"metals", "commodity"=>"futures", _=>canonical };
+                Check(assetClass.ValueKind==JsonValueKind.String&&(assetClass.GetString()==canonical||assetClass.GetString()==legacy),"assetClass mismatch");
+            }
             Check(Text(bar, "timeframe") == "1D", "Bar timeframe must be 1D");
             foreach (var k in new[] { "id", "canonicalIdentity", "sourceIdentity" })
                 if (bar.TryGetProperty(k, out var identity)) Check(identity.ValueKind == JsonValueKind.String && identity.GetString() == Text(source, k == "sourceIdentity" ? k : "id"), "Source identity mismatch");

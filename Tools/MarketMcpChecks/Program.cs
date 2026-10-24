@@ -184,6 +184,18 @@ try
         !receipt.GetProperty("analyticsTriggered").GetBoolean() && !receipt.GetProperty("completionValidated").GetBoolean(), "39 bars validated without ingestion or jobs");
     Check(receipt.GetProperty("payloadSha256").GetString() == Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(daily))).ToLowerInvariant(), "Exact byte checksum");
     Check((await Call("{")).GetProperty("isError").GetBoolean(), "Malformed payload rejected");
+    var classBySymbol=description.RootElement.GetProperty("instruments").EnumerateArray().ToDictionary(e=>e.GetProperty("providerSymbol").GetString()!,e=>e.GetProperty("assetClass").GetString()!);
+    foreach(var legacy in new[]{false,true})
+    {
+        var typed=JsonNode.Parse(daily)!;
+        foreach(var bar in typed["bars"]!.AsArray()){
+            var canonical=classBySymbol[bar!["providerSymbol"]!.GetValue<string>()];
+            bar["assetClass"]=legacy?canonical switch{"forex"=>"fx","metal"=>"metals","commodity"=>"futures",_=>canonical}:canonical;
+        }
+        Check(!(await Call(typed.ToJsonString())).TryGetProperty("isError",out var classError)||!classError.GetBoolean(),"Registry and legacy asset classes accepted for all 39");
+    }
+    var wrongClass=JsonNode.Parse(daily)!;wrongClass["bars"]![0]!["assetClass"]="commodity";
+    Check((await Call(wrongClass.ToJsonString())).GetProperty("isError").GetBoolean(),"Cross-class metadata rejected before SQL");
     payload["bars"]![0]!["provider"] = "Yahoo";
     Check((await Call(payload.ToJsonString())).GetProperty("isError").GetBoolean(), "Provider splice rejected");
     payload = JsonNode.Parse(daily)!; payload["bars"]![0]!["close"] = 999999;

@@ -25,6 +25,15 @@ function run(){const before=snapshot(root),supp=snapshot(supplement),r=preflight
 function rejected(mutator){const p=structuredClone(original),a=structuredClone(originalAudit);mutator(p,a);write(p,a);const before=snapshot(root);try{const r=run();assert.equal(r.accepted,false);}catch(e){assert.notEqual(e.code,'ERR_ASSERTION',e.message);}assert.equal(snapshot(root),before);}
 write();let r=run();assert.equal(r.accepted,true,JSON.stringify(r.instruments.filter(i=>i.failed)));assert.equal(r.plannedInsertions+r.skipped,39);assert.equal(r.calendarIndependentlyVerified,false);assert.equal(r.requiresCommitRevalidation,true);
 assert.equal(fs.existsSync(path.join(root,'daily-ingestion')),false,'Preflight must not create even a directory');
+// Match the server's public contract as well as legacy wire labels for ALL classes.
+const classes=new Map([...registry.entries,...require('./market-daily-ingest.cjs').supplementalEntries(supplement)].map(e=>[e.providerSymbol,e.assetClass]));
+for(const legacy of [false,true]){
+ const p=structuredClone(original);
+ for(const b of p.bars){const canonical=classes.get(b.providerSymbol);b.assetClass=legacy?({forex:'fx',metal:'metals',commodity:'futures',index:'index'}[canonical]):canonical;}
+ write(p);assert.equal(run().accepted,true,'Registry/wire assetClass parity');
+}
+rejected(p=>{p.bars[0].assetClass='commodity';});
+rejected(p=>{p.bars[0].assetClass=null;});
 rejected(p=>p.bars.pop());
 rejected(p=>p.bars[1]=structuredClone(p.bars[0]));
 rejected(p=>p.bars[0].completed=false);

@@ -184,7 +184,9 @@ function ingest({input='data/market-daily/latest.json',root='artifacts/tradingvi
         const normalized=inputBars.map(b=> {
           // SP is the exact TradingView namespace for the existing S&P identity, not a different price provider.
           const provider=e.logicalSymbol==='SPX' && b.provider==='SP'?'S&P':b.provider;
-          if(b.assetClass!==undefined)check(b.assetClass===({forex:'fx',metal:'metals',index:'index',commodity:'futures'}[e.assetClass]),'assetClass mismatch');
+          // The public registry uses canonical classes; retain the original wire aliases
+          // for existing producers, but never admit a different instrument class.
+          if(b.assetClass!==undefined)check(b.assetClass===e.assetClass||b.assetClass===({forex:'fx',metal:'metals',index:'index',commodity:'futures'}[e.assetClass]),'assetClass mismatch');
           const mapped={...b,symbol,provider,sourceIdentity:b.sourceIdentity===undefined?e.sourceIdentity:b.sourceIdentity};
           const documented=!b.sessionEnd && !byTime.has(b.timestamp) && !['forex','metal'].includes(e.assetClass)
             ? auditCompletion(b,observed,audit):null;
