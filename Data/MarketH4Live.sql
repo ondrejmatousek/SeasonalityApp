@@ -14,6 +14,8 @@ SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 IF COL_LENGTH('market_h4.LiveReceipts','OhlcConflictsJson') IS NULL
  ALTER TABLE market_h4.LiveReceipts ADD OhlcConflictsJson nvarchar(max) NULL;
+IF COL_LENGTH('market_h4.LiveReceipts','AdmissionPolicy') IS NULL
+ ALTER TABLE market_h4.LiveReceipts ADD AdmissionPolicy varchar(48) NULL;
 DECLARE @oldStatusCheck sysname;
 SELECT @oldStatusCheck=name FROM sys.check_constraints
  WHERE parent_object_id=OBJECT_ID('market_h4.LiveReceipts')

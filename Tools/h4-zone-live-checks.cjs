@@ -12,6 +12,16 @@ const partial={...live,receipts:[{...receipt,status:'PartialConflict',blockedSym
 assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,status:'PartialConflict',blockedSymbols:['OANDA:EURUSD']}]}),/Conflicted symbol/);
 assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,status:'PartialConflict'}]}),/blocked symbols/);
 assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,status:'Conflict'}]}),/Unaccepted/);
+const v2raw={...raw,count:3,bars:Object.fromEntries(Object.entries(raw.bars).map(([k,v])=>[k,k==='t'?[t,t+14400,t+28800]:[...v,v[0]]]))};
+const v2text=JSON.stringify({schemaVersion:1,fetchedAt:new Date(at).toISOString(),captures:[{capturedAt:new Date(at).toISOString(),rawJson:JSON.stringify(v2raw)}]}),v2id=crypto.createHash('sha256').update(v2text).digest('hex');
+const v2receipt={receiptId:v2id,payloadText:v2text,receivedAt:new Date(at).toISOString(),status:'PartialConflict',admission:'bar-isolated-conflict-v2',blockedSymbols:[],quarantinedBars:[{symbol:raw.symbol,startUnix:t}]};
+const v2={...live,rows:[{...row,receiptId:v2id,timestamp:t+14400}],receipts:[v2receipt]};
+assert.equal(V.merge(prices(),v2).acceptedRows,1,'New candle on SAME conflicted symbol publishes with original raw proof');
+assert.throws(()=>V.merge(prices(),{...v2,rows:[{...v2.rows[0],timestamp:t}]}),/Quarantined candle/);
+assert.throws(()=>V.merge(prices(),{...v2,receipts:[{...v2receipt,admission:'unknown'}]}),/Unknown H4 admission/);
+assert.throws(()=>V.merge(prices(),{...v2,receipts:[{...v2receipt,quarantinedBars:[]}]}),/quarantined bars/);
+assert.throws(()=>V.merge(prices(),{...v2,receipts:[{...v2receipt,status:'Accepted'}]}),/conceal/);
+assert.throws(()=>V.merge(prices(),{...v2,receipts:[{...v2receipt,quarantinedBars:[{symbol:raw.symbol,startUnix:t-14400}]}]}),/raw evidence/);
 assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,close:1.6}]}),/mismatch/);
 assert.throws(()=>V.merge(prices(),{...live,receipts:[{...receipt,payloadText:payloadText+' '}]}),/equal/);
 assert.throws(()=>V.merge(prices(),{...live,rows:[{...row,timestamp:t+14400}]}),/boundary/);

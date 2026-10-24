@@ -10,9 +10,11 @@ namespace SeasonalityApp.Services;
 public sealed class DataRunAudit(IConfiguration config, IMemoryCache cache)
 {
     private readonly SemaphoreSlim gate = new(1, 1);
+    public sealed record QuarantinedBar(string Symbol,long StartUnix);
     public sealed record Entry(string Id, string Source, string[] Timeframes, DateTimeOffset ReceivedAt,
         string Status, int Inserted, int Duplicates, int Excluded, int Symbols, int ReceivedBars,
-        int VolumeWarnings, bool Historical, string[]? BlockedSymbols = null, int? OhlcConflictRows = null);
+        int VolumeWarnings, bool Historical, string[]? BlockedSymbols = null, int? OhlcConflictRows = null,
+        string? Admission = null, QuarantinedBar[]? QuarantinedBars = null);
     public sealed record Snapshot(int SchemaVersion, bool Ready, DateTimeOffset AsOf, int LimitPerSource,
         List<Entry> Runs, string? Code = null);
     public static void Register(IServiceCollection services)
@@ -53,8 +55,8 @@ public sealed class DataRunAudit(IConfiguration config, IMemoryCache cache)
             {
                 // Fixed identifiers only. Limit each source independently so H4 cannot hide D1.
                 var sql = source == "market_h4"
-                    ? "SELECT TOP(200) ReceiptId,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars,PayloadUtf8,VolumeDifferencesJson,OhlcConflictsJson FROM market_h4.LiveReceipts ORDER BY ReceivedAt DESC,ReceiptId"
-                    : "SELECT TOP(200) ReceiptId,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars,PayloadUtf8,VolumeAudit,NULL FROM market_zones.Receipts ORDER BY ReceivedAt DESC,ReceiptId";
+                    ? "SELECT TOP(200) ReceiptId,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars,PayloadUtf8,VolumeDifferencesJson,OhlcConflictsJson,AdmissionPolicy FROM market_h4.LiveReceipts ORDER BY ReceivedAt DESC,ReceiptId"
+                    : "SELECT TOP(200) ReceiptId,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars,PayloadUtf8,VolumeAudit,NULL,NULL FROM market_zones.Receipts ORDER BY ReceivedAt DESC,ReceiptId";
                 await using var command = new SqlCommand(sql, db) { CommandTimeout = 25 };
                 await using var reader = await command.ExecuteReaderAsync(timeout.Token);
                 while(await reader.ReadAsync(timeout.Token))
@@ -72,9 +74,11 @@ public sealed class DataRunAudit(IConfiguration config, IMemoryCache cache)
                     var warnings = 0;
                     if(!reader.IsDBNull(7)) { using var volume = JsonDocument.Parse(reader.GetString(7)); warnings = volume.RootElement.GetArrayLength(); }
                     var conflicts=reader.IsDBNull(8)?null:JsonSerializer.Deserialize<MarketH4Store.OhlcConflict[]>(reader.GetString(8));
+                    var admission=reader.IsDBNull(9)?(conflicts is null?null:MarketH4Store.LegacyAdmissionPolicy):reader.GetString(9);
                     entries.Add(new(reader.GetString(0), source, frames.Order().ToArray(), reader.GetDateTimeOffset(1),
                         reader.GetString(2), reader.GetInt32(3), reader.GetInt32(4), reader.GetInt32(5), symbols.Count, received, warnings, historical,
-                        conflicts?.Select(c=>c.Symbol).Distinct().Order().ToArray(),conflicts?.Length));
+                        admission==MarketH4Store.AdmissionPolicy?[]:conflicts?.Select(c=>c.Symbol).Distinct().Order().ToArray(),conflicts?.Length,
+                        admission,conflicts?.Select(c=>new QuarantinedBar(c.Symbol,c.StartUnix)).Distinct().OrderBy(c=>c.Symbol).ThenBy(c=>c.StartUnix).ToArray()));
                 }
             }
             var snapshot = new Snapshot(1, true, DateTimeOffset.UtcNow, 200, entries);

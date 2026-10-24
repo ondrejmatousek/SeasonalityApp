@@ -14,6 +14,7 @@ const server=http.createServer((req,res)=>{
  try{browser=await chromium.launch({headless:true});}catch{browser=await chromium.launch({headless:true,channel:'msedge'});}
  const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));
  const audit={schemaVersion:1,ready:true,asOf:new Date().toISOString(),limitPerSource:200,runs:Array.from({length:31},(_,i)=>({id:String(i).padStart(64,'a'),source:i<19?'market_h4':'market_zones',timeframes:[i<19?'H4':'D1'],receivedAt:new Date(Date.UTC(i<19?2026:2020,9,18,0,i)).toISOString(),status:i===0?'PartialConflict':'Accepted',inserted:i===0?27:0,blockedSymbols:i===0?['OANDA:EURUSD']:[],duplicates:12,excluded:0,symbols:1,receivedBars:12,volumeWarnings:0,historical:false}))};
+ audit.runs[1]={...audit.runs[1],status:'PartialConflict',admission:'bar-isolated-conflict-v2',inserted:4,blockedSymbols:[],quarantinedBars:[{symbol:'OANDA:EURUSD',startUnix:1792659600},{symbol:'OANDA:EURUSD',startUnix:1792702800}]};
  await page.route('**/api/data-runs/receipts',r=>r.fulfill({json:audit}));
  await page.route('**/artifacts/daily-health/latest.json',r=>r.fulfill({json:{schemaVersion:1,runDate:'2026-10-20',runStartedAt:'2026-10-20T01:00:00Z',runFinishedAt:'2026-10-20T01:24:00Z',staleAfter:'2026-10-21T01:00:00Z',status:'ok',mode:'live',instrumentChecks:[{symbol:'WTI',lastBarDate:'2026-10-19',lastSessionDate:'2026-10-19'}]}}));
  await page.goto('http://127.0.0.1:'+server.address().port+'/');
@@ -34,7 +35,8 @@ const server=http.createServer((req,res)=>{
  await page.locator('#runs-d1').click();assert.match(await page.locator('#runs-page').textContent(),/^2 \/ /,'Independent D1 page retained');
  await page.locator('#runs-h4').click();assert.match(await page.locator('#runs-page').textContent(),/^2 \/ 3/,'Independent H4 page retained');
  await page.locator('#runs-next').click();assert.equal(await page.locator('.run-day').count(),3);assert.equal(await page.locator('#runs-next').isDisabled(),true);
- await page.locator('.run-day').last().click();assert.match(await page.locator('#runs-detail').textContent(),/Částečné přijetí/);assert.match(await page.locator('#runs-detail').textContent(),/OANDA:EURUSD/);await page.locator('#runs-d1').click();
+ await page.locator('.run-day').last().click();assert.match(await page.locator('#runs-detail').textContent(),/Částečné přijetí/);assert.match(await page.locator('#runs-detail').textContent(),/OANDA:EURUSD/);
+ await page.locator('.run-day').nth(1).click();assert.match(await page.locator('#runs-detail').textContent(),/Přijetí s historickými rozpory/);assert.match(await page.locator('#runs-detail').textContent(),/Nově vloženo4/);assert.match(await page.locator('#runs-detail').textContent(),/Karanténa: OANDA:EURUSD/);assert.doesNotMatch(await page.locator('#runs-detail').textContent(),/Zablokované páry/);await page.locator('#runs-d1').click();
  await page.screenshot({path:path.join(root,'runs-desktop.png'),fullPage:true});
  for(const route of ['/','/runs/']){
   await page.goto('http://127.0.0.1:'+server.address().port+route);

@@ -51,7 +51,12 @@
   const meta=el('dl',null,'runs-meta');
   for(const [k,v]of [['Čas přijetí do SQL',time(h.receivedAt)],['Timeframe dávky',h.timeframes.join(' + ')],['Symboly',h.symbols],['Vstupní bary',h.receivedBars],['Nově vloženo',h.inserted],['Duplicity',h.duplicates],['Vyřazeno',h.excluded],['Volume upozornění',h.volumeWarnings],['Typ',h.historical?'Historické doplnění':'SQL příjem'],['Receipt ID',h.receiptId]])meta.append(el('dt',k),el('dd',v));
   detail.append(meta,el('p','Počty platí pro celou SQL dávku. Jedna úloha Work může odeslat více samostatných dávek.','runs-note'));
-  if(h.partialAcceptance)detail.append(el('p','Částečné přijetí: bezkonfliktní páry byly zpracovány. Zablokované páry: '+(h.blockedSymbols||[]).join(', ')+'. Žádné jejich nové bary z této dávky nebyly uloženy; původní ceny zůstaly beze změny.','runs-warning'));
+  if(h.partialAcceptance){
+   if(h.admission==='bar-isolated-conflict-v2'){
+    detail.append(el('p','Přijetí s historickými rozpory: nové ověřené svíčky byly zpracovány i pro stejný pár. Karanténa se týká pouze '+(h.quarantinedBars?.length??'nedoloženého počtu')+' jednotlivých starších svíček; původní ceny nebyly přepsány. Nejde o zablokování celého páru.','runs-warning'));
+    for(const b of (h.quarantinedBars||[]).slice(0,12))detail.append(el('p','Karanténa: '+b.symbol+' · začátek '+time(new Date(b.startUnix*1000).toISOString())));
+   }else detail.append(el('p','Částečné přijetí: bezkonfliktní páry byly zpracovány. Zablokované páry: '+(h.blockedSymbols||[]).join(', ')+'. Žádné jejich nové bary z této dávky nebyly uloženy; původní ceny zůstaly beze změny.','runs-warning'));
+  }
   if(h.source==='market_h4'){meta.querySelector('dt').textContent='Uložený čas kolekce';detail.append(el('p','Starší H4 příjem ukládal do časového údaje čas kolekce z obálky. Nejde o nezávisle změřený začátek nebo konec úlohy Work.'));}
   detail.append(el('p',h.status==='failed'?'Dávka obsahovala konflikt; přijetí nových svíček není potvrzené.':h.inserted===0?'Dávka neobsahovala žádné nové uložené svíčky. Duplicity nejsou chyba.':'Nové svíčky byly uloženy do SQL.'));
   detail.append(el('p','Tento záznam potvrzuje pouze výsledek SQL příjmu, nikoli dokončení celé úlohy Work, výpočtů nebo publikace. Neodeslaný či přeskočený běh zde nemá receipt. H4 se používá pouze pro obchodní zóny; porovnávací krypto nenahrazuje Yahoo.','runs-note'));
