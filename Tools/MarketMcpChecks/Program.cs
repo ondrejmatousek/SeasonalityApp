@@ -142,11 +142,21 @@ try
     using (var r = await Rpc(h, new { jsonrpc = "2.0", id = 2, method = "tools/list" }, auth))
     {
         var tools = (await Json(r)).GetProperty("result").GetProperty("tools");
-        Check(tools.GetArrayLength() == (h4Discovery?6:1) && tools.EnumerateArray().Any(t=>t.GetProperty("name").GetString()=="validate_market_daily"), "Only configured tools exposed");
+        Check(tools.GetArrayLength() == (h4Discovery?8:1) && tools.EnumerateArray().Any(t=>t.GetProperty("name").GetString()=="validate_market_daily"), "Only configured tools exposed");
         if(h4Discovery){var names=tools.EnumerateArray().Select(t=>t.GetProperty("name").GetString()).ToHashSet();Check(names.Contains("submit_market_h4")&&names.Contains("get_market_h4_status"),"H4 discovery");}
     }
     if(h4Discovery)
     {
+        using var contractDenied=await Rpc(h,new{jsonrpc="2.0",id=50,method="tools/call",@params=new{name="get_market_daily_contract",arguments=new{}}},auth);
+        Check((await Json(contractDenied)).GetProperty("result").GetProperty("isError").GetBoolean(),"D1 contract scope before registry access");
+        using var receiptDenied=await Rpc(h,new{jsonrpc="2.0",id=51,method="tools/call",@params=new{name="get_market_daily_receipt",arguments=new{receiptId="invalid"}}},auth);
+        Check((await Json(receiptDenied)).GetProperty("result").GetProperty("isError").GetBoolean(),"D1 receipt scope before parse/SQL");
+        using var contractResponse=await Rpc(h,new{jsonrpc="2.0",id=52,method="tools/call",@params=new{name="get_market_daily_contract",arguments=new{}}},Token(scope:"market.ingest"));
+        using var contractDoc=JsonDocument.Parse((await Json(contractResponse)).GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString()!);
+        var contract=contractDoc.RootElement;Check(contract.GetProperty("ready").GetBoolean()&&contract.GetProperty("instruments").GetArrayLength()==39&&!contract.GetProperty("completionValidated").GetBoolean()&&!contract.GetProperty("persisted").GetBoolean(),"D1 exact contract available without SQL or invented completion certification");
+        Check(!contract.GetRawText().Contains("Password",StringComparison.OrdinalIgnoreCase)&&!contract.GetRawText().Contains("seasonality.database.windows.net",StringComparison.OrdinalIgnoreCase),"Contract does not expose SQL settings");
+        using var invalidReceipt=await Rpc(h,new{jsonrpc="2.0",id=53,method="tools/call",@params=new{name="get_market_daily_receipt",arguments=new{receiptId="invalid"}}},Token(scope:"market.ingest"));
+        Check((await Json(invalidReceipt)).GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString()!.Contains("INVALID_RECEIPT_ID"),"Invalid receipt rejected without SQL");
         using var denied=await Rpc(h,new{jsonrpc="2.0",id=40,method="tools/call",@params=new{name="submit_market_h4",arguments=new{h4Json="not json"}}},auth);
         var body=(await Json(denied)).GetProperty("result");Check(body.GetProperty("isError").GetBoolean()&&body.GetProperty("content")[0].GetProperty("text").GetString()!.Contains("market.ingest"),"H4 scope checked before parse/SQL");
         using var zoneDenied=await Rpc(h,new{jsonrpc="2.0",id=41,method="tools/call",@params=new{name="submit_zone_prices",arguments=new{pricesJson="not json"}}},auth);
@@ -165,6 +175,9 @@ try
         Check(r.IsSuccessStatusCode, "MCP transport success"); return (await Json(r)).GetProperty("result").Clone();
     }
     var result = await Call(daily);
+    using var description=JsonDocument.Parse((await Call("{\"schemaVersion\":1,\"operation\":\"describe\"}")).GetProperty("content")[0].GetProperty("text").GetString()!);
+    Check(description.RootElement.GetProperty("mode").GetString()=="collection-contract"&&description.RootElement.GetProperty("instruments").GetArrayLength()==39&&!description.RootElement.TryGetProperty("receivedBars",out _),"Existing validation tool exposes read-only describe mode without claiming validation");
+    Check((await Call("{\"schemaVersion\":1,\"operation\":\"describe\",\"bars\":[]}")).GetProperty("isError").GetBoolean(),"Describe cannot conceal an invalid payload");
     using var receiptDoc = JsonDocument.Parse(result.GetProperty("content")[0].GetProperty("text").GetString()!);
     var receipt = receiptDoc.RootElement;
     Check(receipt.GetProperty("receivedBars").GetInt32() == 39 && !receipt.GetProperty("persisted").GetBoolean() &&

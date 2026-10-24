@@ -78,6 +78,8 @@ public static class MarketDailyMcp
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
             services.AddTransient<MarketDailyGitHubTrigger>();
             tools.Add(CreateTool<MarketDailySubmissionTool>(nameof(MarketDailySubmissionTool.SubmitMarketDaily),IngestScope));
+            tools.Add(CreateTool<MarketDailyCollectionTools>(nameof(MarketDailyCollectionTools.GetContract),IngestScope));
+            tools.Add(CreateTool<MarketDailyCollectionTools>(nameof(MarketDailyCollectionTools.GetReceipt),IngestScope));
             tools.Add(CreateTool<MarketH4Tool>(nameof(MarketH4Tool.SubmitMarketH4),IngestScope));
             tools.Add(CreateTool<MarketH4Tool>(nameof(MarketH4Tool.GetMarketH4Status),IngestScope));
             tools.Add(CreateTool<MarketZonePriceTool>(nameof(MarketZonePriceTool.SubmitZonePrices),IngestScope));
@@ -213,7 +215,7 @@ public static class MarketDailyMcp
 public sealed class MarketDailyValidationTool(IConfiguration config, IWebHostEnvironment environment)
 {
     [McpServerTool(Name = "validate_market_daily", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Validate the exact daily JSON for all 39 registered market instruments. No persistence, ingestion, SQL, analytics or jobs. Completion/session evidence is NOT independently checked. Never pass credentials in arguments.")]
+    [Description("Validate the exact daily JSON for all 39 registered instruments. Or read the producer contract with dailyJson={\"schemaVersion\":1,\"operation\":\"describe\"}; that mode is NOT payload validation. No persistence/SQL/jobs. Completion is NOT independently checked. Never pass credentials.")]
     public async Task<CallToolResult> ValidateMarketDaily(
         [Description("Exact UTF-8 JSON text of market-daily/latest.json, unchanged. Must contain all 39 bars.")] string dailyJson,
         RequestContext<CallToolRequestParams> context,
@@ -231,6 +233,12 @@ public sealed class MarketDailyValidationTool(IConfiguration config, IWebHostEnv
             using var registry = JsonDocument.Parse(await File.ReadAllTextAsync(file, cancellationToken));
             if (registry.RootElement.GetProperty("schemaVersion").GetInt32() != 1)
                 throw new McpException("Trusted source registry unavailable.");
+            if(payload.RootElement.TryGetProperty("operation",out var operation)&&operation.GetString()=="describe")
+            {
+                if(payload.RootElement.GetProperty("schemaVersion").GetInt32()!=1||payload.RootElement.EnumerateObject().Count()!=2)
+                    throw new InvalidDataException("Contract request must contain only schemaVersion and operation.");
+                return MarketDailyMcp.ToolResult(await MarketDailyCollectionTools.ReadContract(config,environment,cancellationToken));
+            }
             var count = MarketDailyProbe.Validate(payload.RootElement, registry.RootElement.GetProperty("entries"), DateTimeOffset.UtcNow);
             if (count != 39) throw new McpException("This experiment requires all 39 instruments.");
             var digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(dailyJson))).ToLowerInvariant();
