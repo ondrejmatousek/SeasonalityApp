@@ -21,6 +21,7 @@ on:
       - 'Tools/ZonePriceImport/**'
       - 'Tools/PaperTradeStore/**'
       - 'Tools/PaperResearchStore/**'
+      - 'Tools/H4History/**'
       - 'Tools/h4-paper-*.cjs'
       - 'Tools/h4-backtest-*.cjs'
       - 'Tools/cfd-zone-*.cjs'
@@ -113,6 +114,21 @@ jobs:
           node Tools/cfd-zone-snapshot.cjs artifacts/public-site artifacts/cfd-zone-source.json artifacts/zone-crypto
           node Tools/cfd-zone-checks.cjs artifacts/public-site
           node Tools/fm-outlook-live-checks.cjs artifacts/public-site
+      # User explicitly authorized public historical OHLCV publication on 2026-10-26.
+      # Export files/receipts remain private; only stripped per-symbol price files enter hosting.
+      - name: Publish full validated H4 history for isolated backtesting
+        id: backtest_history
+        if: steps.publication.outputs.run == 'true'
+        continue-on-error: true
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+        run: |
+          dotnet Tools/ZonePriceImport/bin/Release/net10.0/ZonePriceImport.dll --export --full-history --config-root . --output artifacts/backtest-extra-history.json
+          node Tools/h4-backtest-history.cjs artifacts/public-site artifacts/h4-hosting-source.json artifacts/backtest-extra-history.json
+          node Tools/h4-backtest-history-checks.cjs artifacts/public-site
+      - name: Surface unavailable full backtest history independently of papertrading
+        if: steps.publication.outputs.run == 'true' && steps.backtest_history.outcome == 'failure'
+        run: node Tools/h4-backtest-history.cjs --unavailable artifacts/public-site
       - name: Persist prospective H4 paper ledger and immutable events in SQL
         if: steps.publication.outputs.run == 'true'
         env:

@@ -1,4 +1,5 @@
-// Private artifact projection; this tool never uploads data or connects to SQL.
+// Staged price-only projection; this tool never uploads data or connects to SQL.
+// Public OHLCV publication was explicitly authorized by the user on 2026-10-26.
 // Full history is separate from capped live-zone inputs and prospective ledgers.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const historical=require('./h4-zone-snapshot.cjs'),incremental=require('./h4-zone-live.cjs'),extra=require('./cfd-zone-snapshot.cjs'),universe=require('../wwwroot/js/cfd-instruments.js');
@@ -19,4 +20,4 @@ function build(site,original,additional){
  const manifest=read(path.join(site,'data/manifest.json'));manifest.backtestHistory={ready:true,path:url,instruments:39,bars:Object.values(index.prices).reduce((n,p)=>n+p.h4.count,0)};require('./apply-market-sources.cjs').saveManifest(site,manifest);
  return manifest.backtestHistory;
 }
-module.exports={build};if(require.main===module)console.log(JSON.stringify(build(process.argv[2],read(process.argv[3]),read(process.argv[4]))));
+module.exports={build};if(require.main===module){if(process.argv[2]==='--unavailable'){const site=path.resolve(process.argv[3]);assert.ok(site.startsWith(path.resolve('artifacts')+path.sep));const manifest=read(path.join(site,'data/manifest.json'));manifest.backtestHistory={ready:false,note:'Full SQL history export unavailable; no silently shortened fallback.'};require('./apply-market-sources.cjs').saveManifest(site,manifest);}else console.log(JSON.stringify(build(process.argv[2],read(process.argv[3]),read(process.argv[4]))));}
