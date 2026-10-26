@@ -82,6 +82,7 @@ jobs:
           node Tools/h4-paper-checks.cjs
           node Tools/h4-paper-table-checks.cjs
           node Tools/h4-backtest-checks.cjs
+          node Tools/h4-backtest-format-checks.cjs
           node Tools/h4-paper-research-checks.cjs
           node Tools/chart-time-checks.cjs
           node Tools/market-date-checks.cjs
