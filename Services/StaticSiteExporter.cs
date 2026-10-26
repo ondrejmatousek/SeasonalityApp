@@ -201,5 +201,13 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
             new TempDataDictionary(http, tempData), paperWriter, new HtmlHelperOptions()));
         Directory.CreateDirectory(Path.Combine(directory, "paper-trading"));
         await File.WriteAllTextAsync(Path.Combine(directory, "paper-trading", "index.html"), paperWriter.ToString());
+        var backtestView = views.GetView(null, "/Views/Data/Backtesting.cshtml", true);
+        if (!backtestView.Success) throw new InvalidOperationException("Backtesting view not found.");
+        using var backtestWriter = new StringWriter();
+        await backtestView.View.RenderAsync(new ViewContext(action, backtestView.View,
+            new ViewDataDictionary(metadata, new ModelStateDictionary()),
+            new TempDataDictionary(http, tempData), backtestWriter, new HtmlHelperOptions()));
+        Directory.CreateDirectory(Path.Combine(directory, "backtesting"));
+        await File.WriteAllTextAsync(Path.Combine(directory, "backtesting", "index.html"), backtestWriter.ToString());
     }
 }

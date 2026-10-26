@@ -1,0 +1,30 @@
+@{ ViewData["BacktestPage"] = true; }
+<section id="h4-backtest" class="strategy-lab">
+ <p class="lab-eyebrow">HISTORICKÉ PŘEHRÁNÍ · FM H4 · DOTYK ZÓNY</p><h1>Backtesting</h1>
+ <p>Stejný obchodní model jako H4 Papertrading · 2R: nejbližší fresh + armed supply a demand, vstup na dotyk, SL 5 % výšky za zónou a TP 2R. Výpočet provádí aplikace na pozadí prohlížeče; nemusíte o každý test žádat.</p>
+ <p class="lab-warning">Zpětná simulace z aktuálně dostupného cenového snapshotu, nikoli skutečné obchody ani nedotčený závěrečný test. Historické ceny mohou být revidované. Parametry se neoptimalizují. Výsledky jsou oddělené od SQL papertradingu a jeho výzkumného vzorku 100 obchodů.</p>
+ <div class="lab-controls">
+  <label>Instrument<select id="bt-symbol" disabled></select></label>
+  <label>Registrace od · UTC dne<input id="bt-from" type="date" /></label>
+  <label>Test do · včetně UTC dne<input id="bt-to" type="date" /></label>
+  <button id="bt-run" type="button" disabled>Spustit backtest</button><button id="bt-stop" type="button" disabled>Zastavit</button><button id="bt-export" type="button" disabled>Stáhnout audit JSON</button>
+ </div>
+ <p id="bt-status" role="status">Načítám dostupnou H4 historii…</p><p id="bt-source"></p>
+ <div id="bt-summary" class="paper-summary"></div>
+ <details open><summary>Pokrytí dat a mezery</summary><div id="bt-coverage"></div></details>
+ <div class="lab-controls"><label>Zobrazit<select id="bt-filter"><option value="closed">Uzavřené obchody · TP / SL</option><option value="active">Nedořešené na konci testu</option><option value="issues">Nejednoznačné / OCO zrušené</option><option value="all">Všechny setupy</option></select></label></div>
+ <p>Řazení kliknutím na záhlaví platí přes všechny stránky. Časy v tabulce a grafu jsou Europe/Prague. Časy vstupu a konce jsou konce důkazních H4, nikoli přesný čas plnění.</p>
+ <div class="lab-table-wrap"><table class="lab-table"><thead><tr>
+  <th scope="col"><button type="button" class="paper-sort" data-bt-sort="registered">Registrace</button></th><th scope="col"><button type="button" class="paper-sort" data-bt-sort="instrument">Trh</button> / <button type="button" class="paper-sort" data-bt-sort="side">směr</button></th><th scope="col"><button type="button" class="paper-sort" data-bt-sort="quality">FM kvalita</button></th><th scope="col"><button type="button" class="paper-sort" data-bt-sort="entry">Vstup</button></th><th scope="col"><button type="button" class="paper-sort" data-bt-sort="sl">SL</button></th><th scope="col"><button type="button" class="paper-sort" data-bt-sort="tp">TP</button></th><th scope="col"><button type="button" class="paper-sort" data-bt-sort="net">Čisté R</button></th><th scope="col"><button type="button" class="paper-sort" data-bt-sort="resolved">Konec</button> / <button type="button" class="paper-sort" data-bt-sort="status">stav</button></th><th scope="col">Setup / graf</th>
+ </tr></thead><tbody id="bt-rows"></tbody></table></div><div id="bt-pages" class="zone-chart-toolbar"></div>
+ <details><summary>Pravidla přehrání a náklady</summary><ul>
+  <li>Při každém historickém H4 close model dostane pouze tehdy dokončené svíčky. Nový setup může vstoupit až v následující H4. Na každém close simulujeme kontrolu bez provozního zpoždění Worku; to není rekonstrukce skutečných minulých běhů.</li>
+  <li>Prvních 200 souvislých svíček každého úseku slouží jako zahřívací historie pro ATR(96) a strukturu. První registrace je na close 200. svíčky. Část před zadaným začátkem slouží jen k výpočtu zón; nepřenášíme z ní staré pozice.</li>
+  <li>OANDA H4 ze stejného publikovaného SQL snapshotu jako zóny. Každý pár má vlastní OCO a nejvýše jednu otevřenou pozici. Identická zóna vstoupí do deníku jen jednou. BOS a volume jsou popis kvality, nikoli vstupní filtry.</li>
+  <li>Nepravidelná mezera rozdělí historii na samostatné úseky. Rozpracované setupy na jejím začátku zůstanou nedořešené, nejsou výhra ani prohra. Následuje nové zahřátí. Povolen je pouze běžný forexový víkend podle stejného pravidla jako paper model; úplný burzovní kalendář nemáme.</li>
+  <li>Oba OCO vstupy, SL i TP v jedné svíčce či neprokazatelné pořadí vstupu a TP jsou nejednoznačné. Nepřidáváme je do TP/SL statistik. Na konci dat otevřené obchody nuceně neuzavíráme. Gap přes SL otevřené pozice může znamenat ztrátu větší než 1R.</li>
+  <li>Pracovní spread 1 bps + skluz 0,5 bps na každé straně, komise 0. Financování, brokerovy tick size, margin, proměnlivý spread a velikost účtu nejsou modelované. R není procentní výnos účtu. Propad jen z uzavřených obchodů; PF bez ztrát nezobrazujeme jako důkaz jistoty.</li>
+  <li>Audit obsahuje hash celého cenového snapshotu, období, pokrytí, pravidla i časové důkazy obchodů. Výpočet v prohlížeči nic nezapisuje do SQL, nemění plány a neotevírá příkazy brokerovi.</li>
+ </ul></details>
+ <dialog id="bt-modal" aria-labelledby="bt-title"><div class="fm-modal-header"><h2 id="bt-title"></h2><button id="bt-close" type="button" autofocus>Zavřít ×</button></div><p id="bt-meta"></p><p id="bt-reason"></p><div class="zone-chart-toolbar"><button id="bt-fit" type="button">Reset grafu</button></div><div class="zone-chart-wrap" id="bt-chart" tabindex="0" aria-label="Historický setup, vstup, SL a TP v pražském čase"><div id="bt-tip" class="zone-tooltip" hidden></div></div><p>Červená plocha: risk. Zelená: plánovaný zisk 2R. Značky zobrazují důkazní svíčky vstupu a výsledku; zóna a ceny jsou zmrazené při historické registraci.</p><h3>Časový audit setupu</h3><ol id="bt-events"></ol></dialog>
+</section>

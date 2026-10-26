@@ -12,4 +12,6 @@ public sealed class DataController : Controller
     public IActionResult FmOutlook() => View();
     [HttpGet("/paper-trading/")]
     public IActionResult PaperTrading() => View();
+    [HttpGet("/backtesting/")]
+    public IActionResult Backtesting() => View();
 }

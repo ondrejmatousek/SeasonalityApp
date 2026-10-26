@@ -22,6 +22,7 @@ on:
       - 'Tools/PaperTradeStore/**'
       - 'Tools/PaperResearchStore/**'
       - 'Tools/h4-paper-*.cjs'
+      - 'Tools/h4-backtest-*.cjs'
       - 'Tools/cfd-zone-*.cjs'
       - 'Tools/fetch-zone-crypto.ps1'
       - 'Services/SeasonalityService.cs'
@@ -79,6 +80,7 @@ jobs:
           node Tools/swing-srajer-checks.cjs
           node Tools/h4-paper-checks.cjs
           node Tools/h4-paper-table-checks.cjs
+          node Tools/h4-backtest-checks.cjs
           node Tools/h4-paper-research-checks.cjs
           node Tools/chart-time-checks.cjs
           node Tools/market-date-checks.cjs
