@@ -10,7 +10,7 @@ function columns(raw){
  if(raw.format==='rows'){assert.ok(Array.isArray(b)&&b.length===n);for(const row of b)for(const key of keys)assert.ok(Object.hasOwn(row,key),'Missing raw H4 row field');return Object.fromEntries(keys.map(key=>[key,b.map(row=>row[key])]));}
  for(const key of keys)assert.ok(Array.isArray(b[key])&&b[key].length===n,'H4 column count');return b;
 }
-function merge(prices,live){
+function merge(prices,live,options={}){
  if(!live?.rows?.length)return {rule:'oanda-h4-boundary-v1',acceptedRows:0,receiptIds:[]};
  assert.equal(live.rule,'oanda-h4-boundary-v1');const receipts=new Map();
  for(const r of live.receipts){assert.equal(sha(r.payloadText),r.receiptId);assert.ok(!receipts.has(r.receiptId));const payload=JSON.parse(r.payloadText),at=Date.parse(r.receivedAt);assert.equal(payload.schemaVersion,1);const fetched=Date.parse(payload.fetchedAt);assert.ok(fetched>=at-1800000&&fetched<=at+60000);const captures=new Map();
@@ -27,7 +27,7 @@ function merge(prices,live){
   const key=b.symbol.replace(/^OANDA:/,'');assert.equal(prices[key].symbol,b.symbol);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push({...b,date:new Date(b.timestamp*1000).toISOString(),endDate:new Date((b.timestamp+14400)*1000).toISOString(),receivedAt:new Date(r.at).toISOString()});
  }
  for(const [key,rows]of grouped){const p=prices[key],bars=new Map(p.bars.map(b=>[b.timestamp,b]));for(const b of rows){if(bars.has(b.timestamp)){for(const f of ['open','high','low','close','volume'])assert.equal(bars.get(b.timestamp)[f],b[f],'Live/backfill price conflict');}else bars.set(b.timestamp,b);}
-  p.bars=[...bars.values()].sort((a,b)=>a.timestamp-b.timestamp).slice(-2200);p.asOfUtc=rows.map(r=>r.receivedAt).sort().at(-1);p.observedAt=p.asOfUtc;p.latestDate=p.bars.at(-1).date;p.latestClose=p.bars.at(-1).close;p.validatedBarCount+=rows.length;p.liveRule=live.rule;p.liveBarCount=rows.length;
+  const sorted=[...bars.values()].sort((a,b)=>a.timestamp-b.timestamp);p.bars=options.fullHistory?sorted:sorted.slice(-2200);p.asOfUtc=rows.map(r=>r.receivedAt).sort().at(-1);p.observedAt=p.asOfUtc;p.latestDate=p.bars.at(-1).date;p.latestClose=p.bars.at(-1).close;p.validatedBarCount+=rows.length;p.liveRule=live.rule;p.liveBarCount=rows.length;
  }
  return {rule:live.rule,acceptedRows:live.rows.length,receiptIds:[...receipts.keys()].sort(),newestReceivedAt:[...receipts.values()].map(r=>new Date(r.at).toISOString()).sort().at(-1),exchangeCalendarValidated:false};
 }

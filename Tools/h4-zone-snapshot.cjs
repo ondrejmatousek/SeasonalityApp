@@ -13,7 +13,7 @@ function validateGroup(rows,daily,capturedAt){
  if(rows[0].open!==daily.open||rows.at(-1).close!==daily.close||Math.max(...rows.map(b=>b.high))!==daily.high||Math.min(...rows.map(b=>b.low))!==daily.low)return 'D1-OHLC-mismatch';
  return null;
 }
-function validate(source,repository='.'){
+function validate(source,repository='.',options={}){
  assert.equal(source.schemaVersion,1);assert.equal(source.source,'Azure SQL market_h4');assert.match(source.batchId,/^[a-f0-9]{64}$/);
  const seedBytes=fs.readFileSync(path.join(repository,'data/market-history/tradingview-backfill-36-v1.json.gz'));
  assert.equal(sha(seedBytes),fs.readFileSync(path.join(repository,'data/market-history/tradingview-backfill-36-v1.json.gz.sha256'),'utf8').trim());
@@ -43,7 +43,7 @@ function validate(source,repository='.'){
   const latest=accepted.at(-1);assert.ok(latest,'No validated H4 history for '+key);
   prices[key]={status:'ready',provider:'OANDA',symbol:capture.symbol,timeframe:'H4',timezone:'UTC',sessionTimezone:'America/New_York',observedAt:capture.capturedAt,asOfUtc:capture.capturedAt,
    validation:'h4-d1-parity-v1',sourceBatchId:source.batchId,rawSha256:capture.rawSha256,latestDate:latest.date,latestClose:latest.close,
-   bars:accepted.slice(-2200),weekly:[],validatedBarCount:accepted.length,excludedBarCount:evidence.rejected,
+   bars:options.fullHistory?accepted:accepted.slice(-2200),weekly:[],validatedBarCount:accepted.length,excludedBarCount:evidence.rejected,
    dailyLifecycleBars:[...daily.values()].filter(d=>d.timestamp+86400<=captured&&d.timestamp>=accepted[0].timestamp).sort((a,b)=>a.timestamp-b.timestamp).slice(-400).map(d=>({date:new Date(d.timestamp*1000).toISOString(),endDate:new Date((d.timestamp+86400)*1000).toISOString(),open:d.open,high:d.high,low:d.low,close:d.close})),
    note:'Historical H4 snapshot; six elapsed 4h slots match the accepted OANDA NY17 D1 OHLC exactly. No missing bars synthesized. Provider volume is not centralized FX volume.'};
  }
