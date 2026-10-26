@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path'),{createHash}=require('node:crypto'),R=require('./h4-paper-research.cjs');
+const [rootArg,previousFile,nextFile]=process.argv.slice(2),root=path.resolve(rootArg),hash=s=>createHash('sha256').update(s).digest('hex');
+const read=f=>JSON.parse(fs.readFileSync(f,'utf8'));
+const baselineFile=path.join(root,'data/h4-paper/ledger.json'),baselineBytes=fs.readFileSync(baselineFile),baseline=JSON.parse(baselineBytes),manifest=read(path.join(root,'data/manifest.json')),url=manifest.zonePrices.path;
+if(!/^\/data\/screener\/zone-prices\.[a-f0-9]{20}\.json$/.test(url))throw Error('Unexpected research source path');
+const previous=read(previousFile),implementation=hash(JSON.stringify([__filename,require.resolve('./h4-paper-research.cjs'),require.resolve('./h4-paper-research-engine.cjs'),require.resolve('../wwwroot/js/h4-paper.js')].map(file=>({file:path.basename(file),code:fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')}))));
+if(previous.state&&previous.state.implementationSha256!==implementation)throw Error('Research implementation changed; new model version required');
+const state=R.update(previous.state,baseline,{...read(root+url),path:url,revision:hash(fs.readFileSync(root+url))},new Date().toISOString(),hash);state.implementationSha256=implementation;
+if(!fs.readFileSync(baselineFile).equals(baselineBytes))throw Error('Baseline file changed during research');
+fs.mkdirSync(path.dirname(path.resolve(nextFile)),{recursive:true});fs.writeFileSync(nextFile,JSON.stringify({expectedRevision:previous.revision,state}));
+console.log(JSON.stringify({model:state.model,progress:state.report.progress,checkpoints:state.checkpoints.length,baselineChanged:false}));

@@ -20,6 +20,7 @@ on:
       - 'Tools/H4SqlImport/**'
       - 'Tools/ZonePriceImport/**'
       - 'Tools/PaperTradeStore/**'
+      - 'Tools/PaperResearchStore/**'
       - 'Tools/h4-paper-*.cjs'
       - 'Tools/cfd-zone-*.cjs'
       - 'Tools/fetch-zone-crypto.ps1'
@@ -77,6 +78,7 @@ jobs:
           node Tools/fm-trade-zones-checks.cjs
           node Tools/swing-srajer-checks.cjs
           node Tools/h4-paper-checks.cjs
+          node Tools/h4-paper-research-checks.cjs
           node Tools/chart-time-checks.cjs
           node Tools/market-date-checks.cjs
           node Tools/htf-retirement-checks.cjs
@@ -118,6 +120,22 @@ jobs:
           dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --ensure-schema --load --output artifacts/h4-paper-previous.json
           node Tools/h4-paper-update.cjs artifacts/public-site artifacts/h4-paper-previous.json artifacts/h4-paper-next.json
           dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/h4-paper-next.json --output artifacts/public-site/data/h4-paper/ledger.json
+      - name: Independent paper research (cannot block or rewrite the baseline model)
+        id: research
+        if: steps.publication.outputs.run == 'true'
+        continue-on-error: true
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+        run: |
+          dotnet build Tools/PaperResearchStore/PaperResearchStore.csproj -c Release
+          node Tools/h4-paper-research-store-checks.cjs
+          dotnet Tools/PaperResearchStore/bin/Release/net10.0/PaperResearchStore.dll --ensure-schema --load --output artifacts/h4-research-previous.json
+          node Tools/h4-paper-research-update.cjs artifacts/public-site artifacts/h4-research-previous.json artifacts/h4-research-next.json
+          dotnet Tools/PaperResearchStore/bin/Release/net10.0/PaperResearchStore.dll --save artifacts/h4-research-next.json --output artifacts/h4-research-saved.json
+          node Tools/h4-paper-research-report.cjs artifacts/h4-research-saved.json artifacts/public-site/data/h4-paper/research.json
+      - name: Surface independent research failure without stopping H4 papertrading
+        if: steps.publication.outputs.run == 'true' && steps.research.outcome == 'failure'
+        run: node Tools/h4-paper-research-report.cjs --unavailable artifacts/public-site/data/h4-paper/research.json
       - name: Publish read-only SQL receipt audit for same-origin fallback
         if: steps.publication.outputs.run == 'true'
         env:
