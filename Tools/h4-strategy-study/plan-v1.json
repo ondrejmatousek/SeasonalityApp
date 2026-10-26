@@ -1,0 +1,29 @@
+{
+ "id":"h4-strategy-study-20261026-v1",
+ "createdBeforeResults":true,
+ "baseline":"fm-h4-touch-2r-v1",
+ "history":"Private validated SQL H4 index, SHA-256 pinned before experiments; 39 fixed OANDA FX symbols, no post-result asset selection",
+ "warmup":200,
+ "discovery":{"from":"2023-01-01","to":"2024-12-31"},
+ "validation":{"from":"2025-01-01","to":"2025-06-30"},
+ "final":{"from":"2025-07-01","to":"2026-10-26"},
+ "contaminationNotice":"Some aggregate baseline results from 2025-2026 were already viewed in earlier tasks. Final is chronologically withheld from this selection, not a genuinely untouched historical dataset. Prospective replication remains required.",
+ "grid":{
+  "rr":[1,1.5,2,2.5,3],
+  "stop":[{"id":"zone05","basis":"zone","fraction":0.05},{"id":"zone25","basis":"zone","fraction":0.25},{"id":"atr25","basis":"atr","fraction":0.25}],
+  "quality":["all","bos","volume","bos_volume"],
+  "entryDays":["all","no_monday","no_friday","tue_thu"],
+  "season":["off","aligned_20d"]
+ },
+ "maximumTrials":480,
+ "seasonRule":"Only the fixed original 28 symbols with same-provider SQL D1. At registration use the previous 10 completed calendar years, same month/day anchor (Feb29 becomes Feb28), first D1 on/after anchor and close 20 trading bars later. Exit must be within that historical year and strictly before registration. At least 8 valid yearly samples and at least 60% sign agreement plus same-sign median. No current-year or future data. Missing evidence fails this filter. All season models compared to baseline on the same 28-symbol universe.",
+ "execution":"Independent strategy simulations, not post-hoc filtering baseline trade rows. Same nearest fresh/armed zones, one open position per instrument, opposite pending OCO, stable one-use zone identities, no expiry. Quality and season filters apply to the selected nearest zones at registration; no farther substitute. Entry-day gate applies at first touch; disallowed first touch cancels that scenario, no deferred entry. Days are OANDA NY17 session labels, Sunday evening counts Monday. SL/TP ambiguity and gaps use baseline assumptions. Pending/open scenarios at gaps remain unresolved, restart only after 200-bar warmup.",
+ "costs":{"spreadBps":1,"slippageBpsPerSide":0.5,"commissionBps":0,"financingBpsPerDay":null,"stresses":[1,2,3]},
+ "trainingEligibility":{"closed":100,"entryWeeks":25,"symbols":10,"maxSingleSymbolShare":0.35},
+ "multipleTesting":{"method":"Approximate one-sided max-T wild bootstrap using common Rademacher signs of centered UTC entry-week net-R clusters across all eligible trials","samples":2000,"familyAlpha":0.05,"limitations":"Assumes approximately exchangeable/symmetric weekly cluster residuals; not PBO/CSCV, not full adjustment for nonstationarity or all FX dependence. R is not account return."},
+ "shortlist":{"size":8,"sort":"Highest discovery family-adjusted lower mean-R bound, then discovery double-cost mean, then stable id; training eligibility mandatory. Selection frozen before validation evaluation."},
+ "candidate":{"validationClosed":50,"validationEntryWeeks":12,"validationSymbols":8,"requires":"Positive validation lower 95% week-cluster bootstrap mean, positive double-cost mean; discovery family-adjusted lower mean also positive for evidence-qualified status","sort":"Highest validation lower 95% bound, then double-cost mean, then stable id","noPass":"Choose at most one clearly labeled diagnostic candidate from the frozen shortlist using the same ranking, without claiming an evidence-qualified winner."},
+ "finalRule":"Freeze one selected candidate before evaluating final period; evaluate only it and the matching baseline. No retuning or replacement based on final results. Report all unresolved/ambiguous cases, 1x/2x/3x costs, years, symbols, leave-one-symbol-out and clustered confidence intervals. If it fails, report failure.",
+ "partitionRule":"Statistics require registration and entry on/after partition start and resolution by partition end. Run chronologically through earlier data, carrying independent model state; boundary-crossing cases disclosed and excluded from partition P/L, never forced flat or used in earlier selection.",
+ "output":"Private local audit JSON, trial CSV, and readable report; no publication of private full OHLCV, no SQL/Work/production-model changes, no automatic live promotion. No broker-cost or financing claims. Same-source revised-history replay, not vintage reconstruction."
+}
