@@ -57,7 +57,7 @@
             lineVisible:false,axisLabelVisible:true,
             axisLabelColor:z.type==='demand'?'#26a69a':'#ef5350',axisLabelTextColor:'#ffffff',title:''
         });
-        if(trade)for(const [key,title,color]of [['entry','Vstup','#c7d2da'],['sl','SL','#ef5350'],['tp','TP 2R','#26a69a']])series.createPriceLine({price:trade[key],color,lineWidth:1,lineStyle:2,lineVisible:true,axisLabelVisible:true,title});
+        if(trade)for(const [key,title,color]of [['entry','Vstup','#c7d2da'],['sl','SL','#ef5350'],['tp',`TP ${String(trade.config?.rr??2).replace('.',',')}R`,'#26a69a']])series.createPriceLine({price:trade[key],color,lineWidth:1,lineStyle:2,lineVisible:true,axisLabelVisible:true,title});
         const markers=annotations.length?L.createSeriesMarkers(series,annotations):null;
         const drawingTools=window.ChartDrawingTools?.create(container,chart,series,{number});
         const x=date=>{

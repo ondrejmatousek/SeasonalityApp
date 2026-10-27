@@ -1,6 +1,7 @@
-(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./fm-trade-zones.js'),require('./trade-zones.js'));else root.H4Paper=factory(root.FmTradeZones,root.TradeZones);})(typeof globalThis==='object'?globalThis:this,(FM,T)=>{
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./fm-trade-zones.js'),require('./trade-zones.js'));else root.H4Paper=factory(root.FmTradeZones,root.TradeZones);})(typeof globalThis==='object'?globalThis:this,function createEngine(FM,T,rr){
  'use strict';
- const model='fm-h4-touch-2r-v1',config=Object.freeze({rr:2,bufferFraction:.05,spreadBps:1,slippageBpsPerSide:.5,commissionBps:0,financingBpsPerDay:null,oco:true,maxRegistrationLagHours:6}),active=s=>['waiting','open','needs_data'].includes(s.status),terminal=s=>!active(s),sec=s=>Date.parse(s)/1000,iso=t=>new Date(t*1000).toISOString(),copy=v=>JSON.parse(JSON.stringify(v));
+ if(rr===undefined)rr=2;if(![1,2,2.5,3].includes(rr))throw Error('Nepodporované pevné RRR.');
+ const model=rr===2?'fm-h4-touch-2r-v1':`fm-h4-backtest-touch-${rr}r-v1`,config=Object.freeze({rr,bufferFraction:.05,spreadBps:1,slippageBpsPerSide:.5,commissionBps:0,financingBpsPerDay:null,oco:true,maxRegistrationLagHours:6}),active=s=>['waiting','open','needs_data'].includes(s.status),terminal=s=>!active(s),sec=s=>Date.parse(s)/1000,iso=t=>new Date(t*1000).toISOString(),copy=v=>JSON.parse(JSON.stringify(v));
  const signature=b=>JSON.stringify([b.timestamp,b.endDate,b.open,b.high,b.low,b.close]);
  const ny=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date(t*1000)).filter(p=>['weekday','hour'].includes(p.type)).map(p=>p.value);
  function adjacent(a,b){if(b-a===14400)return true;const p=ny(a),n=ny(b);return p[0]==='Fri'&&Number(p[1])===13&&n[0]==='Sun'&&Number(n[1])===17&&b-a>=48*3600&&b-a<=56*3600;}
@@ -51,5 +52,5 @@
   return state;
  }
  function summary(setups){const closed=setups.filter(s=>['tp','sl'].includes(s.status)).sort((a,b)=>a.resolvedAt.localeCompare(b.resolvedAt)||a.netR-b.netR||a.id.localeCompare(b.id));let equity=0,peak=0,drawdown=0;for(const s of closed){equity+=s.netR;peak=Math.max(peak,equity);drawdown=Math.max(drawdown,peak-equity);}return {closed:closed.length,tp:closed.filter(s=>s.status==='tp').length,sl:closed.filter(s=>s.status==='sl').length,winRate:closed.length?closed.filter(s=>s.status==='tp').length/closed.length*100:null,netR:equity,meanR:closed.length?equity/closed.length:null,drawdownR:drawdown,ambiguous:setups.filter(s=>s.status==='ambiguous').length,waiting:setups.filter(s=>s.status==='waiting').length,open:setups.filter(s=>s.status==='open').length,needsData:setups.filter(s=>s.status==='needs_data').length};}
- return {model,config,active,terminal,adjacent,plan,empty,update,summary};
+ return {model,config,active,terminal,adjacent,plan,empty,update,summary,forBacktest:rr=>createEngine(FM,T,rr)};
 });

@@ -15,3 +15,17 @@ const gap=B.run({...input,snapshot:fixture([...bars(360),...bars(260,400)])});as
 assert.equal(B.run({...input,snapshot:fixture(bars(100))}).setups.length,0);assert.equal(B.run({...input,from:'2027-01-01'}).setups.length,0);assert.throws(()=>B.run({...input,from:'2026-02-30'}));assert.throws(()=>B.run({...input,from:'2026-03-01',to:'2026-01-01'}));assert.throws(()=>B.run({...input,keys:['TEST','TEST']}));
 const bad=structuredClone(input);bad.snapshot.prices.TEST.h4.bars[10].high=0;assert.throws(()=>B.run(bad),/Neplatné/);const duplicate=structuredClone(input);duplicate.snapshot.prices.TEST.h4.bars.push({...rows[20]});assert.throws(()=>B.run(duplicate),/Duplicit/);
 assert.deepEqual(B.run(input),r,'Deterministic replay');console.log(JSON.stringify({checks:'PASS exact engine parity, native SHA, no future leakage/fill, segmentation, warmup, unresolved ends, bad data rejection, immutable sources and deterministic replay',setups:r.setups.length,closed:r.summary.closed}));
+// Recompute each target from candles, including subsequent admissions.
+const outcomes=[];for(const rr of [1,2,2.5,3]){
+ const variant=B.run({...input,rr}),engine=E.forBacktest(rr);outcomes.push(JSON.stringify(variant.summary));
+ assert.equal(variant.config.rr,rr);assert.equal(variant.selection.rr,rr);assert.ok(variant.setups.length>0);
+ for(const s of variant.setups){const f=s.frozen;assert.equal(f.config.rr,rr);assert.ok(Math.abs(Math.abs(f.tp-f.entry)/f.risk-rr)<1e-10);if(s.status==='tp')assert.ok(Math.abs(s.grossR-rr)<1e-10);}
+ for(const type of ['supply','demand']){const p=engine.plan({type,lower:100,upper:105});assert.ok(Math.abs(Math.abs(p.tp-p.entry)/p.risk-rr)<1e-10);}
+ if(rr!==2)assert.throws(()=>E.update(engine.empty(rows[199].endDate),{},rows[199].endDate,hash),/methodology changed/,'Backtest model cannot overwrite live ledger');
+}
+assert.ok(new Set(outcomes).size>1,'RRR must change execution results, not just labels');
+for(const rr of [0,-1,1.5,4,'2',null,NaN])assert.throws(()=>B.run({...input,rr}),/RRR/);
+assert.deepEqual(B.run({...input,rr:2}),r);assert.equal(E.config.rr,2);assert.equal(E.model,'fm-h4-touch-2r-v1');
+// Frozen complete-state digest from deployed 1182945, generated with identical inputs.
+assert.equal(hash(JSON.stringify(state)),'cacdf7a568a84e9e864806899bc01ec74e27d2386ad1164f6201040e5e046f21','Original live states/events remain exactly unchanged');
+console.log('PASS fixed RRR 1/2/2.5/3, real exits, both directions, frozen audit, model isolation, invalid target rejection and exact deployed 2R ledger parity');

@@ -1,10 +1,11 @@
 @{ ViewData["BacktestPage"] = true; }
 <section id="h4-backtest" class="strategy-lab">
  <p class="lab-eyebrow">HISTORICKÉ PŘEHRÁNÍ · FM H4 · DOTYK ZÓNY</p><h1>Backtesting</h1>
- <p>Stejný obchodní model jako H4 Papertrading · 2R: nejbližší fresh + armed supply a demand, vstup na dotyk, SL 5 % výšky za zónou a TP 2R. Výpočet provádí aplikace na pozadí prohlížeče; nemusíte o každý test žádat.</p>
+ <p>Stejná pravidla zón a vstupů jako H4 Papertrading · 2R: nejbližší fresh + armed supply a demand, vstup na dotyk, SL 5 % výšky za zónou. Pevný cíl zvolte v RRR; výchozí je 1:2. Výpočet provádí aplikace na pozadí prohlížeče; nemusíte o každý test žádat. Volba mění pouze backtest, běžící papertrading zůstává na 2R.</p>
  <p class="lab-warning">Zpětná simulace z aktuálně dostupného cenového snapshotu, nikoli skutečné obchody ani nedotčený závěrečný test. Historické ceny mohou být revidované. Parametry se neoptimalizují. Výsledky jsou oddělené od SQL papertradingu a jeho výzkumného vzorku 100 obchodů.</p>
  <div class="lab-controls">
   <label>Instrument<select id="bt-symbol" disabled></select></label>
+  <label>Pevné RRR<select id="bt-rr"><option value="1">1:1</option><option value="2" selected>1:2</option><option value="2.5">1:2,5</option><option value="3">1:3</option></select></label>
   <label>Registrace od · UTC dne<input id="bt-from" type="date" /></label>
   <label>Test do · včetně UTC dne<input id="bt-to" type="date" /></label>
   <button id="bt-run" type="button" disabled>Spustit backtest</button><button id="bt-stop" type="button" disabled>Zastavit</button><button id="bt-export" type="button" disabled>Stáhnout audit JSON</button>
@@ -26,5 +27,5 @@
   <li>Pracovní spread 1 bps + skluz 0,5 bps na každé straně, komise 0. Financování, brokerovy tick size, margin, proměnlivý spread a velikost účtu nejsou modelované. R není procentní výnos účtu. Propad jen z uzavřených obchodů; PF bez ztrát nezobrazujeme jako důkaz jistoty.</li>
   <li>Audit obsahuje hash celého cenového snapshotu, období, pokrytí, pravidla i časové důkazy obchodů. Výpočet v prohlížeči nic nezapisuje do SQL, nemění plány a neotevírá příkazy brokerovi.</li>
  </ul></details>
- <dialog id="bt-modal" aria-labelledby="bt-title"><div class="fm-modal-header"><h2 id="bt-title"></h2><button id="bt-close" type="button" autofocus>Zavřít ×</button></div><p id="bt-meta"></p><p id="bt-reason"></p><div class="zone-chart-toolbar"><button id="bt-fit" type="button">Reset grafu</button></div><div class="zone-chart-wrap" id="bt-chart" tabindex="0" aria-label="Historický setup, vstup, SL a TP v pražském čase"><div id="bt-tip" class="zone-tooltip" hidden></div></div><p>Červená plocha: risk. Zelená: plánovaný zisk 2R. Značky zobrazují důkazní svíčky vstupu a výsledku; zóna a ceny jsou zmrazené při historické registraci.</p><h3>Časový audit setupu</h3><ol id="bt-events"></ol></dialog>
+ <dialog id="bt-modal" aria-labelledby="bt-title"><div class="fm-modal-header"><h2 id="bt-title"></h2><button id="bt-close" type="button" autofocus>Zavřít ×</button></div><p id="bt-meta"></p><p id="bt-reason"></p><div class="zone-chart-toolbar"><button id="bt-fit" type="button">Reset grafu</button></div><div class="zone-chart-wrap" id="bt-chart" tabindex="0" aria-label="Historický setup, vstup, SL a TP v pražském čase"><div id="bt-tip" class="zone-tooltip" hidden></div></div><p>Červená plocha: risk. Zelená: plánovaný zisk podle zvoleného RRR. Značky zobrazují důkazní svíčky vstupu a výsledku; zóna a ceny jsou zmrazené při historické registraci.</p><h3>Časový audit setupu</h3><ol id="bt-events"></ol></dialog>
 </section>

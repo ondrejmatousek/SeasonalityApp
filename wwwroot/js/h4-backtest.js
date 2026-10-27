@@ -1,11 +1,12 @@
-(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./h4-paper.js'),require('./trade-zones.js'),require('./backtest-sha256.js'));else root.H4Backtest=factory(root.H4Paper,root.TradeZones,root.BacktestSha256);})(typeof globalThis==='object'?globalThis:this,(E,T,hash)=>{
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./h4-paper.js'),require('./trade-zones.js'),require('./backtest-sha256.js'));else root.H4Backtest=factory(root.H4Paper,root.TradeZones,root.BacktestSha256);})(typeof globalThis==='object'?globalThis:this,(baseEngine,T,hash)=>{
  'use strict';
  const version='fm-h4-historical-replay-v1',warmup=200,iso=t=>new Date(t*1000).toISOString();
- function run({snapshot,path,sha256,keys,from=null,to=null},progress=()=>{}){
+ function run({snapshot,path,sha256,keys,from=null,to=null,rr=2},progress=()=>{}){
+  const E=baseEngine.forBacktest(rr);
   if(!snapshot?.prices||!Array.isArray(keys)||!keys.length||new Set(keys).size!==keys.length||typeof path!=='string'||!/^[a-f0-9]{64}$/.test(sha256))throw Error('Invalid backtest source/selection');
   const boundary=(s,end)=>{if(s===null)return end?Infinity:-Infinity;if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||!Number.isFinite(Date.parse(s+'T00:00:00Z'))||new Date(s+'T00:00:00Z').toISOString().slice(0,10)!==s)throw Error('Invalid UTC date');return Date.parse(s+'T00:00:00Z')/1000+(end?86400-0.001:0);};
   const fromSec=boundary(from,false),toSec=boundary(to,true);if(fromSec>toSec)throw Error('Začátek musí být před koncem testu.');
-  const report={schemaVersion:1,version,model:E.model,config:JSON.parse(JSON.stringify(E.config)),source:{path,sha256,asOf:snapshot.asOf},selection:{keys:[...keys],from,to,warmup},coverage:[],setups:[],events:[]};
+  const report={schemaVersion:1,version,model:E.model,config:JSON.parse(JSON.stringify(E.config)),source:{path,sha256,asOf:snapshot.asOf},selection:{keys:[...keys],from,to,warmup,rr},coverage:[],setups:[],events:[]};
   for(const [keyIndex,key]of keys.entries()){
    const h=snapshot.prices[key]?.h4;if(h?.status!=='ready'||h.provider!=='OANDA')throw Error('OANDA H4 nedostupné: '+key);
    const bars=T.sourceBars(h,'H4',h.asOfUtc).filter(b=>Date.parse(b.endDate)/1000<=toSec),expected=h.bars.filter(b=>Date.parse(b.endDate)<=Date.parse(h.asOfUtc)&&Date.parse(b.endDate)/1000<=toSec);
