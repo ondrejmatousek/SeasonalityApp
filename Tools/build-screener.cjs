@@ -12,7 +12,9 @@ const contracts = new Map();
 function latestCot(market) {
     if (!contracts.has(market.contractCode)) {
         const file = manifest.contracts[market.contractCode].files['52'];
-        const reports = JSON.parse(fs.readFileSync(path.join(dir, file))).reports;
+        // Snapshot observation is known even when the archive lacks original publication timestamps.
+        const reports = require('../wwwroot/js/core-cot.js').observedReports(
+            JSON.parse(fs.readFileSync(path.join(dir, file))).reports, manifest.exportedAt);
         const latest=availability.latest(reports,manifest.exportedAt);
         contracts.set(market.contractCode,latest?{...latest,commercial:{...latest.commercial,index:availability.indexAt(reports,latest,manifest.exportedAt)}}:null);
     }
