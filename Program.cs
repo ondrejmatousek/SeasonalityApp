@@ -95,7 +95,8 @@ if (args.Contains("--market-daily-probe-only", StringComparer.OrdinalIgnoreCase)
 }
 var connection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
-var exporting = args.Contains("--export-static", StringComparer.OrdinalIgnoreCase);
+var refreshingCot = args.Contains("--refresh-cot-export", StringComparer.Ordinal);
+var exporting = args.Contains("--export-static", StringComparer.OrdinalIgnoreCase) || refreshingCot;
 if (exporting)
 {
     // A paused serverless SQL database can need more than 30 seconds to resume.
@@ -105,7 +106,7 @@ if (exporting)
 
 builder.Services.AddDbContext<SeasonalityDbContext>(options => options.UseSqlServer(connection, sql =>
 {
-    sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), null);
+    sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), refreshingCot ? new[] { -2 } : null);
     if (exporting) sql.CommandTimeout(180);
 }));
 builder.Services.AddHttpClient();
