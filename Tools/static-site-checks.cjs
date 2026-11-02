@@ -87,8 +87,10 @@ function exportChecks(directory) {
             for(const cot of asset.cot) {
                 const market=catalog.cot.markets.find(m=>m.key===cot.key);
                 assert.ok(market);
-                const availability=require('../wwwroot/js/cot-availability.js'),reports=read(manifest.contracts[market.contractCode].files['52']).reports;
+                const availability=require('../wwwroot/js/cot-availability.js'),reports=require('../wwwroot/js/core-cot.js').observedReports(
+                    read(manifest.contracts[market.contractCode].files['52']).reports,manifest.exportedAt);
                 const latest=availability.latest(reports,manifest.exportedAt);
+                assert.equal(cot.date,latest?.date ?? null,'Screener must use the latest observed COT report');
                 assert.equal(cot.index,availability.indexAt(reports,latest,manifest.exportedAt));
                 assert.equal(cot.change,latest?.commercial.change ?? null);
             }
