@@ -3,7 +3,7 @@ name: Publish verified static output
 # push workflows, so workflow_run handles generated-data commits.
 on:
   workflow_run:
-    workflows: ['Morning analytics']
+    workflows: ['Morning analytics', 'Weekly COT refresh']
     types: [completed]
     branches: [master]
   push:
@@ -45,11 +45,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           SOURCE_RUN: ${{ github.event.workflow_run.id }}
+          SOURCE_WORKFLOW: ${{ github.event.workflow_run.name }}
         run: |
           if [ "$EVENT_NAME" != workflow_run ]; then
             echo 'run=true' >> "$GITHUB_OUTPUT"
           else
-            count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts" --jq '[.artifacts[] | select(.name == "daily-health")] | length')
+            artifact=daily-health
+            if [ "$SOURCE_WORKFLOW" = 'Weekly COT refresh' ]; then artifact=cot-publication; fi
+            count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts" --jq "[.artifacts[] | select(.name == \"$artifact\")] | length")
             if [ "$count" -gt 0 ]; then echo 'run=true' >> "$GITHUB_OUTPUT"; else echo 'run=false' >> "$GITHUB_OUTPUT"; fi
           fi
       - uses: actions/checkout@v4
@@ -83,6 +86,7 @@ jobs:
           node Tools/h4-paper-table-checks.cjs
           node Tools/h4-backtest-checks.cjs
           node Tools/h4-backtest-format-checks.cjs
+          node Tools/cot-refresh-checks.cjs
           node Tools/h4-paper-research-checks.cjs
           node Tools/chart-time-checks.cjs
           node Tools/market-date-checks.cjs
@@ -167,7 +171,7 @@ jobs:
           node Tools/prune-static-output.cjs artifacts/public-site artifacts/unpublished-json
           node Tools/static-site-checks.cjs artifacts/public-site
       - name: Overlay this morning's report including failed runs (keep last good analytics)
-        if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run'
+        if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Morning analytics'
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN: ${{ github.event.workflow_run.id }}

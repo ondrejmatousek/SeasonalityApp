@@ -69,23 +69,7 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
         if (!prices.TryGetValue(assets[0].Key, out var initial) || initial.Count == 0)
             throw new InvalidOperationException("Initial instrument has no price history; refusing to publish an empty snapshot.");
 
-        var contracts = new Dictionary<string, StaticContract>();
-        var reports = await db.CotReports.AsNoTracking().OrderBy(item => item.ReportDate).ToListAsync(ct);
-        var byContract = reports.GroupBy(item => item.ContractCode).ToDictionary(item => item.Key, item => item.ToList());
-        foreach (var market in CotCatalog.Markets)
-        {
-            var history = byContract.GetValueOrDefault(market.ContractCode) ?? [];
-            if (history.Count == 0)
-                throw new InvalidOperationException($"COT contract {market.ContractCode} has no history; refusing an incomplete snapshot.");
-            var files = new Dictionary<string, string>();
-            foreach (var lookbackWeeks in new[] { 26, 52, 156 })
-            {
-                var path = await WriteHashedAsync(directory, "cot", $"{market.ContractCode}-{lookbackWeeks}",
-                    new { contractCode = market.ContractCode, lookbackWeeks, reports = CotService.BuildPoints(history, lookbackWeeks) }, ct);
-                files[lookbackWeeks.ToString()] = path;
-            }
-            contracts[market.ContractCode] = new StaticContract(files, history.Count, history[^1].ReportDate.ToString("yyyy-MM-dd"));
-        }
+        var contracts = await ExportContractsAsync(directory, ct);
         var manifest = JsonSerializer.Serialize(new
         {
             schemaVersion = 1,
@@ -126,6 +110,40 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
             throw new InvalidOperationException("Static export exceeds the safe Azure Free hosting size/file limits.");
         logger.LogInformation("Static export ready: {Directory}; {Assets} tickers ({Empty} without prices), {Contracts} COT contracts, {Files} files, {MiB:F2} MiB",
             directory, assets.Count, prices.Values.Count(item => item.Count == 0), contracts.Count, exported.Length, bytes / 1048576d);
+    }
+
+    public async Task ExportCotAsync(string output, CancellationToken ct = default)
+    {
+        var directory = Path.GetFullPath(output);
+        var artifacts = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "artifacts")) + Path.DirectorySeparatorChar;
+        if (!directory.StartsWith(artifacts, StringComparison.OrdinalIgnoreCase) || Directory.Exists(directory) || File.Exists(directory))
+            throw new ArgumentException("COT export requires a new artifacts directory.");
+        Directory.CreateDirectory(Path.Combine(directory, "data", "cot"));
+        var contracts = await ExportContractsAsync(directory, ct);
+        await File.WriteAllTextAsync(Path.Combine(directory, "cot-refresh.json"),
+            JsonSerializer.Serialize(new { schemaVersion = 1, checkedAt = DateTimeOffset.UtcNow, contracts }, Json), ct);
+    }
+
+    private async Task<Dictionary<string, StaticContract>> ExportContractsAsync(string directory, CancellationToken ct)
+    {
+        var contracts = new Dictionary<string, StaticContract>();
+        var reports = await db.CotReports.AsNoTracking().OrderBy(item => item.ReportDate).ToListAsync(ct);
+        var byContract = reports.GroupBy(item => item.ContractCode).ToDictionary(item => item.Key, item => item.ToList());
+        foreach (var market in CotCatalog.Markets)
+        {
+            var history = byContract.GetValueOrDefault(market.ContractCode) ?? [];
+            if (history.Count == 0)
+                throw new InvalidOperationException($"COT contract {market.ContractCode} has no history; refusing an incomplete snapshot.");
+            var files = new Dictionary<string, string>();
+            foreach (var lookbackWeeks in new[] { 26, 52, 156 })
+            {
+                var path = await WriteHashedAsync(directory, "cot", $"{market.ContractCode}-{lookbackWeeks}",
+                    new { contractCode = market.ContractCode, lookbackWeeks, reports = CotService.BuildPoints(history, lookbackWeeks) }, ct);
+                files[lookbackWeeks.ToString()] = path;
+            }
+            contracts[market.ContractCode] = new StaticContract(files, history.Count, history[^1].ReportDate.ToString("yyyy-MM-dd"));
+        }
+        return contracts;
     }
 
     private static async Task<string> WriteHashedAsync(string directory, string folder, string key, object payload, CancellationToken ct)

@@ -126,6 +126,18 @@ builder.Services.AddControllersWithViews().ConfigureApplicationPartManager(parts
 });
 
 var app = builder.Build();
+if (args.Contains("--refresh-cot-export", StringComparer.Ordinal))
+{
+    var index = Array.IndexOf(args, "--output");
+    if (index < 0 || index + 1 >= args.Length) throw new ArgumentException("COT output required.");
+    var output = Path.GetFullPath(args[index + 1]);
+    if (!output.StartsWith(Path.GetFullPath("artifacts") + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || Directory.Exists(output) || File.Exists(output))
+        throw new ArgumentException("COT export requires a new artifacts directory.");
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<CotService>().UpdateAsync();
+    await scope.ServiceProvider.GetRequiredService<StaticSiteExporter>().ExportCotAsync(output);
+    return;
+}
 if (args.Contains("--export-data-run-audit", StringComparer.Ordinal))
 {
     var index = Array.IndexOf(args, "--output");

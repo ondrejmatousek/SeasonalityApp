@@ -1,0 +1,74 @@
+name: Weekly COT refresh
+on:
+  schedule:
+    # CFTC normally releases Friday 15:30 New York; cover both DST offsets.
+    - cron: '0 20,21,22 * * 5'
+    # Saturday safety retries: 02:15/05:15 CET, 03:15/06:15 CEST.
+    - cron: '15 1,4 * * 6'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Refresh even if the latest CFTC position date is already published
+        type: boolean
+        default: false
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: seasonality-data-update
+  cancel-in-progress: false
+jobs:
+  cot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check CFTC latest dates before waking SQL
+        id: gate
+        run: |
+          node Tools/cot-refresh-checks.cjs
+          node Tools/cot-refresh.cjs --gate
+        env:
+          FORCE_COT: ${{ inputs.force }}
+      - uses: actions/setup-dotnet@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and verify existing COT definitions
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          dotnet build SeasonalityApp.slnx --configuration Release
+          dotnet run --project Tools/CotChecks/CotChecks.csproj -c Release
+      - name: Refresh only CFTC SQL data and export all COT windows
+        if: steps.gate.outputs.run == 'true'
+        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --refresh-cot-export --output artifacts/cot-refresh
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+      - name: Recalculate COT context against unchanged price histories
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          node Tools/cot-refresh.cjs --stage
+          node Tools/build-screener.cjs artifacts/cot-site
+          node Tools/build-opportunities.cjs artifacts/cot-site
+          dotnet bin/Release/net10.0/SeasonalityApp.dll --render-static-shell --output artifacts/cot-site
+          node Tools/static-site-checks.cjs artifacts/cot-site
+      - name: Commit verified COT snapshot without force push
+        if: steps.gate.outputs.run == 'true'
+        run: node Tools/cot-refresh.cjs --publish
+      - uses: actions/upload-artifact@v4
+        if: success() && steps.gate.outputs.run == 'true'
+        with:
+          name: cot-publication
+          path: artifacts/cot-publication/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cot-refresh-failure
+          path: artifacts/cot-official.json
+          retention-days: 90
