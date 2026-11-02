@@ -10,3 +10,12 @@ let plan=C.publicationPlan(output,source);assert.ok([...plan.files].every(f=>!f.
 const stagedManifest=path.join(output,'data/manifest.json');fs.writeFileSync(stagedManifest,JSON.stringify({...next,marketDailySql:{generationId:8}}));assert.throws(()=>C.publicationPlan(output,source),/protected/);fs.writeFileSync(stagedManifest,JSON.stringify(next));fs.appendFileSync(path.join(source,'data/manifest.json'),' ');assert.throws(()=>C.publicationPlan(output,source),/changed during/);
 assert.throws(()=>C.validate(base,{...fresh,contracts:{'099741':beforeContract}},source,official),/stale/);assert.throws(()=>C.validate(base,{...fresh,contracts:{}},freshRoot,official),/coverage/);const f=path.join(freshRoot,afterContract.files[52].slice(1));fs.appendFileSync(f,' ');assert.throws(()=>C.validate(base,fresh,freshRoot,official),/hash/);
 const workflow=fs.readFileSync('.github/workflows/cot-refresh.yml','utf8'),host=fs.readFileSync('.github/workflows/static-hosting.yml','utf8');assert.ok(workflow.includes("cron: '0 20,21,22 * * 5'")&&workflow.includes("cron: '15 1,4 * * 6'"));assert.ok(workflow.includes('group: seasonality-data-update'));assert.ok(!workflow.includes('--update-once')&&!workflow.includes('--process-market'));assert.ok(host.includes("workflows: ['Morning analytics', 'Weekly COT refresh']")&&host.includes('artifact=cot-publication')&&host.includes("github.event.workflow_run.name == 'Morning analytics'"));console.log('PASS independent COT gate, unchanged-date no SQL wakeup, force retry, content hashes, complete/stale exports, price/H4/SQL provenance preservation, embedded manifest, publication CAS, protected target, Friday/Saturday UTC schedule and separate hosting trigger');
+
+const {validateDates}=require('./zone-snapshot-dates.cjs');
+validateDates({zonePrices:{asOf:'2026-10-24'}},{asOf:'2026-10-24'},{asOf:'2026-10-24'});
+assert.throws(()=>validateDates({zonePrices:{asOf:'2026-10-24'}},{asOf:'2026-10-24'},{asOf:'2026-11-02'}));
+const clock={zonePrices:{asOf:'2026-10-24'},cotSnapshotAt:'2026-11-02T08:00:00Z',exportedAt:'2026-11-02T08:00:00Z'},context={asOf:'2026-11-02',exportedAt:clock.cotSnapshotAt};
+validateDates(clock,{asOf:'2026-10-24'},context);
+assert.throws(()=>validateDates(clock,{asOf:'2026-11-03'},context));
+assert.throws(()=>validateDates(clock,{asOf:'2026-10-24'},{...context,exportedAt:'2026-10-24T08:00:00Z'}));
+console.log('PASS independent COT/price clocks, unchanged actual price date, stale context/future prices rejected');
