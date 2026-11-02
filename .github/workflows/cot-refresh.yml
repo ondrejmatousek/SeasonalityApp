@@ -56,6 +56,7 @@ jobs:
           node Tools/build-screener.cjs artifacts/cot-site
           node Tools/build-opportunities.cjs artifacts/cot-site
           dotnet bin/Release/net10.0/SeasonalityApp.dll --render-static-shell --output artifacts/cot-site
+          node Tools/prune-static-output.cjs artifacts/cot-site artifacts/cot-unpublished
           node Tools/static-site-checks.cjs artifacts/cot-site
       - name: Commit verified COT snapshot without force push
         if: steps.gate.outputs.run == 'true'
