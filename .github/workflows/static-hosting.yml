@@ -77,11 +77,11 @@ jobs:
           # Render current Razor navigation and the Data view without SQL or analytics.
           node Tools/data-runs-checks.cjs
           node Tools/trade-zones-checks.cjs
+          node Tools/trade-zone-view-state-checks.cjs
           node Tools/trade-zone-table-checks.cjs
           node Tools/strategy-lab-checks.cjs wwwroot/research/strategy-lab-pilot.json
           node Tools/fm-order-blocks-checks.cjs wwwroot/research/fm-outlook-pilot.json
           node Tools/fm-trade-zones-checks.cjs
-          node Tools/swing-srajer-checks.cjs
           node Tools/h4-paper-checks.cjs
           node Tools/h4-paper-table-checks.cjs
           node Tools/h4-backtest-checks.cjs

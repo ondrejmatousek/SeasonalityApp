@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),S=require('../wwwroot/js/trade-zone-view-state.js');
+const at='2026-11-06T09:00:00Z',snapshot={asOf:'2026-10-24',prices:{EURUSD:{h4:{status:'ready',latestDate:'2026-11-06T06:00:00Z'}}}},opps={asOf:'2026-11-06',exportedAt:at,assets:[]};
+assert.equal(S.context(snapshot,opps,at).available,true,'Independent verified context survives older D1 date');
+assert.equal(S.context(snapshot,{...opps,exportedAt:'2026-11-05T09:00:00Z'},at).available,false,'Reject a context from another publication');
+assert.equal(S.context(snapshot,{...opps,asOf:'2026-11-07'},at).available,false,'Reject future or incorrectly dated context');
+assert.equal(S.context(snapshot,null,at).available,false);
+assert.equal(S.context({...snapshot,asOf:opps.asOf},opps,at).available,true);
+const h4=S.freshness(snapshot,'H4',null,Date.parse(at));assert.equal(h4.stale,false,'Fresh H4 must not inherit stale D1 date');assert.doesNotMatch(h4.label,/2026-10-24/);assert.match(h4.label,/Praha/);
+assert.equal(S.freshness(snapshot,'D1',null,Date.parse(at)).stale,true,'Do not disguise older D1');
+assert.equal(S.freshness(snapshot,'H4',null,Date.parse('2026-11-10T09:00:00Z')).stale,true);
+assert.equal(S.freshness(snapshot,'H4',['GBPUSD'],Date.parse(at)).stale,true,'Missing selected scope is not fresh');
+for(const file of ['Views/Seasonality/Index.cshtml','Views/Shared/_Layout.cshtml','wwwroot/js/cot.js','.github/workflows/static-hosting.yml'])assert.doesNotMatch(fs.readFileSync(file,'utf8'),/swing-srajer|market-swing-view|market-tab-swing|Swing Honzy/);
+for(const file of ['wwwroot/js/fm-order-blocks.js','wwwroot/js/fm-trade-zones.js','wwwroot/js/h4-paper.js'])assert.ok(fs.existsSync(file),'Preserve shared detector and papertrading');
+console.log('PASS: independent context identity, price freshness per timeframe, removed Swing navigation, preserved shared models.');
