@@ -478,4 +478,9 @@
     document.addEventListener('scroll', () => { tooltip.hidden = true; }, true);
     window.addEventListener('resize', () => { tooltip.hidden = true; });
     new ResizeObserver(draw).observe(panel);
+    const defaultTab = tabs.find(tab => tab.dataset.marketTab === 'seasonality');
+    switchTab(defaultTab);
+    window.addEventListener('pageshow', event => {
+        if (event.persisted) switchTab(defaultTab);
+    });
 })();
