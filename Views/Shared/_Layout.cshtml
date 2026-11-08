@@ -1,3 +1,14 @@
+@{
+    var analysisLinks = new[]
+    {
+        (Url: "/", Label: "Seasonality & COT", Icon: "M3 3v14h14 M6 13l4-5 3 3 4-6", Current: ViewData["DataPage"] is not true && ViewData["LabPage"] is not true && ViewData["FmPage"] is not true && ViewData["PaperPage"] is not true && ViewData["BacktestPage"] is not true),
+        (Url: "/strategy-lab/", Label: "Laboratoř strategií", Icon: "M7 3h6 M8 3v6l-4 7a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l-4-7V3 M6 13h8", Current: ViewData["LabPage"] is true),
+        (Url: "/daily-outlook/", Label: "Denní výhled · FM", Icon: "M3 5h14v10H3z M3 9h14 M7 12h3", Current: ViewData["FmPage"] is true),
+        (Url: "/paper-trading/", Label: "H4 Papertrading · 2R", Icon: "M4 3h12v14H4z M7 7h6 M7 10h6 M7 13h3", Current: ViewData["PaperPage"] is true),
+        (Url: "/backtesting/", Label: "Backtesting", Icon: "M4 8a6 6 0 1 1 .5 6 M4 4v4h4 M10 7v4l2 1", Current: ViewData["BacktestPage"] is true)
+    };
+    var runsCurrent = ViewData["DataPage"] is true;
+}
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -20,6 +31,7 @@
     <link rel="stylesheet" href="~/css/h4-paper-table.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/h4-paper-research.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/h4-backtest.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/workspace.css" asp-append-version="true" />
 </head>
 <body class="journal-shell app-section-shell">
     <header>
@@ -27,22 +39,27 @@
             <div class="container-fluid">
                 <a class="navbar-brand app-brand" href="/">
                     <img class="brand-chart-mark" src="~/favicon.svg" asp-append-version="true" width="30" height="30" alt="" />
-                    <span>SeasonalityApp</span>
+                    <span>Seasonality App</span>
                 </a>
             </div>
         </nav>
     </header>
     <div class="app-workspace">
-        <aside class="app-sidebar">
+        <nav class="app-sidebar" aria-label="Sekce aplikace">
             <div class="sidebar-title">Analýza trhů</div>
-            <a class="sidebar-link @(ViewData["DataPage"] is true || ViewData["LabPage"] is true || ViewData["FmPage"] is true || ViewData["PaperPage"] is true || ViewData["BacktestPage"] is true ? "" : "active")" href="/">Seasonality &amp; COT</a>
-            <a class="sidebar-link @(ViewData["LabPage"] is true ? "active" : "")" href="/strategy-lab/">Laboratoř strategií</a>
-            <a class="sidebar-link @(ViewData["FmPage"] is true ? "active" : "")" href="/daily-outlook/">Denní výhled · FM</a>
-            <a class="sidebar-link @(ViewData["PaperPage"] is true ? "active" : "")" href="/paper-trading/">H4 Papertrading · 2R</a>
-            <a class="sidebar-link @(ViewData["BacktestPage"] is true ? "active" : "")" href="/backtesting/">Backtesting</a>
+            @foreach (var link in analysisLinks)
+            {
+                <a class="sidebar-link @(link.Current ? "active" : "")" href="@link.Url" aria-current="@(link.Current ? "page" : null)">
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="@link.Icon" /></svg>
+                    <span>@link.Label</span>
+                </a>
+            }
             <div class="sidebar-title">Data</div>
-            <a class="sidebar-link @(ViewData["DataPage"] is true ? "active" : "")" href="/runs/">Denní běhy</a>
-        </aside>
+            <a class="sidebar-link @(runsCurrent ? "active" : "")" href="/runs/" aria-current="@(runsCurrent ? "page" : null)">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3h10v14H5z M8 7h4 M8 10h4 M8 13h4" /></svg>
+                <span>Denní běhy</span>
+            </a>
+        </nav>
         <main role="main" class="app-workspace-main">@RenderBody()</main>
     </div>
     <script src="~/js/static-market-data.js" asp-append-version="true"></script>
