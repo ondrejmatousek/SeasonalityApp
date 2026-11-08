@@ -1,0 +1,57 @@
+/* Drawing toolbar and SVG overlay from Trade Replay, scoped to the paper chart. */
+#paper-chart .zone-chart-canvas { position: relative; }
+#paper-chart .zone-tooltip { z-index: 4; }
+#paper-chart .paper-drawing-status {
+  position: absolute;
+  bottom: 32px;
+  left: 58px;
+  z-index: 5;
+  max-width: calc(100% - 70px);
+  padding: 3px 7px;
+  color: #d1d4dc;
+  background: #1e222d;
+  font-size: 12px;
+  pointer-events: none;
+}
+#paper-chart .paper-drawing-status:empty { display: none; }
+#paper-modal #paper-fit { display: inline-flex; align-items: center; gap: 6px; }
+#paper-fit svg { width: 16px; height: 16px; }
+
+#paper-modal .tv-drawing-tools { order: 0; flex: none; display: flex; flex-direction: column; box-sizing: border-box; width: 52px; padding: 4px 3px; gap: 2px; background: #131722; border-right: 1px solid #2a2e39; position: relative; z-index: 8; overflow: visible; }
+#paper-modal .tv-tool { width: 40px; height: 32px; padding: 0; min-height: 32px; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 4px; color: #b2b5be; cursor: pointer; flex-shrink: 0; position: relative; }
+#paper-modal .tv-tool svg { width: 25px; height: 25px; pointer-events: none; }
+#paper-modal .tv-tool:hover { background: #2a2e39; color: #e0e3eb; }
+#paper-modal .tv-tool.selected, #paper-modal .tv-tool.enabled { color: #82a8ff; background: #203455; }
+#paper-modal .tv-cursor.selected { color: #d7e5ff; background: #16418b; }
+#paper-modal .tv-tool:disabled { opacity: .3; }
+#paper-modal .tv-tool-group { position: relative; width: 46px; min-height: 32px; }
+#paper-modal .tv-group-primary { width: 39px; }
+#paper-modal .tv-group-expand { position: absolute; right: 0; top: 0; width: 11px; height: 32px; min-height: 32px; padding: 0; border: 0; background: transparent; color: #6b7180; display: flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; }
+#paper-modal .tv-group-expand:hover, #paper-modal .tv-group-expand[aria-expanded=true] { background: #2a2e39; color: #e0e3eb; }
+#paper-modal .tv-group-expand svg { width: 6px; height: 6px; margin: 0; display: block; fill: none; stroke: currentColor; stroke-width: 1.4; }
+#paper-modal .tv-separator { display: block; width: 30px; height: 1px; min-height: 1px; background: #2a2e39; margin: 6px 0; }
+#paper-modal .tv-tool-menu { position: absolute; left: 49px; top: 0; min-width: 238px; padding: 7px 0; background: #1e222d; border: 1px solid #363a45; border-radius: 4px; box-shadow: 0 8px 28px #0009; color: #d1d4dc; z-index: 20; }
+#paper-modal .tv-menu-title { font-size: 10px; letter-spacing: .5px; color: #868c9c; padding: 7px 16px 10px; border-bottom: 1px solid #303540; margin-bottom: 5px; }
+#paper-modal .tv-tool-menu [role=menuitem] { display: flex; align-items: center; gap: 14px; width: 100%; height: 41px; min-height: 41px; padding: 0 16px; border: 0; background: none; text-align: left; font-size: 12px; font-weight: 400; color: #d1d4dc; cursor: pointer; white-space: nowrap; }
+#paper-modal .tv-tool-menu [role=menuitem]>svg { width: 23px; height: 23px; flex-shrink: 0; }
+#paper-modal .tv-tool-menu [role=menuitem]:hover, #paper-modal .tv-tool-menu [role=menuitem]:focus-visible { background: #2a2e39; color: #f0f3fa; outline-offset: -2px; }
+#paper-modal .tv-tool-menu .tv-menu-check { margin-left: auto; color: #82a8ff; visibility: hidden; }
+#paper-modal .tv-tool-menu [role=menuitem].selected .tv-menu-check { visibility: visible; }
+@media (max-width: 600px) {
+  #paper-modal .tv-drawing-tools { width: 46px; padding-inline: 0; }
+  #paper-modal .tv-tool-menu { left: 44px; min-width: min(222px, calc(100vw - 84px)); }
+  #paper-modal .tv-tool-menu [role=menuitem] { font-size: 11px; }
+  #paper-modal .tv-tool-group { width: 43px; }
+}
+
+#paper-modal .drawing-overlay { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: hidden; touch-action: none; }
+#paper-modal .drawing-overlay.drawing-mode { pointer-events: all; cursor: crosshair; }
+#paper-modal .drawing-shape { pointer-events: all; cursor: move; stroke-width: 1.2; }
+#paper-modal .drawing-shape.is-selected>rect { stroke-width: 1.7; }
+#paper-modal .drawing-label { font: 10px 'Segoe UI',sans-serif; pointer-events: none; paint-order: stroke; stroke: #121923; stroke-width: 2px; stroke-linejoin: round; }
+#paper-modal .drawing-handle { fill: #161e2a; stroke: #e3bd8b; stroke-width: 1.5; pointer-events: none; }
+#paper-modal .drawing-handle-hit { fill: transparent; stroke: none; pointer-events: all; cursor: ns-resize; }
+#paper-modal .drawing-handle-hit[data-handle=entry], #paper-modal .drawing-handle-hit[data-handle=end] { cursor: ew-resize; }
+#paper-modal .drawing-handle-hit[data-handle=start] { cursor: nwse-resize; }
+#paper-modal .drawing-handle[data-handle=end], #paper-modal .drawing-handle[data-handle=start] { cursor: nwse-resize; }
+#paper-modal .line-hit { stroke-width: 3; pointer-events: stroke; }

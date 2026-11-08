@@ -2,7 +2,7 @@
 (() => {
     const iso=t=>typeof t==='string'?t:typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):`${t.year}-${String(t.month).padStart(2,'0')}-${String(t.day).padStart(2,'0')}`;
     const day=s=>Date.parse(s.includes('T')?s:s+'T00:00:00Z'),fmt=s=>new Date(day(s)).toLocaleDateString('cs-CZ');
-    window.ZonePriceChart={create(container,tip,{price,zone,zones=[],candidate,resolution,annotations=[],trade=null}){
+    window.ZonePriceChart={create(container,tip,{price,zone,zones=[],candidate,resolution,annotations=[],trade=null,replayDrawingTools=false}){
         const L=window.LightweightCharts;if(!L)throw Error('Knihovna cenového grafu není dostupná');
         const shown=[zone,...zones].filter((z,i,a)=>a.findIndex(v=>v.type===z.type&&v.lower===z.lower&&v.upper===z.upper&&v.baseDate===z.baseDate)===i);
         const tradePrices=trade?[trade.entry,trade.sl,trade.tp]:[];
@@ -59,7 +59,9 @@
         });
         if(trade)for(const [key,title,color]of [['entry','Vstup','#c7d2da'],['sl','SL','#ef5350'],['tp',`TP ${String(trade.config?.rr??2).replace('.',',')}R`,'#26a69a']])series.createPriceLine({price:trade[key],color,lineWidth:1,lineStyle:2,lineVisible:true,axisLabelVisible:true,title});
         const markers=annotations.length?L.createSeriesMarkers(series,annotations):null;
-        const drawingTools=window.ChartDrawingTools?.create(container,chart,series,{number});
+        const drawingTools=replayDrawingTools
+            ? window.PaperChartToolbar.create(container,host,chart,series,{data,precision})
+            : window.ChartDrawingTools?.create(container,chart,series,{number});
         const x=date=>{
             let n=dates.findIndex(d=>d>=date);if(n<0)n=dates.length-1;
             let p=n;if(n>0&&dates[n]!==date)p=n-1+(day(date)-day(dates[n-1]))/(day(dates[n])-day(dates[n-1]));
