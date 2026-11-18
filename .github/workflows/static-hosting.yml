@@ -32,12 +32,11 @@ on:
 permissions:
   contents: read
   actions: read
-concurrency:
-  group: seasonality-static-hosting
-  cancel-in-progress: false
 jobs:
-  hosting:
+  publication:
     runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.publication.outputs.run }}
     steps:
       - name: Skip hosting for deduplicated/no-op morning runs
         id: publication
@@ -55,16 +54,21 @@ jobs:
             count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts" --jq "[.artifacts[] | select(.name == \"$artifact\")] | length")
             if [ "$count" -gt 0 ]; then echo 'run=true' >> "$GITHUB_OUTPUT"; else echo 'run=false' >> "$GITHUB_OUTPUT"; fi
           fi
+  hosting:
+    needs: publication
+    if: needs.publication.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: seasonality-static-hosting
+      cancel-in-progress: false
+    steps:
       - uses: actions/checkout@v4
-        if: steps.publication.outputs.run == 'true'
         with:
           ref: master
       - uses: actions/setup-dotnet@v4
-        if: steps.publication.outputs.run == 'true'
         with:
           dotnet-version: '10.0.x'
       - name: Assemble previously verified static outputs (no analytics or SQL)
-        if: steps.publication.outputs.run == 'true'
         run: |
           test -s data/generated/site/data/manifest.json
           mkdir -p artifacts/public-site
@@ -97,7 +101,7 @@ jobs:
           cp StaticSite/staticwebapp.config.json artifacts/public-site/staticwebapp.config.json
       - name: Add SQL-validated H4 sidecar for trading zones only
         id: h4_zones
-        if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
         env:
           SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
@@ -175,7 +179,6 @@ jobs:
           ConnectionStrings__H4Connection: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --export-data-run-audit --output artifacts/h4-site/data/data-runs/receipts.json
       - name: Preserve last verified H4 and publish independent D1/COT
-        if: steps.publication.outputs.run == 'true'
         env:
           H4_OUTCOME: ${{ steps.h4_cfd.outcome }}
           H4_ATTEMPTED: ${{ github.event_name == 'workflow_dispatch' }}
@@ -186,12 +189,11 @@ jobs:
           fi
           node Tools/preserve-published-h4.cjs artifacts/public-site "$H4_ATTEMPTED"
       - name: Exclude obsolete generated JSON from the free hosting bundle
-        if: steps.publication.outputs.run == 'true'
         run: |
           node Tools/prune-static-output.cjs artifacts/public-site artifacts/unpublished-json
           node Tools/static-site-checks.cjs artifacts/public-site
       - name: Overlay this morning's report including failed runs (keep last good analytics)
-        if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Morning analytics'
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Morning analytics'
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN: ${{ github.event.workflow_run.id }}
@@ -199,7 +201,6 @@ jobs:
           gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name daily-health --dir artifacts/run-health
           cp artifacts/run-health/*.json artifacts/public-site/artifacts/daily-health/
       - name: Existing Azure static hosting publication
-        if: steps.publication.outputs.run == 'true'
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
