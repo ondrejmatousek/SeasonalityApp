@@ -20,7 +20,8 @@ public sealed record StaticContract(IReadOnlyDictionary<string, string> Files, i
 // Build-time only. Nothing in the generated directory needs .NET or SQL.
 public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironment environment,
     IRazorViewEngine views, IModelMetadataProvider metadata, ITempDataProvider tempData,
-    IServiceProvider services, ILogger<StaticSiteExporter> logger, MarketPriceSources marketSources)
+    IServiceProvider services, ILogger<StaticSiteExporter> logger, MarketPriceSources marketSources,
+    [FromKeyedServices("COT")] SeasonalityDbContext cotDb, IConfiguration config)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -69,11 +70,15 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
         if (!prices.TryGetValue(assets[0].Key, out var initial) || initial.Count == 0)
             throw new InvalidOperationException("Initial instrument has no price history; refusing to publish an empty snapshot.");
 
-        var contracts = await ExportContractsAsync(directory, ct);
+        var verifiedCot = config["StaticExport:VerifiedCotSite"];
+        var (contracts, cotSnapshotAt) = string.IsNullOrWhiteSpace(verifiedCot)
+            ? (await ExportContractsAsync(directory, ct), DateTimeOffset.UtcNow)
+            : await CopyVerifiedCotAsync(verifiedCot, directory, ct);
         var manifest = JsonSerializer.Serialize(new
         {
             schemaVersion = 1,
             exportedAt = DateTimeOffset.UtcNow,
+            cotSnapshotAt,
             assets = assets.Select(asset => new
             {
                 key = asset.Key, name = asset.Name, aliases = SeasonalityService.SearchAliases(asset.Key),
@@ -124,10 +129,44 @@ public sealed class StaticSiteExporter(SeasonalityDbContext db, IWebHostEnvironm
             JsonSerializer.Serialize(new { schemaVersion = 1, checkedAt = DateTimeOffset.UtcNow, contracts }, Json), ct);
     }
 
+    private static async Task<(Dictionary<string, StaticContract> Contracts, DateTimeOffset SnapshotAt)> CopyVerifiedCotAsync(
+        string site, string directory, CancellationToken ct)
+    {
+        using var manifest = JsonDocument.Parse(await File.ReadAllBytesAsync(Path.Combine(site, "data", "manifest.json"), ct));
+        var root = manifest.RootElement;
+        var snapshotAt = root.TryGetProperty("cotSnapshotAt", out var observed)
+            ? observed.GetDateTimeOffset()
+            : root.GetProperty("exportedAt").GetDateTimeOffset();
+        var committed = root.GetProperty("contracts").Deserialize<Dictionary<string, StaticContract>>(Json)
+            ?? throw new InvalidDataException("Missing verified COT contracts.");
+        var contracts = new Dictionary<string, StaticContract>();
+        foreach (var market in CotCatalog.Markets)
+        {
+            if (!committed.TryGetValue(market.ContractCode, out var contract) || contract.Count == 0 || contract.LastDate is null)
+                throw new InvalidDataException("Missing verified COT history for " + market.ContractCode);
+            foreach (var window in new[] { "26", "52", "156" })
+            {
+                var file = contract.Files[window];
+                var prefix = $"/data/cot/{market.ContractCode}-{window}.";
+                if (!file.StartsWith(prefix, StringComparison.Ordinal) ||
+                    !Regex.IsMatch(file[prefix.Length..], "^[a-f0-9]{20}\\.json$"))
+                    throw new InvalidDataException("Invalid verified COT file name.");
+                var relative = file[1..];
+                var bytes = await File.ReadAllBytesAsync(Path.Combine(site, relative), ct);
+                if (Convert.ToHexStringLower(SHA256.HashData(bytes))[..20] != file.Substring(prefix.Length, 20))
+                    throw new InvalidDataException("Verified COT file hash mismatch.");
+                await File.WriteAllBytesAsync(Path.Combine(directory, relative), bytes, ct);
+            }
+            contracts.Add(market.ContractCode, contract);
+        }
+
+        return (contracts, snapshotAt);
+    }
+
     private async Task<Dictionary<string, StaticContract>> ExportContractsAsync(string directory, CancellationToken ct)
     {
         var contracts = new Dictionary<string, StaticContract>();
-        var reports = await db.CotReports.AsNoTracking().OrderBy(item => item.ReportDate).ToListAsync(ct);
+        var reports = await cotDb.CotReports.AsNoTracking().OrderBy(item => item.ReportDate).ToListAsync(ct);
         var byContract = reports.GroupBy(item => item.ContractCode).ToDictionary(item => item.Key, item => item.ToList());
         foreach (var market in CotCatalog.Markets)
         {

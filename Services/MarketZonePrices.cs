@@ -126,7 +126,7 @@ public sealed class MarketZonePriceTool(IConfiguration config,MarketDailyGitHubT
         if(!MarketDailyMcp.HasScope(context.User,config,MarketDailyMcp.IngestScope))return MarketDailyMcp.ScopeRequired(MarketDailyMcp.IngestScope);
         try
         {
-            await using var db=new SqlConnection(config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);var rows=new List<object>();var receipts=new List<object>();
+            await using var db=new SqlConnection(config.GetConnectionString("H4Connection") ?? config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);var rows=new List<object>();var receipts=new List<object>();
             await using(var c=new SqlCommand("SELECT Symbol,Interval,MAX(StartUnix),COUNT(*) FROM market_zones.Bars GROUP BY Symbol,Interval ORDER BY Symbol,Interval",db))
             {await using var r=await c.ExecuteReaderAsync(cancellationToken);while(await r.ReadAsync(cancellationToken))rows.Add(new{symbol=r.GetString(0),interval=r.GetString(1),storedThrough=DateTimeOffset.FromUnixTimeSeconds(r.GetInt64(2)),storedBars=r.GetInt32(3)});}
             await using(var c=new SqlCommand("SELECT TOP(12) ReceiptId,Status,InsertedBars,DuplicateBars,ExcludedBars,ReceivedAt,VolumeAudit FROM market_zones.Receipts ORDER BY ReceivedAt DESC,ReceiptId",db))
@@ -142,7 +142,7 @@ public sealed class MarketZonePriceTool(IConfiguration config,MarketDailyGitHubT
         if(!MarketDailyMcp.InboxConfigured(config))return MarketDailyMcp.ToolResult(new{code="ZONE_INBOX_DISABLED",persisted=false},true);
         try
         {
-            var batch=MarketZonePrices.Parse(pricesJson,DateTimeOffset.UtcNow);await using var db=new SqlConnection(config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);
+            var batch=MarketZonePrices.Parse(pricesJson,DateTimeOffset.UtcNow);await using var db=new SqlConnection(config.GetConnectionString("H4Connection") ?? config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);
             var receipt=await MarketZonePrices.Receive(db,batch,cancellationToken);
             var publish=await MarketZonePrices.NeedsZonePublication(db,receipt,cancellationToken);
             var wake=publish?await trigger.RequestH4Async(cancellationToken):new MarketDailyGitHubTrigger.Result("NoNewZoneBars");

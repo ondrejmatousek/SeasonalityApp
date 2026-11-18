@@ -145,7 +145,7 @@ public sealed class MarketH4Tool(IConfiguration config,IWebHostEnvironment envir
         if(!MarketDailyMcp.HasScope(context.User,config,MarketDailyMcp.IngestScope))return MarketDailyMcp.ScopeRequired(MarketDailyMcp.IngestScope);
         try
         {
-            var allowed=await MarketH4Ingestion.Allowed(config,environment,cancellationToken);await using var db=new SqlConnection(config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);
+            var allowed=await MarketH4Ingestion.Allowed(config,environment,cancellationToken);await using var db=new SqlConnection(config.GetConnectionString("H4Connection") ?? config.GetConnectionString("DefaultConnection"));await db.OpenAsync(cancellationToken);
             var watermarks=new List<object>();await using(var c=new SqlCommand("SELECT Symbol,MAX(StartUnix) FROM (SELECT Symbol,StartUnix FROM market_h4.LiveBars UNION ALL SELECT Symbol,StartUnix FROM market_h4.Bars WHERE Provider='OANDA' AND Timeframe='H4') b GROUP BY Symbol ORDER BY Symbol",db))
             {await using var r=await c.ExecuteReaderAsync(cancellationToken);while(await r.ReadAsync(cancellationToken))watermarks.Add(new{symbol=r.GetString(0),storedThrough=DateTimeOffset.FromUnixTimeSeconds(r.GetInt64(1)),note="Storage watermark, not a claim of complete coverage"});}
             var receipts=new List<object>();await using(var c=new SqlCommand("SELECT TOP(12) ReceiptId,ReceivedAt,Status,InsertedBars,DuplicateBars,ExcludedBars,ComparisonPolicy,VolumeDifferencesJson,OhlcConflictsJson,AdmissionPolicy FROM market_h4.LiveReceipts ORDER BY ReceivedAt DESC,ReceiptId",db))
@@ -162,7 +162,7 @@ public sealed class MarketH4Tool(IConfiguration config,IWebHostEnvironment envir
         try
         {
             var allowed=await MarketH4Ingestion.Allowed(config,environment,cancellationToken);var batch=MarketH4Ingestion.Parse(h4Json,DateTimeOffset.UtcNow,allowed);
-            var receipt=await new MarketH4Store(config.GetConnectionString("DefaultConnection")!).Receive(batch,cancellationToken);
+            var receipt=await new MarketH4Store(config.GetConnectionString("H4Connection") ?? config.GetConnectionString("DefaultConnection")!).Receive(batch,cancellationToken);
             var wake=(receipt.Status is "Accepted" or "PartialConflict")&&receipt.InsertedBars>0?await trigger.RequestH4Async(cancellationToken):new MarketDailyGitHubTrigger.Result("NoNewBars");
             return MarketDailyMcp.ToolResult(new{receipt,receivedCaptures=batch.Captures,validationRule=MarketH4Ingestion.Rule,providerBoundaryValidated=receipt.Status=="Accepted",partialAcceptance=receipt.Status=="PartialConflict",blockedSymbols=receipt.Admission==MarketH4Store.AdmissionPolicy?[]:receipt.OhlcConflicts?.Select(c=>c.Symbol).Distinct().Order().ToArray(),symbolsWithConflicts=receipt.OhlcConflicts?.Select(c=>c.Symbol).Distinct().Order().ToArray(),completionValidated=false,exchangeCalendarValidated=false,excluded=batch.Excluded,zonePublicationRequested=wake.Requested,workflowTrigger=wake.Status,analyticsTriggered=false,d1Changed=false},receipt.Status=="Conflict");
         }

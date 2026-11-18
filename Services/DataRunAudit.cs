@@ -46,7 +46,7 @@ public sealed class DataRunAudit(IConfiguration config, IMemoryCache cache)
         {
             await gate.WaitAsync(timeout.Token); entered = true;
             if(cache.TryGetValue<Snapshot>("data-run-audit", out saved)) return saved!;
-            var cs = config.GetConnectionString("DefaultConnection");
+            var cs = config.GetConnectionString("H4Connection") ?? config.GetConnectionString("DefaultConnection");
             if(string.IsNullOrWhiteSpace(cs)) throw new InvalidOperationException("SQL not configured");
             await using var db = new SqlConnection(new SqlConnectionStringBuilder(cs) { ConnectTimeout = 15 }.ConnectionString);
             await db.OpenAsync(timeout.Token);

@@ -96,75 +96,95 @@ jobs:
           node Tools/zone-prices-checks.cjs artifacts/public-site
           cp StaticSite/staticwebapp.config.json artifacts/public-site/staticwebapp.config.json
       - name: Add SQL-validated H4 sidecar for trading zones only
-        if: steps.publication.outputs.run == 'true'
+        id: h4_zones
+        if: steps.publication.outputs.run == 'true' && github.event_name == 'workflow_dispatch'
+        continue-on-error: true
         env:
-          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
         run: |
+          cp -a artifacts/public-site artifacts/h4-site
           node Tools/h4-zone-checks.cjs
           node Tools/h4-zone-live-checks.cjs
           dotnet build Tools/H4SqlImport/H4SqlImport.csproj -c Release
           dotnet Tools/H4SqlImport/bin/Release/net10.0/H4SqlImport.dll --export-zone-source --config-root . --output artifacts/h4-hosting-source.json
-          node Tools/h4-zone-snapshot.cjs overlay artifacts/h4-hosting-source.json artifacts/public-site
-          node Tools/h4-zone-snapshot-checks.cjs artifacts/public-site
-          node Tools/liquidity-setup-checks.cjs artifacts/public-site
+          node Tools/h4-zone-snapshot.cjs overlay artifacts/h4-hosting-source.json artifacts/h4-site
+          node Tools/h4-zone-snapshot-checks.cjs artifacts/h4-site
+          node Tools/liquidity-setup-checks.cjs artifacts/h4-site
       - name: Export isolated CFD zone prices and verify Yahoo crypto identity
-        if: steps.publication.outputs.run == 'true'
+        id: h4_cfd
+        if: steps.h4_zones.outcome == 'success'
+        continue-on-error: true
         env:
-          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
         run: |
           dotnet build Tools/ZonePriceImport/ZonePriceImport.csproj -c Release
           dotnet Tools/ZonePriceImport/bin/Release/net10.0/ZonePriceImport.dll --checks
           dotnet Tools/ZonePriceImport/bin/Release/net10.0/ZonePriceImport.dll --export --config-root . --output artifacts/cfd-zone-source.json
           pwsh -NoProfile -File Tools/fetch-zone-crypto.ps1 -OutputDir artifacts/zone-crypto
-          node Tools/cfd-zone-snapshot.cjs artifacts/public-site artifacts/cfd-zone-source.json artifacts/zone-crypto
-          node Tools/cfd-zone-checks.cjs artifacts/public-site
-          node Tools/fm-outlook-live-checks.cjs artifacts/public-site
+          node Tools/cfd-zone-snapshot.cjs artifacts/h4-site artifacts/cfd-zone-source.json artifacts/zone-crypto
+          node Tools/cfd-zone-checks.cjs artifacts/h4-site
+          node Tools/fm-outlook-live-checks.cjs artifacts/h4-site
       # User explicitly authorized public historical OHLCV publication on 2026-10-26.
       # Export files/receipts remain private; only stripped per-symbol price files enter hosting.
       - name: Publish full validated H4 history for isolated backtesting
         id: backtest_history
-        if: steps.publication.outputs.run == 'true'
+        if: steps.h4_cfd.outcome == 'success'
         continue-on-error: true
         env:
-          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
         run: |
           dotnet Tools/ZonePriceImport/bin/Release/net10.0/ZonePriceImport.dll --export --full-history --config-root . --output artifacts/backtest-extra-history.json
-          node Tools/h4-backtest-history.cjs artifacts/public-site artifacts/h4-hosting-source.json artifacts/backtest-extra-history.json
-          node Tools/h4-backtest-history-checks.cjs artifacts/public-site
+          node Tools/h4-backtest-history.cjs artifacts/h4-site artifacts/h4-hosting-source.json artifacts/backtest-extra-history.json
+          node Tools/h4-backtest-history-checks.cjs artifacts/h4-site
       - name: Surface unavailable full backtest history independently of papertrading
-        if: steps.publication.outputs.run == 'true' && steps.backtest_history.outcome == 'failure'
-        run: node Tools/h4-backtest-history.cjs --unavailable artifacts/public-site
+        if: steps.backtest_history.outcome == 'failure'
+        run: node Tools/h4-backtest-history.cjs --unavailable artifacts/h4-site
       - name: Persist prospective H4 paper ledger and immutable events in SQL
-        if: steps.publication.outputs.run == 'true'
+        id: h4_paper
+        if: steps.h4_cfd.outcome == 'success'
+        continue-on-error: true
         env:
-          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
         run: |
           dotnet build Tools/PaperTradeStore/PaperTradeStore.csproj -c Release
           node Tools/h4-paper-store-checks.cjs
           dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --ensure-schema --load --output artifacts/h4-paper-previous.json
-          node Tools/h4-paper-update.cjs artifacts/public-site artifacts/h4-paper-previous.json artifacts/h4-paper-next.json
-          dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/h4-paper-next.json --output artifacts/public-site/data/h4-paper/ledger.json
+          node Tools/h4-paper-update.cjs artifacts/h4-site artifacts/h4-paper-previous.json artifacts/h4-paper-next.json
+          dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/h4-paper-next.json --output artifacts/h4-site/data/h4-paper/ledger.json
       - name: Independent paper research (cannot block or rewrite the baseline model)
         id: research
-        if: steps.publication.outputs.run == 'true'
+        if: steps.h4_paper.outcome == 'success'
         continue-on-error: true
         env:
-          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
         run: |
           dotnet build Tools/PaperResearchStore/PaperResearchStore.csproj -c Release
           node Tools/h4-paper-research-store-checks.cjs
           dotnet Tools/PaperResearchStore/bin/Release/net10.0/PaperResearchStore.dll --ensure-schema --load --output artifacts/h4-research-previous.json
-          node Tools/h4-paper-research-update.cjs artifacts/public-site artifacts/h4-research-previous.json artifacts/h4-research-next.json
+          node Tools/h4-paper-research-update.cjs artifacts/h4-site artifacts/h4-research-previous.json artifacts/h4-research-next.json
           dotnet Tools/PaperResearchStore/bin/Release/net10.0/PaperResearchStore.dll --save artifacts/h4-research-next.json --output artifacts/h4-research-saved.json
-          node Tools/h4-paper-research-report.cjs artifacts/h4-research-saved.json artifacts/public-site/data/h4-paper/research.json
+          node Tools/h4-paper-research-report.cjs artifacts/h4-research-saved.json artifacts/h4-site/data/h4-paper/research.json
       - name: Surface independent research failure without stopping H4 papertrading
-        if: steps.publication.outputs.run == 'true' && steps.research.outcome == 'failure'
-        run: node Tools/h4-paper-research-report.cjs --unavailable artifacts/public-site/data/h4-paper/research.json
+        if: steps.research.outcome == 'failure'
+        run: node Tools/h4-paper-research-report.cjs --unavailable artifacts/h4-site/data/h4-paper/research.json
       - name: Publish read-only SQL receipt audit for same-origin fallback
+        id: h4_audit
+        if: steps.h4_cfd.outcome == 'success'
+        continue-on-error: true
+        env:
+          ConnectionStrings__H4Connection: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
+        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --export-data-run-audit --output artifacts/h4-site/data/data-runs/receipts.json
+      - name: Preserve last verified H4 and publish independent D1/COT
         if: steps.publication.outputs.run == 'true'
         env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
-        run: dotnet bin/Release/net10.0/SeasonalityApp.dll --export-data-run-audit --output artifacts/public-site/data/data-runs/receipts.json
+          H4_OUTCOME: ${{ steps.h4_cfd.outcome }}
+          H4_ATTEMPTED: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          if [ "$H4_OUTCOME" = success ]; then
+            mv artifacts/public-site artifacts/d1-cot-site
+            mv artifacts/h4-site artifacts/public-site
+          fi
+          node Tools/preserve-published-h4.cjs artifacts/public-site "$H4_ATTEMPTED"
       - name: Exclude obsolete generated JSON from the free hosting bundle
         if: steps.publication.outputs.run == 'true'
         run: |

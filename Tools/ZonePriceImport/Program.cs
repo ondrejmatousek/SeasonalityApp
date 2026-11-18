@@ -13,7 +13,7 @@ try
     var cs=Environment.GetEnvironmentVariable("SEASONALITY_H4_SQL_CONNECTION");
     if(string.IsNullOrWhiteSpace(cs)){using var c=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"appsettings.Development.json")));cs=c.RootElement.GetProperty("ConnectionStrings").GetProperty("DefaultConnection").GetString();}
     var target=new SqlConnectionStringBuilder(cs){ConnectTimeout=120};
-    if(target.InitialCatalog!="seasonality-free-20261022"||!new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(target.DataSource,StringComparer.OrdinalIgnoreCase))throw new InvalidOperationException("Unexpected SQL target.");
+    if(target.InitialCatalog is not ("seasonality-free-20261022" or "seasonality-free-h4-20261118")||!new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(target.DataSource,StringComparer.OrdinalIgnoreCase))throw new InvalidOperationException("Unexpected SQL target.");
     await using var db=new SqlConnection(target.ConnectionString);await db.OpenAsync();
     if(args.Contains("--install"))
     {

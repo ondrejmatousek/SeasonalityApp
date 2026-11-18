@@ -21,7 +21,8 @@ function execute({root='artifacts/tradingview-backfill-36-v1',input='data/market
    try{const warnings=health.stockRefreshAudit(audit);if(warnings.length){h.stocks.status='warning';h.warnings.push(...warnings);}}
    catch(e){h.stocks.status='failed';throw e;}
    // Existing CFTC refresh only; no change to COT definitions or normalization.
-   try{stage('cot',()=>command('dotnet',['run','--project','SeasonalityApp.csproj','-c','Release','--no-build','--','--update-cot-once']));}
+   if(process.env.StaticExport__VerifiedCotSite)h.cot.status='snapshot-only';
+   else try{stage('cot',()=>command('dotnet',['run','--project','SeasonalityApp.csproj','-c','Release','--no-build','--','--update-cot-once']));}
    catch{h.cot.status='warning';h.warnings.push('COT refresh failed; existing snapshot freshness will be checked');}
    command('pwsh',['-NoProfile','-File','Tools/fetch-zone-ohlc.ps1','-OutputDir',feed]);
   }else{h.stocks.status='snapshot-only';h.cot.status='snapshot-only';h.warnings.push('Safe rehearsal: no stock/COT refresh, no SQL writes, no publication');}

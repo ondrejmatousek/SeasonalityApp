@@ -6,7 +6,7 @@ using TradingJournal.Models;
 
 namespace TradingJournal.Services;
 
-public sealed class CotService(SeasonalityDbContext db, IHttpClientFactory clients, ILogger<CotService> logger)
+public sealed class CotService([FromKeyedServices("COT")] SeasonalityDbContext db, IHttpClientFactory clients, ILogger<CotService> logger)
 {
     public static IReadOnlyList<CotMarket> Markets => CotCatalog.Markets;
     public static IReadOnlyList<CotMarket> MarketsForAsset(string key) => CotCatalog.MarketsForAsset(key);

@@ -45,7 +45,10 @@ static class Store
             string Arg(string k){var i=Array.IndexOf(args,k);return i>=0&&i+1<args.Length?args[i+1]:throw new ArgumentException("Missing "+k);}
             if(args.Contains("--validate")){using var j=JsonDocument.Parse(await File.ReadAllTextAsync(Arg("--validate")));using var old=args.Contains("--previous")?JsonDocument.Parse(await File.ReadAllTextAsync(Arg("--previous"))):null;Validate(j.RootElement.GetProperty("state"),old?.RootElement.GetProperty("state"));Console.WriteLine("Paper state validation passed.");return 0;}
             var cs=Environment.GetEnvironmentVariable("SEASONALITY_H4_SQL_CONNECTION")??throw new InvalidOperationException("Paper SQL connection required.");var target=new SqlConnectionStringBuilder(cs){ConnectTimeout=120};
-            if(target.InitialCatalog!="seasonality-free-20261022"||!new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(target.DataSource,StringComparer.OrdinalIgnoreCase))throw new InvalidOperationException("Unexpected paper SQL target.");
+            if(target.InitialCatalog is not ("seasonality-free-20261022" or "seasonality-free-h4-20261118")||!new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(target.DataSource,StringComparer.OrdinalIgnoreCase))throw new InvalidOperationException("Unexpected paper SQL target.");
+            var restoring=args.Contains("--restore-published");
+            if(restoring&&(target.InitialCatalog!="seasonality-free-h4-20261118"||Arg("--confirm-database")!=target.InitialCatalog))
+                throw new InvalidOperationException("Explicit recovery H4 database confirmation required.");
             await using var db=new SqlConnection(target.ConnectionString);await db.OpenAsync();
             if(args.Contains("--ensure-schema"))
             {
@@ -61,10 +64,20 @@ static class Store
             long revision=0;string? raw=null;string? sha=null;
             await using(var read=new SqlCommand("SELECT Revision,StateJson,StateSha256 FROM paper_h4.State WHERE Id=1",db)){await using var r=await read.ExecuteReaderAsync();if(await r.ReadAsync()){revision=r.GetInt64(0);raw=r.GetString(1);sha=r.GetString(2);if(Hash(raw)!=sha)throw new InvalidDataException("Paper SQL state hash mismatch.");}}
             if(args.Contains("--load")){await Output(Arg("--output"),revision,raw,sha);Console.WriteLine(JsonSerializer.Serialize(new{revision,initialized=raw is not null}));return 0;}
-            if(!args.Contains("--save"))throw new ArgumentException("Paper load/save required.");
-            var input=await File.ReadAllTextAsync(Arg("--save"));if(Encoding.UTF8.GetByteCount(input)>16*1024*1024)throw new InvalidDataException("Paper state size limit.");using var next=JsonDocument.Parse(input,new JsonDocumentOptions{MaxDepth=64});var expected=next.RootElement.GetProperty("expectedRevision").GetInt64();var state=next.RootElement.GetProperty("state");
+            if(!restoring&&!args.Contains("--save"))throw new ArgumentException("Paper load/save required.");
+            var input=await File.ReadAllTextAsync(Arg(restoring?"--restore-published":"--save"));if(Encoding.UTF8.GetByteCount(input)>16*1024*1024)throw new InvalidDataException("Paper state size limit.");using var next=JsonDocument.Parse(input,new JsonDocumentOptions{MaxDepth=64});var expected=restoring?0:next.RootElement.GetProperty("expectedRevision").GetInt64();var state=next.RootElement.GetProperty("state");
+            var restoredRevision=restoring?next.RootElement.GetProperty("revision").GetInt64():0;
+            var restoredHash=restoring?next.RootElement.GetProperty("stateSha256").GetString():null;
+            if(restoring&&(restoredRevision<=0||Hash(state.GetRawText())!=restoredHash))
+                throw new InvalidDataException("Published paper state hash or revision mismatch.");
             await using var tx=(SqlTransaction)await db.BeginTransactionAsync(IsolationLevel.Serializable);
             await using(var locked=new SqlCommand("SELECT Revision,StateJson FROM paper_h4.State WITH(UPDLOCK,HOLDLOCK) WHERE Id=1",db,tx)){await using var r=await locked.ExecuteReaderAsync();revision=0;raw=null;if(await r.ReadAsync()){revision=r.GetInt64(0);raw=r.GetString(1);}}
+            if(restoring&&revision==restoredRevision&&raw is not null&&Hash(raw)==restoredHash)
+            {
+                await tx.CommitAsync();
+                await Output(Arg("--output"),revision,raw,restoredHash);
+                return 0;
+            }
             if(revision!=expected)throw new InvalidOperationException("Paper concurrent publication; retry from current SQL state.");
             using var previous=raw is null?null:JsonDocument.Parse(raw);Validate(state,previous?.RootElement);
             var oldCount=previous?.RootElement.GetProperty("events").GetArrayLength()??0;
@@ -73,7 +86,7 @@ static class Store
                 await using var insert=new SqlCommand("INSERT INTO paper_h4.Events(Sequence,Id,SetupId,Kind,At,EventJson) VALUES(@n,@id,@s,@k,@at,@json)",db,tx);
                 insert.Parameters.AddWithValue("@n",e.GetProperty("sequence").GetInt64());insert.Parameters.AddWithValue("@id",e.GetProperty("id").GetString()!);insert.Parameters.AddWithValue("@s",e.GetProperty("setupId").GetString()!);insert.Parameters.AddWithValue("@k",e.GetProperty("kind").GetString()!);insert.Parameters.AddWithValue("@at",DateTimeOffset.Parse(e.GetProperty("at").GetString()!));insert.Parameters.AddWithValue("@json",e.GetRawText());await insert.ExecuteNonQueryAsync();
             }
-            raw=state.GetRawText();sha=Hash(raw);revision++;
+            raw=state.GetRawText();sha=Hash(raw);revision=restoring?restoredRevision:revision+1;
             await using(var write=new SqlCommand("IF EXISTS(SELECT 1 FROM paper_h4.State WHERE Id=1) UPDATE paper_h4.State SET Revision=@r,StateJson=@j,StateSha256=@h,UpdatedAt=SYSUTCDATETIME() WHERE Id=1; ELSE INSERT paper_h4.State VALUES(1,@r,@j,@h,SYSUTCDATETIME());",db,tx)){write.Parameters.AddWithValue("@r",revision);write.Parameters.AddWithValue("@j",raw);write.Parameters.AddWithValue("@h",sha);await write.ExecuteNonQueryAsync();}
             await tx.CommitAsync();await Output(Arg("--output"),revision,raw,sha);Console.WriteLine(JsonSerializer.Serialize(new{revision,persisted=true,setups=state.GetProperty("setups").GetArrayLength(),events=state.GetProperty("events").GetArrayLength()}));return 0;
         }

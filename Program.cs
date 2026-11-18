@@ -109,6 +109,24 @@ builder.Services.AddDbContext<SeasonalityDbContext>(options => options.UseSqlSer
     sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), refreshingCot ? new[] { -2 } : null);
     if (exporting) sql.CommandTimeout(180);
 }));
+var cotConnection = builder.Configuration.GetConnectionString("CotConnection");
+if (string.IsNullOrWhiteSpace(cotConnection))
+{
+    builder.Services.AddKeyedScoped<SeasonalityDbContext>("COT",
+        (services, _) => services.GetRequiredService<SeasonalityDbContext>());
+}
+else
+{
+    if (exporting)
+        cotConnection = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(cotConnection) { ConnectTimeout = 120 }.ConnectionString;
+
+    var cotOptions = new DbContextOptionsBuilder<SeasonalityDbContext>().UseSqlServer(cotConnection, sql =>
+    {
+        sql.EnableRetryOnFailure(8, TimeSpan.FromSeconds(30), refreshingCot ? new[] { -2 } : null);
+        if (exporting) sql.CommandTimeout(180);
+    }).Options;
+    builder.Services.AddKeyedScoped<SeasonalityDbContext>("COT", (_, _) => new SeasonalityDbContext(cotOptions));
+}
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("CFTC", client =>
 {
@@ -173,7 +191,7 @@ using (var scope = app.Services.CreateScope())
         return;
     }
     await db.Database.EnsureCreatedAsync();
-    await db.EnsureCotSchemaAsync();
+    if (string.IsNullOrWhiteSpace(cotConnection)) await db.EnsureCotSchemaAsync();
     if (args.Contains("--update-missing-once", StringComparer.OrdinalIgnoreCase))
     {
         await scope.ServiceProvider.GetRequiredService<SeasonalityService>().UpdateMissingAsync();

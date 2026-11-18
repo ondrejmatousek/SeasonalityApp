@@ -48,7 +48,7 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --refresh-cot-export --output artifacts/cot-refresh
         env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_COT_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
       - name: Recalculate COT context against unchanged price histories
         if: steps.gate.outputs.run == 'true'
         run: |

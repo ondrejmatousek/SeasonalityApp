@@ -8,9 +8,17 @@ using SeasonalityApp.Services;
 
 try {
  string Arg(string key){var i=Array.IndexOf(args,key);return i>=0&&i+1<args.Length?args[i+1]:throw new ArgumentException("Missing "+key);}
- const string targetName="seasonality-free-20261022";
+ var targetName=Arg("--confirm-database");
+ var legacy=targetName=="seasonality-free-20261022";
+ var d1=targetName=="seasonality-free-d1-20261118";
+ var h4=targetName=="seasonality-free-h4-20261118";
+ var cotOnly=targetName=="seasonality-free-cot-20261118";
+ if(!legacy&&!d1&&!h4&&!cotOnly)throw new InvalidOperationException("Unexpected recovery database.");
  var input=Path.GetFullPath(Arg("--input"));var repo=Path.GetFullPath(Arg("--repo"));var phase=Arg("--phase");
- if(Arg("--confirm-database")!=targetName)throw new InvalidOperationException("Explicit NEW database confirmation required.");
+ if(!(legacy || (d1 && phase is "base" or "sync-market") ||
+      (h4 && phase is "base" or "zones" or "zones-current" or "live-h4" or "intraday" or "verify") ||
+      (cotOnly && phase=="base")))
+  throw new InvalidOperationException("Phase does not match the database role.");
  var target=new SqlConnectionStringBuilder(Environment.GetEnvironmentVariable("SEASONALITY_RECOVERY_SQL_CONNECTION")??throw new InvalidOperationException("Secure connection missing")){ConnectTimeout=120};
  if(target.InitialCatalog!=targetName||!new[]{"seasonality.database.windows.net","tcp:seasonality.database.windows.net","seasonality.database.windows.net,1433","tcp:seasonality.database.windows.net,1433"}.Contains(target.DataSource,StringComparer.OrdinalIgnoreCase))throw new InvalidOperationException("Unexpected recovery target");
  using var plan=JsonDocument.Parse(File.ReadAllText(Path.Combine(input,"plan.json")));
@@ -21,15 +29,15 @@ try {
  async Task Bulk(DataTable data,string table,SqlTransaction? tx=null){using var b=new SqlBulkCopy(db,SqlBulkCopyOptions.CheckConstraints,tx){DestinationTableName=table,BulkCopyTimeout=180,BatchSize=10000};foreach(DataColumn c in data.Columns)b.ColumnMappings.Add(c.ColumnName,c.ColumnName);await b.WriteToServerAsync(data);}
  if(phase=="base") {
   var options=new DbContextOptionsBuilder<SeasonalityDbContext>().UseSqlServer(target.ConnectionString,s=>s.EnableRetryOnFailure(3)).Options;
-  await using(var ctx=new SeasonalityDbContext(options)){await ctx.Database.EnsureCreatedAsync();await ctx.EnsureCotSchemaAsync();}
-  await Execute("""
+  await using(var ctx=new SeasonalityDbContext(options)){if(legacy||d1)await ctx.Database.EnsureCreatedAsync();if(legacy||cotOnly)await ctx.EnsureCotSchemaAsync();}
+  if(!cotOnly)await Execute("""
    IF SCHEMA_ID('market_recovery') IS NULL EXEC('CREATE SCHEMA market_recovery');
    IF OBJECT_ID('market_recovery.Series') IS NULL CREATE TABLE market_recovery.Series(AssetKey nvarchar(32) NOT NULL PRIMARY KEY,SourceSha256 char(64) NOT NULL,ImportedRows int NOT NULL,ImportedAt datetimeoffset NOT NULL);
    IF OBJECT_ID('market_recovery.Evidence') IS NULL CREATE TABLE market_recovery.Evidence(Id char(64) NOT NULL PRIMARY KEY,Kind varchar(32) NOT NULL,SourcePath nvarchar(512) NOT NULL,Payload varbinary(max) NOT NULL,RecoveredAt datetimeoffset NOT NULL,Note nvarchar(1024) NOT NULL);
    IF OBJECT_ID('market_recovery.Intraday') IS NULL CREATE TABLE market_recovery.Intraday(Symbol varchar(32) NOT NULL,Interval varchar(4) NOT NULL,StartUnix bigint NOT NULL,[Open] decimal(28,10) NOT NULL,[High] decimal(28,10) NOT NULL,[Low] decimal(28,10) NOT NULL,[Close] decimal(28,10) NOT NULL,Volume decimal(28,10) NULL,PRIMARY KEY(Symbol,Interval,StartUnix));
    """);
   long imported=0;var unavailable=0;
-  foreach(var file in Directory.EnumerateFiles(Path.Combine(input,"candidate-prices"),"*.json").Order()) {
+  if(legacy||d1)foreach(var file in Directory.EnumerateFiles(Path.Combine(input,"candidate-prices"),"*.json").Order()) {
    var bytes=File.ReadAllBytes(file);using var doc=JsonDocument.Parse(bytes);var root=doc.RootElement;var key=root.GetProperty("assetKey").GetString()!;var rows=root.GetProperty("prices");if(rows.GetArrayLength()==0){unavailable++;continue;}var hash=Hash(bytes);
    await using(var c=new SqlCommand("SELECT SourceSha256,ImportedRows FROM market_recovery.Series WHERE AssetKey=@key",db)){c.Parameters.AddWithValue("@key",key);await using var r=await c.ExecuteReaderAsync();if(await r.ReadAsync()){if(r.GetString(0)!=hash||r.GetInt32(1)!=rows.GetArrayLength())throw new InvalidDataException("Previously imported series changed "+key);continue;}}
    using var tx=db.BeginTransaction();try {
@@ -45,10 +53,11 @@ try {
     tx.Commit();imported+=table.Rows.Count;Console.WriteLine(JsonSerializer.Serialize(new{series=key,rows=table.Rows.Count,imported}));
    }catch{tx.Rollback();throw;}
   }
+  if(legacy||cotOnly){
   await Execute("IF COL_LENGTH('dbo.CotReports','FirstObservedAt') IS NULL ALTER TABLE dbo.CotReports ADD FirstObservedAt datetimeoffset NULL;");
-  using var manifest=JsonDocument.Parse(File.ReadAllText(Path.Combine(input,"baseline/data/manifest.json")));
+  using var manifest=JsonDocument.Parse(File.ReadAllText(Path.Combine(cotOnly?Path.Combine(repo,"data/generated/site"):Path.Combine(input,"baseline"),"data/manifest.json")));
   foreach(var contract in manifest.RootElement.GetProperty("contracts").EnumerateObject()) {
-   var relative=contract.Value.GetProperty("files").GetProperty("156").GetString()!;using var cot=JsonDocument.Parse(File.ReadAllText(Path.Combine(input,"baseline",relative.TrimStart('/'))));
+   var relative=contract.Value.GetProperty("files").GetProperty("156").GetString()!;using var cot=JsonDocument.Parse(File.ReadAllText(Path.Combine(cotOnly?Path.Combine(repo,"data/generated/site"):Path.Combine(input,"baseline"),relative.TrimStart('/'))));
    var table=new DataTable();foreach(var name in new[]{"ContractCode","ReportDate","OpenInterest","CommercialLong","CommercialShort","NonCommercialLong","NonCommercialShort","NonCommercialSpread","NonReportableLong","NonReportableShort","UpdatedAt","FirstObservedAt"})table.Columns.Add(name,name=="ContractCode"?typeof(string):name=="ReportDate"?typeof(DateTime):name.EndsWith("At")?typeof(DateTimeOffset):typeof(long));
    foreach(var r in cot.RootElement.GetProperty("reports").EnumerateArray()) {
     var oi=r.GetProperty("openInterest").GetInt64();long V(string g,string f)=>r.GetProperty(g).GetProperty(f).GetInt64();var cl=V("commercial","long");var cs=V("commercial","short");var nl=V("nonCommercial","long");var ns=V("nonCommercial","short");var spread=V("nonCommercial","spread");var rl=V("nonReportable","long");var rs=V("nonReportable","short");
@@ -58,11 +67,23 @@ try {
    using var tx=db.BeginTransaction();await using(var c=new SqlCommand("SELECT COUNT_BIG(*) FROM dbo.CotReports WHERE ContractCode=@code",db,tx)){c.Parameters.AddWithValue("@code",contract.Name);if(Convert.ToInt64(await c.ExecuteScalarAsync())>0){tx.Commit();continue;}}
    await Bulk(table,"dbo.CotReports",tx);tx.Commit();
   }
-  foreach(var name in new[]{"MarketDailyInbox.sql","MarketDailyShadowHistory.sql","MarketH4Live.sql","MarketZonePrices.sql"})await Execute(await File.ReadAllTextAsync(Path.Combine(repo,"Data",name)));
-  await Execute("IF COL_LENGTH('market_zones.Receipts','RecoveryValidatedAt') IS NULL ALTER TABLE market_zones.Receipts ADD RecoveryValidatedAt datetimeoffset NULL;");
-  await Execute("IF NOT EXISTS(SELECT 1 FROM market_daily.ShadowHistory) DBCC CHECKIDENT ('market_daily.ShadowHistory', RESEED, 1000000) WITH NO_INFOMSGS;");
-  foreach(var name in new[]{"plan.json","source-archive.json","candidate-inventory.json","intraday-inventory-current.json","extra-daily-inventory.json","README.md"}){var bytes=await File.ReadAllBytesAsync(Path.Combine(input,name));await using var c=new SqlCommand("IF NOT EXISTS(SELECT 1 FROM market_recovery.Evidence WHERE Id=@id) INSERT market_recovery.Evidence VALUES(@id,'OperatorRecovery',@path,@bytes,SYSDATETIMEOFFSET(),N'Local reconstruction; former SQL audit not restored; original database preserved.')",db);c.Parameters.AddWithValue("@id",Hash(bytes));c.Parameters.AddWithValue("@path",name);c.Parameters.Add("@bytes",SqlDbType.VarBinary,-1).Value=bytes;await c.ExecuteNonQueryAsync();}
-  Console.WriteLine(JsonSerializer.Serialize(new{phase,database=targetName,prices=await Count("dbo.SeasonalityPrices"),cot=await Count("dbo.CotReports"),unavailable,oldAuditRestored=false}));
+  }
+  if(legacy||d1)
+  {
+   foreach(var name in new[]{"MarketDailyInbox.sql","MarketDailyShadowHistory.sql"})
+    await Execute(await File.ReadAllTextAsync(Path.Combine(repo,"Data",name)));
+   // A recovered empty database must issue generations above the last committed pointer.
+   using var committed=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(repo,"data/generated/site/data/manifest.json")));
+   var seed=1000000L;
+   if(committed.RootElement.TryGetProperty("marketDailySql",out var pointer))
+    seed=Math.Max(seed,pointer.GetProperty("generationId").GetInt64()+1);
+   await Execute($"IF NOT EXISTS(SELECT 1 FROM market_daily.ShadowHistory) DBCC CHECKIDENT ('market_daily.ShadowHistory', RESEED, {seed}) WITH NO_INFOMSGS;");
+  }
+  if(legacy||h4)
+   foreach(var name in new[]{"MarketH4Live.sql","MarketZonePrices.sql"})
+    await Execute(await File.ReadAllTextAsync(Path.Combine(repo,"Data",name)));
+  if(!cotOnly)foreach(var name in new[]{"plan.json","source-archive.json","candidate-inventory.json","intraday-inventory-current.json","extra-daily-inventory.json","README.md"}){var bytes=await File.ReadAllBytesAsync(Path.Combine(input,name));await using var c=new SqlCommand("IF NOT EXISTS(SELECT 1 FROM market_recovery.Evidence WHERE Id=@id) INSERT market_recovery.Evidence VALUES(@id,'OperatorRecovery',@path,@bytes,SYSDATETIMEOFFSET(),N'Local reconstruction; former SQL audit not restored; original database preserved.')",db);c.Parameters.AddWithValue("@id",Hash(bytes));c.Parameters.AddWithValue("@path",name);c.Parameters.Add("@bytes",SqlDbType.VarBinary,-1).Value=bytes;await c.ExecuteNonQueryAsync();}
+  Console.WriteLine(JsonSerializer.Serialize(new{phase,database=targetName,prices=legacy||d1?await Count("dbo.SeasonalityPrices"):0,cot=legacy||cotOnly?await Count("dbo.CotReports"):0,unavailable,oldAuditRestored=false}));
  }
  else if(phase=="live-h4") {
   using var manifest=JsonDocument.Parse(File.ReadAllText(Path.Combine(repo,"artifacts/sql-recovery-market/analytics-sources-v1/manifest.json")));
@@ -117,7 +138,7 @@ try {
    while(await reader.ReadAsync()){if(!expected.Remove(reader.GetInt64(0),out var row))throw new InvalidDataException("Unexpected SQL intraday timestamp");var fields=new[]{"open","high","low","close","volume"};for(var i=0;i<fields.Length;i++){var value=row.GetProperty(fields[i]);if(value.ValueKind==JsonValueKind.Null){if(!reader.IsDBNull(i+1))throw new InvalidDataException("Intraday null mismatch");}else if(reader.IsDBNull(i+1)||reader.GetDecimal(i+1)!=decimal.Round(value.GetDecimal(),10,MidpointRounding.AwayFromZero))throw new InvalidDataException("Intraday exact readback mismatch");}checkedRows++;}if(expected.Count!=0)throw new InvalidDataException("Missing SQL intraday rows");
   }
   var tables=new List<object>();await using(var c=new SqlCommand("SELECT s.name,t.name,SUM(p.rows) FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id JOIN sys.partitions p ON p.object_id=t.object_id AND p.index_id IN (0,1) GROUP BY s.name,t.name ORDER BY s.name,t.name",db)){await using var r=await c.ExecuteReaderAsync();while(await r.ReadAsync())tables.Add(new{schema=r.GetString(0),table=r.GetString(1),rows=r.GetInt64(2)});}
-  var report=JsonSerializer.Serialize(new{at=DateTimeOffset.UtcNow,database=targetName,tables,intradayExactReadback=checkedRows,oldSqlAuditRestored=false,readOnly=true});await File.WriteAllTextAsync(Path.Combine(input,"sql-recovery-readback.json"),report);Console.WriteLine(report);
+  var report=JsonSerializer.Serialize(new{at=DateTimeOffset.UtcNow,database=targetName,tables,intradayExactReadback=checkedRows,oldSqlAuditRestored=false,readOnly=true});await File.WriteAllTextAsync(Path.Combine(input,legacy?"sql-recovery-readback.json":$"{targetName}-readback.json"),report);Console.WriteLine(report);
  } else throw new ArgumentException("Unknown recovery phase");
 } catch(Exception e){Console.Error.WriteLine(JsonSerializer.Serialize(new{failed=true,type=e.GetType().Name,sqlNumber=e is SqlException sql?(int?)sql.Number:null,reason=e is SqlException?"SQL failed; secrets withheld":e.Message}));Environment.ExitCode=1;}
 static string Hash(byte[] bytes)=>Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();

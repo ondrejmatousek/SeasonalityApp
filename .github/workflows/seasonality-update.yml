@@ -2,7 +2,8 @@ name: Morning analytics
 
 on:
   schedule:
-    - cron: '7,22,37,52 1-8 * * *'
+    # MCP dispatches after persisting a receipt; this slot recovers an interrupted dispatch.
+    - cron: '17 6 * * *'
   workflow_dispatch:
     inputs:
       sql_inbox_shadow:
@@ -65,7 +66,7 @@ jobs:
         if: steps.queue_gate.outputs.run == 'true' && inputs.sql_inbox_shadow
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-once
         env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_D1_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
           MarketDailyInboxWorker__Enabled: 'true'
           MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
           MarketDailyInboxWorker__BootstrapState: ${{ github.workspace }}/data/market-state
@@ -75,7 +76,7 @@ jobs:
         if: steps.queue_gate.outputs.run == 'true' && !inputs.sql_inbox_shadow
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --process-market-inbox-queue
         env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_D1_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
           MarketDailyInboxWorker__Enabled: 'true'
           MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
           MarketDailyInboxWorker__BootstrapState: ${{ github.workspace }}/data/market-state
@@ -125,14 +126,15 @@ jobs:
         id: gate
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --export-market-inbox
         env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_D1_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
           MarketDailyInboxWorker__Enabled: 'true'
           MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
-      - name: Build from exact SQL evidence with existing live Yahoo stocks/CFTC refresh
+      - name: Build from exact SQL evidence with live Yahoo stocks and verified COT snapshot
         if: steps.gate.outputs.run == 'true'
         run: node Tools/market-daily-sql-publication.cjs artifacts/sql-market/context.json
         env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_D1_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
+          StaticExport__VerifiedCotSite: data/generated/site
       - name: Preserve existing V3 live ledger and verify final static output
         if: steps.gate.outputs.run == 'true'
         env:
@@ -149,7 +151,7 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         run: dotnet bin/Release/net10.0/SeasonalityApp.dll --publish-market-inbox
         env:
-          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_D1_SQL_CONNECTION || secrets.SEASONALITY_CONNECTION_STRING }}
           MarketDailyInboxWorker__Enabled: 'true'
           MarketDailyInboxWorker__RepositoryRoot: ${{ github.workspace }}
           MarketDailySqlPublication__Enabled: 'true'

@@ -105,25 +105,46 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_71B0AFE26429422AB6CC3D81C63576A4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5AB6A357FD164277B9EFF94C03CF8964 }}
 
-      - name: Route backend and MCP to the restored free SQL database
+      - name: Route backend and MCP to verified free SQL databases
         shell: pwsh
         env:
-          RECOVERY_SQL_CONNECTION: ${{ secrets.SEASONALITY_CONNECTION_STRING }}
+          D1_SQL_CONNECTION: ${{ secrets.SEASONALITY_D1_SQL_CONNECTION }}
+          H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION }}
+          COT_SQL_CONNECTION: ${{ secrets.SEASONALITY_COT_SQL_CONNECTION }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $sql = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($env:RECOVERY_SQL_CONNECTION)
-          if ($sql.get_InitialCatalog() -ne 'seasonality-free-20261022' -or $sql.get_DataSource() -notin @('seasonality.database.windows.net','tcp:seasonality.database.windows.net','seasonality.database.windows.net,1433','tcp:seasonality.database.windows.net,1433')) { throw 'Unexpected SQL target; no settings changed' }
+          $expected = @{
+            DefaultConnection = 'seasonality-free-d1-20261118'
+            H4Connection = 'seasonality-free-h4-20261118'
+            CotConnection = 'seasonality-free-cot-20261118'
+          }
+          $connections = @{
+            DefaultConnection = $env:D1_SQL_CONNECTION
+            H4Connection = $env:H4_SQL_CONNECTION
+            CotConnection = $env:COT_SQL_CONNECTION
+          }
+          foreach ($key in $expected.Keys) {
+            $sql = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($connections[$key])
+            if ($sql.get_InitialCatalog() -ne $expected[$key] -or $sql.get_DataSource() -notmatch '^(tcp:)?seasonality\.database\.windows\.net(,1433)?$') {
+              throw "Unexpected SQL target for $key"
+            }
+          }
           $sites = @(az resource list --resource-type Microsoft.Web/sites --name Seasonality --query '[].{name:name,group:resourceGroup}' --output json | ConvertFrom-Json)
           if ($LASTEXITCODE -ne 0 -or $sites.Count -ne 1) { throw 'Could not resolve the existing Seasonality app uniquely' }
-          az webapp config connection-string set --name $sites[0].name --resource-group $sites[0].group --connection-string-type SQLAzure --settings "DefaultConnection=$($env:RECOVERY_SQL_CONNECTION)" --output none
-          if ($LASTEXITCODE -ne 0) { throw 'Backend SQL connection update failed' }
-          az webapp config appsettings set --name $sites[0].name --resource-group $sites[0].group --settings "ConnectionStrings__DefaultConnection=$($env:RECOVERY_SQL_CONNECTION)" --output none
+          $site = $sites[0]
+          $pairs = @($connections.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
+          az webapp config connection-string set --name $site.name --resource-group $site.group --connection-string-type SQLAzure --settings @pairs --output none
+          if ($LASTEXITCODE -ne 0) { throw 'Backend SQL slot update failed' }
+          $overrides = @($pairs | ForEach-Object { "ConnectionStrings__$_" })
+          az webapp config appsettings set --name $site.name --resource-group $site.group --settings @overrides --output none
           if ($LASTEXITCODE -ne 0) { throw 'Backend SQL appsetting update failed' }
-          $actual = az webapp config connection-string list --name $sites[0].name --resource-group $sites[0].group --query "[?name=='DefaultConnection'].value | [0]" --output tsv
-          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($actual)) { throw 'SQL target readback failed' }
-          $readback = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($actual)
-          if ($readback.get_InitialCatalog() -ne 'seasonality-free-20261022') { throw 'SQL target readback mismatch' }
-          Write-Host 'Backend/MCP SQL target verified: seasonality-free-20261022. Secrets withheld.'
+          $actual = @(az webapp config connection-string list --name $site.name --resource-group $site.group --output json | ConvertFrom-Json)
+          if ($LASTEXITCODE -ne 0) { throw 'SQL target readback failed' }
+          foreach ($key in $expected.Keys) {
+            $sql = [System.Data.SqlClient.SqlConnectionStringBuilder]::new(($actual | Where-Object name -eq $key).value)
+            if ($sql.get_InitialCatalog() -ne $expected[$key]) { throw "SQL target readback mismatch for $key" }
+          }
+          Write-Host 'D1, H4 and COT SQL targets verified.'
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
