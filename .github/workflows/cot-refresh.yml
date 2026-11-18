@@ -5,6 +5,8 @@ on:
     - cron: '0 20,21,22 * * 5'
     # Saturday safety retries: 02:15/05:15 CET, 03:15/06:15 CEST.
     - cron: '15 1,4 * * 6'
+    # Sunday catch-up and Monday federal-holiday releases, after 15:30 New York.
+    - cron: '45 21 * * 0,1'
   workflow_dispatch:
     inputs:
       force:
