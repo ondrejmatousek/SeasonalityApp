@@ -3,7 +3,7 @@ name: Publish verified static output
 # push workflows, so workflow_run handles generated-data commits.
 on:
   workflow_run:
-    workflows: ['Morning analytics', 'Weekly COT refresh']
+    workflows: ['Morning analytics', 'Weekly COT refresh', 'Dukascopy market collection', 'Dukascopy daily analytics']
     types: [completed]
     branches: [master]
   push:
@@ -51,6 +51,8 @@ jobs:
           else
             artifact=daily-health
             if [ "$SOURCE_WORKFLOW" = 'Weekly COT refresh' ]; then artifact=cot-publication; fi
+            if [ "$SOURCE_WORKFLOW" = 'Dukascopy market collection' ]; then artifact=dukascopy-sql-source; fi
+            if [ "$SOURCE_WORKFLOW" = 'Dukascopy daily analytics' ]; then artifact=dukascopy-daily-publication; fi
             count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts" --jq "[.artifacts[] | select(.name == \"$artifact\")] | length")
             if [ "$count" -gt 0 ]; then echo 'run=true' >> "$GITHUB_OUTPUT"; else echo 'run=false' >> "$GITHUB_OUTPUT"; fi
           fi
@@ -188,6 +190,20 @@ jobs:
             mv artifacts/h4-site artifacts/public-site
           fi
           node Tools/preserve-published-h4.cjs artifacts/public-site "$H4_ATTEMPTED"
+      - name: Apply latest verified Dukascopy FX and CFD projection
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION }}
+        run: |
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "dukascopy-sql-source" and .expired == false)] | sort_by(.created_at) | last | .workflow_run.id')
+          if [ -n "$run_id" ] && [ "$run_id" != null ]; then
+            gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name dukascopy-sql-source --dir artifacts/dukascopy-sql
+            node Tools/dukascopy-zone-snapshot.cjs artifacts/public-site artifacts/dukascopy-sql/source.json
+            dotnet build Tools/PaperTradeStore/PaperTradeStore.csproj -c Release
+            dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --ensure-schema --load --output artifacts/dukascopy-paper-previous.json
+            node Tools/h4-paper-update.cjs artifacts/public-site artifacts/dukascopy-paper-previous.json artifacts/dukascopy-paper-next.json
+            dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/dukascopy-paper-next.json --output artifacts/public-site/data/h4-paper/ledger.json
+          fi
       - name: Exclude obsolete generated JSON from the free hosting bundle
         run: |
           node Tools/prune-static-output.cjs artifacts/public-site artifacts/unpublished-json

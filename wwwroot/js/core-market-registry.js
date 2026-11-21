@@ -45,7 +45,7 @@
             chartSource:{provider:source.provider,symbol:source.providerSymbol},priceSource:source,
             // Data-source review is retained; importing a bar does not validate a gold or roll model.
             status:mapping.scope==='research'?'research-only':mapping.status,
-            proxyRelationship:mapping.scope==='research'?'TradingView source; research/review limitations retained':mapping.proxyRelationship};
+            proxyRelationship:mapping.scope==='research'?source.provider+' source; research/review limitations retained':mapping.proxyRelationship};
     }
     const labels={'validated-ranking-ready':'Core · jasná datová identita (ne potvrzení ziskovosti)',
         'descriptive-ready':'Mimo core scope · pouze popisná analýza','research-only':'Research only / unsupported for validated ranking',

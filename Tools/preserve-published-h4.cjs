@@ -33,6 +33,10 @@ async function preserve(site, attempted) {
     if (keepPreviousH4) {
         for (const [key, oldPrice] of Object.entries(previousSnapshot.prices)) {
             const current = snapshot.prices[key];
+            if (oldPrice.provider === 'Dukascopy' && oldPrice.status === 'ready') {
+                snapshot.prices[key] = oldPrice;
+                continue;
+            }
             if (knownZoneOnly.has(key) && (!current?.latestDate || oldPrice.latestDate > current.latestDate))
                 snapshot.prices[key] = { ...oldPrice, h4: current?.h4 };
             if (oldPrice.h4?.status !== 'ready') continue;
@@ -42,11 +46,16 @@ async function preserve(site, attempted) {
                 price.h4 = oldPrice.h4;
         }
         snapshot.h4 = previousSnapshot.h4;
+        if (previous.dukascopy) {
+            manifest.dukascopy = previous.dukascopy;
+            snapshot.asOf = previousSnapshot.asOf;
+            snapshot.builtAt = previousSnapshot.builtAt;
+        }
         snapshot.cfdCoverage ??= previousSnapshot.cfdCoverage;
         const bytes = Buffer.from(JSON.stringify(snapshot));
         const url = '/data/screener/zone-prices.' + sha(bytes).slice(0, 20) + '.json';
         fs.writeFileSync(path.join(site, url.slice(1)), bytes);
-        manifest.zonePrices = { ...manifest.zonePrices, path: url, h4: snapshot.h4, cfdCoverage: snapshot.cfdCoverage };
+        manifest.zonePrices = { ...manifest.zonePrices, path: url, asOf: snapshot.asOf, h4: snapshot.h4, cfdCoverage: snapshot.cfdCoverage };
     }
 
     if ((keepPreviousH4 || !manifest.backtestHistory?.ready) && previous.backtestHistory?.ready) {

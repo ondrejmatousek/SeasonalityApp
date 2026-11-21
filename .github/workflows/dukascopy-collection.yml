@@ -10,6 +10,10 @@ on:
         description: Number of source H1 months to collect
         type: string
         default: '15'
+      store:
+        description: Import complete registry into isolated Dukascopy SQL and publish
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -18,7 +22,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,10 +38,28 @@ jobs:
           args=(--months "$MONTHS")
           if [ -n "$SYMBOLS" ]; then args+=(--symbols "$SYMBOLS"); fi
           python Tools/dukascopy-collect.py "${args[@]}"
+      - uses: actions/setup-dotnet@v4
+        if: inputs.store && inputs.symbols == ''
+        with:
+          dotnet-version: '10.0.x'
+      - name: Store verified source history and export Dukascopy projection
+        if: inputs.store && inputs.symbols == ''
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION }}
+        run: |
+          dotnet build Tools/DukascopyImport/DukascopyImport.csproj -c Release
+          dotnet Tools/DukascopyImport/bin/Release/net10.0/DukascopyImport.dll --import --input artifacts/dukascopy --confirm-database seasonality-free-h4-20261118 --export --output artifacts/dukascopy-sql/source.json
+      - uses: actions/upload-artifact@v4
+        if: success() && inputs.store && inputs.symbols == ''
+        with:
+          name: dukascopy-sql-source
+          path: artifacts/dukascopy-sql/
+          retention-days: 2
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dukascopy-collection
           path: artifacts/dukascopy/
-          retention-days: 7
+          retention-days: 2
           if-no-files-found: error

@@ -16,7 +16,7 @@ static class Store
         foreach(var (id,s) in setups)
         {
             if(id.Length!=64||id.Any(c=>!Uri.IsHexDigit(c)))throw new InvalidDataException("Paper identity.");
-            var f=s.GetProperty("frozen");if(f.GetProperty("id").GetString()!=id||f.GetProperty("provider").GetString()!="OANDA"||f.GetProperty("timeframe").GetString()!="H4")throw new InvalidDataException("Paper feed identity.");
+            var f=s.GetProperty("frozen");if(f.GetProperty("id").GetString()!=id||f.GetProperty("provider").GetString() is not ("OANDA" or "Dukascopy")||f.GetProperty("timeframe").GetString()!="H4")throw new InvalidDataException("Paper feed identity.");
             var entry=f.GetProperty("entry").GetDouble();var sl=f.GetProperty("sl").GetDouble();var tp=f.GetProperty("tp").GetDouble();var risk=f.GetProperty("risk").GetDouble();var sign=f.GetProperty("side").GetString()=="long"?1:-1;
             if(!(entry>0&&sl>0&&tp>0&&risk>0)||Math.Abs(Math.Abs(entry-sl)-risk)>1e-9||Math.Abs((tp-entry)*sign/risk-2)>1e-7||(entry-sl)*sign<=0)throw new InvalidDataException("Paper 2R geometry.");
             if(s.GetProperty("status").GetString() is not ("waiting" or "open" or "needs_data" or "tp" or "sl" or "ambiguous" or "cancelled"))throw new InvalidDataException("Paper status.");

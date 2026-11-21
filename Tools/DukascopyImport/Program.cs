@@ -17,7 +17,15 @@ try
     if (target.InitialCatalog != database || target.DataSource is not ("seasonality.database.windows.net" or "tcp:seasonality.database.windows.net" or "seasonality.database.windows.net,1433" or "tcp:seasonality.database.windows.net,1433"))
         throw new InvalidOperationException("Unexpected Dukascopy database target.");
     await using var db = new SqlConnection(target.ConnectionString);
-    await db.OpenAsync();
+    for (var attempt = 0; ; attempt++)
+    {
+        try { await db.OpenAsync(); break; }
+        catch (SqlException error) when (error.Number == 40613 && attempt < 4)
+        {
+            Console.WriteLine("Dukascopy database resuming; retrying connection.");
+            await Task.Delay(TimeSpan.FromSeconds(10));
+        }
+    }
 
     if (args.Contains("--import"))
     {
@@ -29,12 +37,15 @@ try
         if (!collection.GetProperty("ready").GetBoolean() || collection.GetProperty("provider").GetString() != "Dukascopy" || collection.GetProperty("priceSide").GetString() != "BID" || collection.GetProperty("rule").GetString() != rule)
             throw new InvalidDataException("Invalid Dukascopy collection identity.");
         var observed = collection.GetProperty("observedAt").GetDateTimeOffset();
-        if (observed < DateTimeOffset.UtcNow.AddHours(-2) || observed > DateTimeOffset.UtcNow.AddMinutes(1))
+        if (observed < DateTimeOffset.UtcNow.AddHours(-6) || observed > DateTimeOffset.UtcNow.AddMinutes(1))
             throw new InvalidDataException("Dukascopy collection observation is stale or future.");
-        var expected = "AUDCAD AUDCHF AUDJPY AUDNZD CADCHF CADJPY CHFJPY EURCAD EURCHF EURAUD EURGBP EURJPY EURNZD GBPAUD GBPCAD GBPCHF GBPJPY GBPNZD NZDCAD NZDCHF NZDJPY NZDUSD AUDUSD EURUSD GBPUSD USDCAD USDCHF USDJPY USDHKD EURNOK EURPLN EURSEK USDMXN USDNOK USDPLN USDSEK USDZAR SGDJPY USDSGD".Split(' ').ToHashSet();
+        using var registry = JsonDocument.Parse(await File.ReadAllBytesAsync("Tools/dukascopy-instruments.json"));
+        var codes = registry.RootElement.GetProperty("fx").EnumerateArray().ToDictionary(i => i.GetString()!, i => i.GetString()![..3] + "-" + i.GetString()![3..]);
+        foreach (var item in registry.RootElement.GetProperty("cfd").EnumerateObject()) codes.Add(item.Name, item.Value.GetString()!);
+        var expected = codes.Keys.ToHashSet();
         var instruments = collection.GetProperty("instruments").EnumerateArray().ToArray();
         if (instruments.Length != expected.Count || !expected.SetEquals(instruments.Select(i => i.GetProperty("key").GetString()!)))
-            throw new InvalidDataException("Expected all 39 FX identities.");
+            throw new InvalidDataException("Expected every registered Dukascopy FX/CFD identity.");
 
         var table = new DataTable();
         table.Columns.Add("Symbol", typeof(string));
@@ -45,7 +56,7 @@ try
         foreach (var instrument in instruments)
         {
             var key = instrument.GetProperty("key").GetString()!;
-            if (instrument.GetProperty("symbol").GetString() != "DUKASCOPY:" + key) throw new InvalidDataException("Dukascopy symbol mismatch.");
+            if (instrument.GetProperty("symbol").GetString() != "DUKASCOPY:" + codes[key]) throw new InvalidDataException("Dukascopy symbol mismatch.");
             foreach (var source in instrument.GetProperty("evidence").EnumerateArray())
             {
                 var relative = source.GetProperty("file").GetString()!;
@@ -126,7 +137,9 @@ try
         var rows = new List<object>();
         await using var command = new SqlCommand("""
             SELECT b.Symbol,b.Interval,b.StartUnix,b.[Open],b.[High],b.[Low],b.[Close],b.Volume,b.CollectionId,c.ObservedAt
-            FROM dukascopy.Bars b JOIN dukascopy.Collections c ON c.Id=b.CollectionId ORDER BY b.Symbol,b.Interval,b.StartUnix
+            FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY Symbol,Interval ORDER BY StartUnix DESC) AS n FROM dukascopy.Bars) b
+            JOIN dukascopy.Collections c ON c.Id=b.CollectionId WHERE b.Interval='D1' OR b.n<=2200
+            ORDER BY b.Symbol,b.Interval,b.StartUnix
             """, db) { CommandTimeout = 180 };
         await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())

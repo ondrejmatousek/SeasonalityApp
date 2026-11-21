@@ -1,0 +1,62 @@
+name: Dukascopy daily analytics
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: seasonality-data-update
+  cancel-in-progress: false
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Require complete independently stored Dukascopy history
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION }}
+        run: |
+          dotnet build Tools/DukascopyImport/DukascopyImport.csproj -c Release
+          dotnet Tools/DukascopyImport/bin/Release/net10.0/DukascopyImport.dll --export --output artifacts/dukascopy-sql/source.json
+          node Tools/dukascopy-daily-bundle.cjs artifacts/dukascopy-sql/source.json artifacts/dukascopy-daily
+      - name: Refresh Yahoo stocks and export cached COT with independent Dukascopy daily history
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SEASONALITY_D1_SQL_CONNECTION }}
+          StaticExport__VerifiedCotSite: data/generated/site
+          MarketData__BundlePath: artifacts/dukascopy-daily/manifest.json
+        run: |
+          dotnet bin/Release/net10.0/SeasonalityApp.dll --update-once --stock-refresh-report artifacts/stock-refresh/latest.json
+          dotnet bin/Release/net10.0/SeasonalityApp.dll --export-static --output artifacts/dukascopy-daily-site
+          node -e "require('./Tools/apply-market-sources.cjs').apply('artifacts/dukascopy-daily-site','artifacts/dukascopy-daily/manifest.json')"
+      - name: Calculate and verify seasonal outputs and independent price zones
+        run: |
+          node Tools/build-screener.cjs artifacts/dukascopy-daily-site
+          node Tools/build-opportunities.cjs artifacts/dukascopy-daily-site
+          node -e "const fs=require('fs'),a=require('./Tools/apply-market-sources.cjs');const dir='artifacts/dukascopy-daily-site',m=JSON.parse(fs.readFileSync(dir+'/data/manifest.json')),p=JSON.parse(fs.readFileSync('data/generated/site/data/manifest.json'));m.zonePrices=p.zonePrices;const file=dir+p.zonePrices.path;fs.mkdirSync(require('path').dirname(file),{recursive:true});fs.copyFileSync('data/generated/site'+p.zonePrices.path,file);a.saveManifest(dir,m)"
+          node Tools/dukascopy-zone-snapshot.cjs artifacts/dukascopy-daily-site artifacts/dukascopy-sql/source.json
+          node Tools/raw-seasonality-checks.cjs artifacts/dukascopy-daily-site
+          node Tools/prune-static-output.cjs artifacts/dukascopy-daily-site artifacts/dukascopy-daily-unpublished
+          node Tools/static-site-checks.cjs artifacts/dukascopy-daily-site
+      - name: Commit verified daily output
+        run: |
+          cp -a artifacts/dukascopy-daily-site/. data/generated/site/
+          git config user.name seasonality-data-bot
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/generated/site
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Publish verified Dukascopy daily analytics'
+          git push origin HEAD:master
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dukascopy-daily-publication
+          path: artifacts/stock-refresh/latest.json
+          retention-days: 2

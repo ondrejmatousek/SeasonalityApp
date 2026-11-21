@@ -14,7 +14,9 @@ from zoneinfo import ZoneInfo
 
 UTC = dt.timezone.utc
 NY = ZoneInfo('America/New_York')
-FX = 'AUDCAD AUDCHF AUDJPY AUDNZD CADCHF CADJPY CHFJPY EURCAD EURCHF EURAUD EURGBP EURJPY EURNZD GBPAUD GBPCAD GBPCHF GBPJPY GBPNZD NZDCAD NZDCHF NZDJPY NZDUSD AUDUSD EURUSD GBPUSD USDCAD USDCHF USDJPY USDHKD EURNOK EURPLN EURSEK USDMXN USDNOK USDPLN USDSEK USDZAR SGDJPY USDSGD'.split()
+REGISTRY = json.loads(pathlib.Path(__file__).with_name('dukascopy-instruments.json').read_text(encoding='utf-8'))
+FX = REGISTRY['fx']
+CODES = {**{key: key[:3] + '-' + key[3:] for key in FX}, **REGISTRY['cfd']}
 RULE = 'dukascopy-bid-ny17-h1-v1'
 ROOT = 'https://jetta.dukascopy.com/v1/candles/hour/'
 
@@ -32,12 +34,12 @@ def market_hour(timestamp):
     return local.weekday() < 4 or local.weekday() == 4 and local.hour < 17 or local.weekday() == 6 and local.hour >= 17
 
 
-def decode(body):
+def decode(body, shift=3600000):
     """Decode only observed rows. Provider time deltas never create synthetic bars."""
     data = json.loads(body, parse_float=decimal.Decimal)
     keys = ('opens', 'highs', 'lows', 'closes', 'volumes')
     count = len(data['times'])
-    if data['shift'] != 3600000 or any(len(data[k]) != count for k in keys):
+    if data['shift'] != shift or any(len(data[k]) != count for k in keys):
         raise ValueError('Invalid H1 columns or shift')
     multiplier = decimal.Decimal(data['multiplier'])
     if not multiplier.is_finite() or multiplier <= 0 or multiplier < decimal.Decimal('0.0000000001'):
@@ -102,7 +104,7 @@ def aggregate(rows, observed):
 
 def fetch(root, symbol, month, now):
     year, number = month
-    code = symbol[:3] + '-' + symbol[3:]
+    code = CODES[symbol]
     if (year, number) == (now.year, now.month):
         begin = int(dt.datetime(year, number, 1, tzinfo=UTC).timestamp() * 1000)
         url = f'{ROOT}{code}/BID?from={begin}'
@@ -140,6 +142,31 @@ def fetch(root, symbol, month, now):
     return dict(symbol=symbol, month=f'{year}-{number:02d}', url=url, file=relative, sha256=sha(body), rows=rows)
 
 
+def fetch_daily(root, symbol, year, now):
+    code = CODES[symbol]
+    url = f'https://jetta.dukascopy.com/v1/candles/day/{code}/BID/{year}'
+    if year == now.year:
+        begin = int(dt.datetime(year, 1, 1, tzinfo=UTC).timestamp() * 1000)
+        url = f'https://jetta.dukascopy.com/v1/candles/day/{code}/BID?from={begin}'
+    relative = f'raw/{symbol}/daily-{year}.json'
+    target = root / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(url, headers={'Referer': 'https://widgets.dukascopy.com/en/historical-data-export', 'User-Agent': 'Mozilla/5.0 SeasonalityApp/1.0', 'Accept': 'application/json'})
+    if target.exists():
+        body = target.read_bytes()
+    else:
+        with urllib.request.urlopen(request, timeout=35) as response:
+            body = response.read(2 * 1024 * 1024 + 1)
+            if response.status != 200 or len(body) > 2 * 1024 * 1024:
+                raise ValueError(f'Daily source HTTP {response.status}')
+        target.write_bytes(body)
+    rows = decode(body, 86400000)
+    if not rows or any(dt.datetime.fromtimestamp(row['timestamp'], UTC).year != year for row in rows):
+        raise ValueError('Daily source year mismatch')
+    closed = [dict(**row, date=dt.datetime.fromtimestamp(row['timestamp'], UTC).date().isoformat(), endTimestamp=row['timestamp'] + 86400) for row in rows if row['timestamp'] + 86400 <= now.timestamp() - 60]
+    return dict(symbol=symbol, year=year, url=url, file=relative, sha256=sha(body), rows=closed)
+
+
 def collect(output, symbols, months):
     root = pathlib.Path(output).resolve()
     if not root.is_relative_to(pathlib.Path('artifacts').resolve()) or root == pathlib.Path('artifacts').resolve():
@@ -151,11 +178,13 @@ def collect(output, symbols, months):
         month_index = now.year * 12 + now.month - 1 - offset
         requested.append(divmod(month_index, 12))
     requested = [(year, month + 1) for year, month in reversed(requested)]
-    summary = dict(schemaVersion=1, provider='Dukascopy', priceSide='BID', rule=RULE, observedAt=stamp(now), instruments=[], errors=[])
+    summary = dict(schemaVersion=1, provider='Dukascopy', priceSide='BID', rule=RULE, observedAt=stamp(now), instruments=[], errors=[], unavailable=REGISTRY['unavailable'])
     for symbol in symbols:
         try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
-                evidence = list(pool.map(lambda month: fetch(root, symbol, month, now), requested))
+            first = dt.datetime.fromisoformat(REGISTRY['historyStart'][symbol].replace('Z', '+00:00'))
+            available = [month for month in requested if month >= (first.year, first.month)]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+                evidence = list(pool.map(lambda month: fetch(root, symbol, month, now), available))
             unique = {}
             for item in evidence:
                 for row in item['rows']:
@@ -163,9 +192,15 @@ def collect(output, symbols, months):
                         raise ValueError('Conflicting H1 overlap')
                     unique[row['timestamp']] = row
             bars = aggregate(sorted(unique.values(), key=lambda r: r['timestamp']), now)
+            daily_rule = RULE
+            if symbol not in FX:
+                native = [fetch_daily(root, symbol, year, now) for year in sorted({year for year, _ in available})]
+                bars['daily'] = [row for item in native for row in item['rows']]
+                evidence += native
+                daily_rule = 'dukascopy-provider-utc-d1-v1'
             if len(bars['h4']) < 100:
                 raise ValueError('Less than 100 complete H4 source candles')
-            summary['instruments'].append(dict(key=symbol, symbol='DUKASCOPY:' + symbol, **bars, evidence=[{k: v for k, v in e.items() if k != 'rows'} for e in evidence]))
+            summary['instruments'].append(dict(key=symbol, symbol='DUKASCOPY:' + CODES[symbol], dailyRule=daily_rule, **bars, evidence=[{k: v for k, v in e.items() if k != 'rows'} for e in evidence]))
             print(json.dumps(dict(symbol=symbol, h4=len(bars['h4']), daily=len(bars['daily']), last=bars['h4'][-1]['endTimestamp'])), flush=True)
         except Exception as error:
             summary['errors'].append(dict(symbol=symbol, type=type(error).__name__, message=str(error)))
@@ -179,10 +214,10 @@ def collect(output, symbols, months):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', default='artifacts/dukascopy')
-    parser.add_argument('--symbols', default=','.join(FX))
+    parser.add_argument('--symbols', default=','.join(CODES))
     parser.add_argument('--months', type=int, default=15)
     args = parser.parse_args()
     symbols = args.symbols.split(',')
-    if not symbols or len(set(symbols)) != len(symbols) or not set(symbols).issubset(FX) or not 1 <= args.months <= 36:
+    if not symbols or len(set(symbols)) != len(symbols) or not set(symbols).issubset(CODES) or not 1 <= args.months <= 300:
         parser.error('Invalid symbol list or month count')
     collect(args.output, symbols, args.months)

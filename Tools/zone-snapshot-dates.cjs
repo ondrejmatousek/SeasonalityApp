@@ -1,6 +1,12 @@
 const assert=require('node:assert/strict');
 function validateDates(manifest,prices,opportunities){
  assert.equal(prices.asOf,manifest.zonePrices.asOf,'Price snapshot must retain its own actual evaluation date');
+ if(manifest.dukascopy){
+  assert.equal(prices.h4.provider,'Dukascopy');
+  const day=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Prague'}).format(new Date(manifest.dukascopy.observedAt));
+  assert.equal(prices.asOf,day,'Dukascopy evaluation clock must match its own observation');
+  return;
+ }
  if(manifest.cotSnapshotAt&&prices.asOf!==opportunities.asOf){
   assert.equal(opportunities.exportedAt,manifest.cotSnapshotAt,'New context must identify its independent COT observation');
   assert.equal(manifest.exportedAt,manifest.cotSnapshotAt);
