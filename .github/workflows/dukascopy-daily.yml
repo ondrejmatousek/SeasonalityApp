@@ -36,7 +36,7 @@ jobs:
         run: |
           dotnet bin/Release/net10.0/SeasonalityApp.dll --update-once --stock-refresh-report artifacts/stock-refresh/latest.json
           dotnet bin/Release/net10.0/SeasonalityApp.dll --export-static --output artifacts/dukascopy-daily-site
-          node -e "require('./Tools/apply-market-sources.cjs').apply('artifacts/dukascopy-daily-site','artifacts/dukascopy-daily/manifest.json')"
+          node -e "const fs=require('fs'),a=require('./Tools/apply-market-sources.cjs'),dir='artifacts/dukascopy-daily-site',m=JSON.parse(fs.readFileSync(dir+'/data/manifest.json'));m.stockSnapshotAt=m.exportedAt;m.sourceSnapshotAt=m.exportedAt;a.saveManifest(dir,m);a.apply(dir,'artifacts/dukascopy-daily/manifest.json')"
       - name: Calculate and verify seasonal outputs and independent price zones
         run: |
           node Tools/build-screener.cjs artifacts/dukascopy-daily-site

@@ -64,7 +64,10 @@ function overlay(site, source) {
                 note: 'Four original complete H1 source bars per H4. Missing source hours are excluded.'
             }
         };
-        if (!snapshot.assets.some(asset => asset.key === targetKey)) {
+        const listed = snapshot.assets.find(asset => asset.key === targetKey);
+        if (listed) {
+            listed.mapping = { ...listed.mapping, priceSeriesId: 'dukascopy-bid:' + symbol, chartSource: { provider: 'Dukascopy', symbol }, priceKind: isFx ? 'spot-forex' : 'cfd' };
+        } else {
             snapshot.assets.push({ key: targetKey, name: targetKey, mapping: { scope: 'research', status: 'price-zone-only', priceSeriesId: 'dukascopy-bid:' + symbol, chartSource: { provider: 'Dukascopy', symbol }, cotSources: [], cotMode: 'unavailable' } });
         }
         assert.ok(!previous?.h4 || snapshot.prices[targetKey].h4.provider === 'Dukascopy');
