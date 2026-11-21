@@ -2,7 +2,7 @@ name: Dukascopy market collection
 on:
   schedule:
     # UTC; starts after both winter and summer NY17-aligned H4 closes.
-    - cron: '23 2,6,10,14,18,22 * * 0-5'
+    - cron: '23 2,6,10,14,18,22 * * 1-5'
   workflow_dispatch:
     inputs:
       symbols:
