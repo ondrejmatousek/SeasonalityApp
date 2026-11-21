@@ -1,6 +1,6 @@
 // Cross-runtime invariant tests only. No SQL connection or schema mutation.
 const fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:child_process'),{createHash}=require('node:crypto'),E=require('../wwwroot/js/h4-paper.js'),root=path.resolve('artifacts/h4-paper-store-checks');fs.mkdirSync(root,{recursive:true});
-const hash=s=>createHash('sha256').update(s).digest('hex'),id=hash('store-fixture'),s=E.empty('2026-10-20T05:00:00.000Z'),f={id,provider:'OANDA',symbol:'OANDA:TEST',timeframe:'H4',side:'long',entry:100,sl:95,tp:110,risk:5,registeredAt:s.startedAt};
+const hash=s=>createHash('sha256').update(s).digest('hex'),id=hash('store-fixture'),s=E.empty('2026-10-20T05:00:00.000Z'),f={id,provider:'Dukascopy',symbol:'Dukascopy:TEST',timeframe:'H4',side:'long',entry:100,sl:95,tp:110,risk:5,registeredAt:s.startedAt};
 s.setups.push({id,frozen:f,status:'waiting',lastProcessedStart:100});const e={sequence:1,setupId:id,kind:'REGISTERED',at:s.startedAt,payload:f};s.events.push({...e,id:hash(JSON.stringify(e))});
 const file=(name,state)=>{const p=path.join(root,name+'.json');fs.writeFileSync(p,JSON.stringify({state}));return p;},previous=file('old',s),dll='Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll';
 const check=(name,edit,expected)=>{const n=JSON.parse(JSON.stringify(s));edit(n);const r=spawnSync('dotnet',[dll,'--validate',file(name,n),'--previous',previous],{encoding:'utf8'});if((r.status===0)!==expected)throw Error(name+' '+r.stdout+' '+r.stderr);};

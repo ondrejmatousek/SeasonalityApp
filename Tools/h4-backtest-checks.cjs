@@ -3,7 +3,7 @@ const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
 for(const s of ['', 'abc', 'Žluťoučký kůň 😀', 'x'.repeat(100000)])assert.equal(sha(s),hash(s),'Browser SHA-256 must equal native crypto');
 const t0=Date.parse('2026-01-05T01:00:00Z')/1000,iso=t=>new Date(t*1000).toISOString();
 function bars(count,offset=0){let seed=173,previous=1000;return Array.from({length:count},(_,i)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;const t=t0+(i+offset)*14400,open=previous,close=open+(seed/4294967296-.5)*8;previous=close;return {date:iso(t),timestamp:t,endDate:iso(t+14400),open,close,low:Math.min(open,close)-.2,high:Math.max(open,close)+.2,volume:100+i%9};});}
-const fixture=rows=>({asOf:'2026-04-01',prices:{TEST:{h4:{status:'ready',provider:'OANDA',symbol:'OANDA:TEST',timeframe:'H4',validation:'h4-d1-parity-v1',asOfUtc:rows.at(-1).endDate,bars:rows}}}}),rows=bars(360),snapshot=fixture(rows),path='/data/screener/zone-prices.'+'a'.repeat(20)+'.json',input={snapshot,path,sha256:hash(JSON.stringify(snapshot)),keys:['TEST']},before=JSON.stringify(snapshot);
+const fixture=rows=>({asOf:'2026-04-01',prices:{TEST:{h4:{status:'ready',provider:'Dukascopy',symbol:'Dukascopy:TEST',timeframe:'H4',validation:'h4-d1-parity-v1',asOfUtc:rows.at(-1).endDate,bars:rows}}}}),rows=bars(360),snapshot=fixture(rows),path='/data/screener/zone-prices.'+'a'.repeat(20)+'.json',input={snapshot,path,sha256:hash(JSON.stringify(snapshot)),keys:['TEST']},before=JSON.stringify(snapshot);
 const r=B.run(input);assert.equal(JSON.stringify(snapshot),before,'No source mutation');assert.equal(r.coverage[0].segments[0].checks,161);assert.equal(r.model,E.model);assert.deepEqual(r.config,E.config);assert.ok(r.setups.length>0);assert.ok(r.summary.closed>0);
 // Direct parity with the unchanged prospective engine at every simulated close.
 let state=null;for(let i=199;i<rows.length;i++){const b=rows[i],h=snapshot.prices.TEST.h4,price={status:'ready',provider:h.provider,symbol:h.symbol,timeframe:'H4',validation:h.validation,bars:rows.slice(0,i+1),asOfUtc:b.endDate,latestClose:b.close,latestDate:b.date};state=E.update(state,{asOf:b.endDate,revision:input.sha256,path,prices:{TEST:{h4:price}}},b.endDate,hash);}
@@ -26,6 +26,8 @@ const outcomes=[];for(const rr of [1,2,2.5,3]){
 assert.ok(new Set(outcomes).size>1,'RRR must change execution results, not just labels');
 for(const rr of [0,-1,1.5,4,'2',null,NaN])assert.throws(()=>B.run({...input,rr}),/RRR/);
 assert.deepEqual(B.run({...input,rr:2}),r);assert.equal(E.config.rr,2);assert.equal(E.model,'fm-h4-touch-2r-v1');
-// Frozen complete-state digest from deployed 1182945, generated with identical inputs.
-assert.equal(hash(JSON.stringify(state)),'cacdf7a568a84e9e864806899bc01ec74e27d2386ad1164f6201040e5e046f21','Original live states/events remain exactly unchanged');
-console.log('PASS fixed RRR 1/2/2.5/3, real exits, both directions, frozen audit, model isolation, invalid target rejection and exact deployed 2R ledger parity');
+// Same execution fixture with explicit Dukascopy source identity; hashes include provider.
+assert.equal(hash(JSON.stringify(state)),'9c48d6a738842087e68cee08b0770e537dc0866c3d3563d88519798743d900da','Dukascopy fixture states/events remain deterministic');
+console.log('PASS fixed RRR 1/2/2.5/3, real exits, both directions, frozen audit, model isolation, invalid target rejection and exact Dukascopy 2R ledger parity');
+
+const legacy=structuredClone(input);legacy.snapshot.prices.TEST.h4.provider='OANDA';assert.throws(()=>B.run(legacy),/Dukascopy/,'Legacy H4 cannot enter active backtests');

@@ -8,7 +8,7 @@
   const fromSec=boundary(from,false),toSec=boundary(to,true);if(fromSec>toSec)throw Error('Začátek musí být před koncem testu.');
   const report={schemaVersion:1,version,model:E.model,config:JSON.parse(JSON.stringify(E.config)),source:{path,sha256,asOf:snapshot.asOf},selection:{keys:[...keys],from,to,warmup,rr},coverage:[],setups:[],events:[]};
   for(const [keyIndex,key]of keys.entries()){
-   const h=snapshot.prices[key]?.h4;if(h?.status!=='ready'||h.provider!=='OANDA')throw Error('OANDA H4 nedostupné: '+key);
+   const h=snapshot.prices[key]?.h4;if(h?.status!=='ready'||h.provider!=='Dukascopy')throw Error('Dukascopy H4 nedostupné: '+key);
    const bars=T.sourceBars(h,'H4',h.asOfUtc).filter(b=>Date.parse(b.endDate)/1000<=toSec),expected=h.bars.filter(b=>Date.parse(b.endDate)<=Date.parse(h.asOfUtc)&&Date.parse(b.endDate)/1000<=toSec);
    if(bars.length!==expected.length)throw Error('Neplatné H4 OHLC nelze tiše vyřadit: '+key);
    const segments=[];for(const b of bars){if(!segments.length||!E.adjacent(segments.at(-1).at(-1).timestamp,b.timestamp))segments.push([]);segments.at(-1).push(b);}

@@ -137,8 +137,8 @@ try
         var rows = new List<object>();
         await using var command = new SqlCommand("""
             SELECT b.Symbol,b.Interval,b.StartUnix,b.[Open],b.[High],b.[Low],b.[Close],b.Volume,b.CollectionId,c.ObservedAt
-            FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY Symbol,Interval ORDER BY StartUnix DESC) AS n FROM dukascopy.Bars) b
-            JOIN dukascopy.Collections c ON c.Id=b.CollectionId WHERE b.Interval='D1' OR b.n<=2200
+            FROM dukascopy.Bars b
+            JOIN dukascopy.Collections c ON c.Id=b.CollectionId
             ORDER BY b.Symbol,b.Interval,b.StartUnix
             """, db) { CommandTimeout = 180 };
         await using var reader = await command.ExecuteReaderAsync();

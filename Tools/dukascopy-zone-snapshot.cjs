@@ -20,6 +20,8 @@ function overlay(site, source) {
     assert.ok(Number.isFinite(Date.parse(source.builtAt)) && Date.parse(source.builtAt) <= Date.now() + 60000);
     const manifest = read(path.join(site, 'data/manifest.json'));
     const snapshot = read(path.join(site, manifest.zonePrices.path.slice(1)));
+    // Retire every legacy H4 input, including instruments outside Dukascopy coverage.
+    for (const price of Object.values(snapshot.prices)) delete price.h4;
     const asOf = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date(source.builtAt));
     const groups = new Map();
     for (const row of source.rows) {

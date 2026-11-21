@@ -14,7 +14,7 @@
   if(!Number.isFinite(sec(now))||typeof hash!=='function')throw Error('Paper clock/hash required.');const state=previous?copy(previous):empty(now);if(state.schemaVersion!==1||state.model!==model||JSON.stringify(state.config)!==JSON.stringify(config))throw Error('Paper methodology changed; use a new model, never rewrite existing ledger.');if(sec(now)<sec(state.lastRunAt))throw Error('Paper clock moved backwards.');
   state.lastRunAt=now;state.source={asOf:sources.asOf,revision:sources.revision,path:sources.path};state.diagnostics=[];
   for(const [key,price]of Object.entries(sources.prices||{})){
-   const h=price.h4;if(h?.status!=='ready'||!['OANDA','Dukascopy'].includes(h.provider))continue;let bars;
+   const h=price.h4;if(h?.status!=='ready'||h.provider!=='Dukascopy')continue;let bars;
    try{bars=T.sourceBars(h,'H4',h.asOfUtc);if(!bars.length||bars.some(b=>sec(b.endDate)>sec(now)))throw Error('Missing/future completed H4.');}catch(e){state.diagnostics.push({key,reason:e.message});continue;}
    const instrument=state.setups.filter(s=>s.frozen.symbol===h.symbol&&active(s));
    for(const b of bars){const candidates=instrument.filter(s=>active(s)&&b.timestamp>s.lastProcessedStart);if(!candidates.length)continue;
