@@ -21,5 +21,20 @@ gap=update(fixture(),[b1,b2]);assert.equal(gap.setups[0].status,'needs_data');as
 const future=update(initial,[b0,b1],iso(t0+14400));assert.equal(future.diagnostics.length,1);assert.equal(future.setups[0].status,'waiting'); // source rejection is diagnosed, not a forged fill
 const beforeRegistration=update(fixture(['long'],iso(t0+30000)),[b0,b1,b2]);assert.equal(beforeRegistration.setups[0].status,'cancelled');assert.equal(E.summary(beforeRegistration.setups).closed,0);assert.ok(beforeRegistration.events.every(e=>e.kind!=='ENTRY'));
 const p=E.plan({type:'supply',lower:1.90878,upper:1.91444});assert.ok(p.sl>1.91444);assert.ok(Math.abs((p.entry-p.tp)/(p.sl-p.entry)-2)<1e-10);
+// Waiting candidates may be observed during the normal NY17 weekend, but
+// registration stays at the observation time and never fabricates past fills.
+const FM=require('../wwwroot/js/fm-trade-zones.js'),detect=FM.detect;
+try{
+ FM.detect=()=>[{type:'demand',lower:95,upper:100,baseDate:'2026-11-19T14:00:00Z',confirmedAt:'2026-11-20T22:00:00Z'}];
+ const friday=bar(Date.parse('2026-11-20T18:00:00Z')/1000,105,107,103,105),saturday='2026-11-21T21:30:00Z';
+ const waiting=update(null,[friday],saturday);assert.equal(waiting.setups.length,1);assert.equal(waiting.setups[0].status,'waiting');assert.equal(waiting.setups[0].frozen.registeredAt,saturday);assert.deepEqual(waiting.events.map(e=>e.kind),['REGISTERED']);
+ const repeat=update(waiting,[friday],'2026-11-22T10:00:00Z');assert.deepEqual(repeat.setups,waiting.setups);assert.deepEqual(repeat.events,waiting.events);
+ const stale=update(null,[friday],'2026-11-23T05:00:01Z');assert.equal(stale.setups.length,0);assert.ok(stale.diagnostics.some(d=>d.reason==='STALE_SOURCE_NO_NEW_REGISTRATION'));
+ const oldWeek=update(null,[friday],'2026-11-28T12:00:00Z');assert.equal(oldWeek.setups.length,0);
+ const thursday=bar(Date.parse('2026-11-19T18:00:00Z')/1000,105,107,103,105);assert.equal(update(null,[thursday],saturday).setups.length,0,'A missing Friday is not a weekend exemption');
+ for(const [end,weekend] of [['2026-03-06T22:00:00Z','2026-03-08T20:00:00Z'],['2026-10-30T21:00:00Z','2026-11-01T21:00:00Z']]){
+  const b=bar(Date.parse(end)/1000-14400,105,107,103,105);assert.equal(update(null,[b],weekend).setups[0].status,'waiting','NY weekend handles DST changes');
+ }
+}finally{FM.detect=detect;}
 const root=process.argv[2];if(root){const m=JSON.parse(fs.readFileSync(path.join(root,'data/manifest.json'))),s=JSON.parse(fs.readFileSync(root+m.zonePrices.path)),ends=Object.values(s.prices).filter(p=>p.h4?.status==='ready').map(p=>Date.parse(p.h4.bars.at(-1).endDate)),now=new Date(Math.max(...ends)+60000).toISOString(),real=E.update(null,{...s,revision:'test-snapshot',path:m.zonePrices.path},now,hash);assert.ok(real.setups.length>0);assert.ok(real.setups.every(s=>s.status==='waiting'));assert.equal(E.summary(real.setups).closed,0);const again=E.update(real,{...s,revision:'test-snapshot',path:m.zonePrices.path},now,hash);assert.deepEqual(again.setups,real.setups);const out=path.join(root,'data/h4-paper');fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'ledger.json'),JSON.stringify({schemaVersion:1,revision:1,stateSha256:hash(JSON.stringify(real)),state:real}));fs.writeFileSync(path.join(root,'h4-paper-validation.json'),JSON.stringify({state:real}));console.log(JSON.stringify({realSources:real.setups.length,retrospectiveTrades:0,fixtureClock:now}));}
 console.log('PASS H4 paper: frozen 2R geometry, future-only entries, OCO, ambiguous ordering, entry/TP ambiguity, gaps, missing/revised bars, recovery, costs, immutable outcomes and idempotency.');

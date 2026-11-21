@@ -5,6 +5,16 @@
  const signature=b=>JSON.stringify([b.timestamp,b.endDate,b.open,b.high,b.low,b.close]);
  const ny=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date(t*1000)).filter(p=>['weekday','hour'].includes(p.type)).map(p=>p.value);
  function adjacent(a,b){if(b-a===14400)return true;const p=ny(a),n=ny(b);return p[0]==='Fri'&&Number(p[1])===13&&n[0]==='Sun'&&Number(n[1])===17&&b-a>=48*3600&&b-a<=56*3600;}
+ // A normal NY17 weekend does not age the last completed trading candle.
+ // Only exclude that known closure; missing weekday/holiday prices stay stale.
+ function registrationAgeHours(end,now){
+  const from=sec(end),to=sec(now);if(!Number.isFinite(from)||!Number.isFinite(to)||to<from||to-from>72*3600)return Infinity;
+  let elapsed=0;
+  for(let start=Math.floor(from/3600)*3600;start<to;start+=3600){const p=ny(start),hour=Number(p[1]),closed=p[0]==='Sat'||p[0]==='Fri'&&hour>=17||p[0]==='Sun'&&hour<17;
+   if(!closed)elapsed+=Math.min(to,start+3600)-Math.max(from,start);
+  }
+  return elapsed/3600;
+ }
  function plan(z){const long=z.type==='demand',entry=long?z.upper:z.lower,buffer=(z.upper-z.lower)*config.bufferFraction,sl=long?z.lower-buffer:z.upper+buffer,risk=Math.abs(entry-sl),tp=entry+(long?1:-1)*config.rr*risk;if(!(risk>0&&Math.min(entry,sl,tp)>0))return null;return {side:long?'long':'short',entry,sl,tp,risk};}
  function empty(now){return {schemaVersion:1,model,config:copy(config),startedAt:now,lastRunAt:now,source:null,setups:[],events:[],diagnostics:[]};}
  function event(state,s,kind,at,payload,hash){const e={sequence:state.events.length+1,setupId:s.id,kind,at,payload};state.events.push({...e,id:hash(JSON.stringify(e))});}
@@ -38,7 +48,7 @@
    }
    // Freeze each fresh zone once. Never move entry/SL/TP to a newer nearest pair.
    if(state.setups.some(s=>s.frozen.symbol===h.symbol&&active(s)))continue;
-   if(sec(now)-sec(bars.at(-1).endDate)>config.maxRegistrationLagHours*3600){state.diagnostics.push({key,reason:'STALE_SOURCE_NO_NEW_REGISTRATION'});continue;}
+   if(registrationAgeHours(bars.at(-1).endDate,now)>config.maxRegistrationLagHours){state.diagnostics.push({key,reason:'STALE_SOURCE_NO_NEW_REGISTRATION'});continue;}
    let zones;try{zones=FM.detect(h,'H4',h.asOfUtc);}catch(e){state.diagnostics.push({key,reason:e.message});continue;}
    const last=bars.at(-1);
    for(const z of zones){const p=plan(z);if(!p)continue;const id=hash(JSON.stringify([model,h.provider,h.symbol,'H4',z.type,z.baseDate,z.confirmedAt,z.lower,z.upper,config]));if(state.setups.some(s=>s.id===id))continue;
