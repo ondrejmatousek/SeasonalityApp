@@ -1,12 +1,12 @@
 @{ ViewData["PaperPage"] = true; }
 <section id="h4-paper" class="strategy-lab">
- <p class="lab-eyebrow">PROSPEKTIVNÍ MODEL · FM H4 · DOTYK ZÓNY</p><h1>H4 Papertrading · 2R</h1>
+ <p class="lab-eyebrow">PROSPEKTIVNÍ MODEL · FM H4 · DOTYK ZÓNY</p><h1>H4 Papertrading · Dukascopy · 2R</h1>
  <p>Samostatný technický model: short ze spodní hrany fresh supply, long z horní hrany fresh demand. Vstup na dotyk, bez svíčkového potvrzení. SL za zónou, TP na hrubé 2R. Setupy se po zapsání do SQL nepřekreslují.</p>
  <p class="lab-warning">Pouze simulované obchody, žádné příkazy brokerovi. Nejde o Šrajerův kompletní checklist, backtest ani ověřenou strategii. Makro, COT a futures volume profil nejsou vstupní filtry. Do historie se nezapočítávají dotyky před registrací.</p>
  <div class="lab-controls"><button id="paper-refresh" type="button">Obnovit stav</button><button id="paper-export" type="button" disabled>Stáhnout audit JSON</button><label>Instrument<input id="paper-search" type="search" placeholder="Např. GBPAUD" /></label></div>
  <p id="paper-status" role="status">Načítám trvalý SQL deník…</p><p id="paper-source"></p><div id="paper-summary" class="paper-summary"></div>
  <details id="paper-research" aria-labelledby="research-title">
-  <summary id="research-title">Výzkum nastavení · oddělený od modelu 2R</summary>
+  <summary id="research-title">Výzkum nastavení · archiv původního zdroje OANDA</summary>
   <p>Původní pravidla, obchody a výsledky 2R zůstávají beze změny. Porovnání má vlastní trvalý SQL deník; jiné TP/SL a M15 SFP jsou pouze samostatné dopředné simulace, nikoli nové brokerové příkazy.</p>
   <p id="research-status" role="status">Načítám samostatný výzkumný report…</p>
   <p id="research-progress"></p><p id="research-notice" role="status" class="lab-warning"></p>
