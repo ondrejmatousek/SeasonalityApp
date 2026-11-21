@@ -8,7 +8,10 @@ public sealed class MarketPriceSources
 {
     private readonly string _bundlePath;
     public MarketPriceSources(IConfiguration configuration, IWebHostEnvironment environment)
-        : this(Path.GetFullPath(configuration["MarketData:BundlePath"] ?? "artifacts/tradingview-backfill-36-v1/analytics-sources-v1/manifest.json", environment.ContentRootPath)) { }
+        : this(Path.GetFullPath(configuration["MarketData:BundlePath"] ??
+            (File.Exists(Path.Combine(environment.ContentRootPath, "data/dukascopy-daily/manifest.json"))
+                ? "data/dukascopy-daily/manifest.json"
+                : "artifacts/tradingview-backfill-36-v1/analytics-sources-v1/manifest.json"), environment.ContentRootPath)) { }
     public MarketPriceSources(string bundlePath) => _bundlePath = Path.GetFullPath(bundlePath);
 
     public static bool IsMarket(SeasonalityAsset asset) => AssetClassification.ClassFor(asset) is "forex" or "index" or "commodity";
@@ -18,7 +21,7 @@ public sealed class MarketPriceSources
         if (doc.RootElement.GetProperty("schemaVersion").GetInt32() != 1) throw new InvalidDataException("Unknown market bundle schema.");
         foreach (var e in doc.RootElement.GetProperty("entries").EnumerateArray())
             if (e.GetProperty("assetKey").GetString() == assetKey) return e.Clone();
-        return JsonSerializer.SerializeToElement(new { assetKey, status = "unavailable", error = "No TradingView source in the 36-instrument registry; no Yahoo fallback" });
+        return JsonSerializer.SerializeToElement(new { assetKey, status = "unavailable", error = "No market source registered for this instrument" });
     }
     public IReadOnlyList<SeasonalityPrice> Prices(string assetKey)
     {

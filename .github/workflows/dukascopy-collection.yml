@@ -49,6 +49,17 @@ jobs:
         run: |
           dotnet build Tools/DukascopyImport/DukascopyImport.csproj -c Release
           dotnet Tools/DukascopyImport/bin/Release/net10.0/DukascopyImport.dll --import --input artifacts/dukascopy --confirm-database seasonality-free-h4-20261118 --export --output artifacts/dukascopy-sql/source.json
+      - name: Update prospective ledger within the same SQL wake-up
+        if: inputs.store && inputs.symbols == ''
+        env:
+          SEASONALITY_H4_SQL_CONNECTION: ${{ secrets.SEASONALITY_H4_SQL_CONNECTION }}
+        run: |
+          node -e "const fs=require('fs'),path=require('path'),src='data/generated/site',dst='artifacts/dukascopy-paper-site',m=JSON.parse(fs.readFileSync(src+'/data/manifest.json'));for(const f of ['index.html','data/manifest.json',m.zonePrices.path.slice(1)]){fs.mkdirSync(path.dirname(dst+'/'+f),{recursive:true});fs.copyFileSync(src+'/'+f,dst+'/'+f)}"
+          node Tools/dukascopy-zone-snapshot.cjs artifacts/dukascopy-paper-site artifacts/dukascopy-sql/source.json
+          dotnet build Tools/PaperTradeStore/PaperTradeStore.csproj -c Release
+          dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --ensure-schema --load --output artifacts/dukascopy-paper-previous.json
+          node Tools/h4-paper-update.cjs artifacts/dukascopy-paper-site artifacts/dukascopy-paper-previous.json artifacts/dukascopy-paper-next.json
+          dotnet Tools/PaperTradeStore/bin/Release/net10.0/PaperTradeStore.dll --save artifacts/dukascopy-paper-next.json --output artifacts/dukascopy-sql/ledger.json
       - uses: actions/upload-artifact@v4
         if: success() && inputs.store && inputs.symbols == ''
         with:
