@@ -3,6 +3,9 @@ import datetime as dt
 import importlib.util
 import json
 import pathlib
+import tempfile
+import urllib.error
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('collector', pathlib.Path(__file__).with_name('dukascopy-collect.py'))
 collector = importlib.util.module_from_spec(spec)
@@ -31,4 +34,44 @@ for day, expected in [('2026-03-09', 21), ('2026-11-02', 22)]:
     unfinished = collector.aggregate(bars, dt.datetime.fromtimestamp(start + 3600, collector.UTC))
     assert not unfinished['h4'] and not unfinished['daily']
 
-print('PASS original price deltas, no synthetic gap filling, DST NY17, complete H4/D1 and open-bar exclusion')
+# Reproduce the API's origin-only Referer gate for both H1 and native CFD D1.
+requests = []
+
+
+def source_response(request, timeout):
+    requests.append(request)
+    if request.get_header('Referer') != 'https://widgets.dukascopy.com/':
+        raise urllib.error.HTTPError(request.full_url, 403, 'Forbidden', {}, None)
+    payload = dict(source)
+    payload['shift'] = 86400000 if '/day/' in request.full_url else 3600000
+
+    class Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self, limit):
+            return json.dumps(payload).encode()
+
+    return Response()
+
+
+with tempfile.TemporaryDirectory() as folder, patch.object(collector.urllib.request, 'urlopen', side_effect=source_response):
+    root = pathlib.Path(folder)
+    now = dt.datetime(2026, 11, 27, tzinfo=collector.UTC)
+    hourly = collector.fetch(root, 'EURUSD', (2026, 10), now)
+    daily = collector.fetch_daily(root, 'XAUUSD', 2026, now)
+    assert len(hourly['rows']) == len(daily['rows']) == 2
+    assert '/hour/EUR-USD/BID/2026/10' in requests[0].full_url
+    assert '/day/XAU-USD/BID?from=' in requests[1].full_url
+    assert hourly['sha256'] == collector.sha((root / hourly['file']).read_bytes())
+    assert daily['sha256'] == collector.sha((root / daily['file']).read_bytes())
+    collector.fetch(root, 'EURUSD', (2026, 10), now)
+    collector.fetch_daily(root, 'XAUUSD', 2026, now)
+    assert len(requests) == 2, 'Cached evidence must not be downloaded again'
+
+print('PASS source request origin, H1/D1 evidence caching, original price deltas, no synthetic gap filling, DST NY17, complete H4/D1 and open-bar exclusion')
