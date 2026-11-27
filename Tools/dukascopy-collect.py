@@ -19,6 +19,8 @@ FX = REGISTRY['fx']
 CODES = {**{key: key[:3] + '-' + key[3:] for key in FX}, **REGISTRY['cfd']}
 RULE = 'dukascopy-bid-ny17-h1-v1'
 ROOT = 'https://jetta.dukascopy.com/v1/candles/hour/'
+# The data API accepts the widget origin; the export page path returns HTTP 403.
+SOURCE_HEADERS = {'Referer': 'https://widgets.dukascopy.com/', 'User-Agent': 'Mozilla/5.0 SeasonalityApp/1.0', 'Accept': 'application/json'}
 
 
 def sha(data):
@@ -117,7 +119,7 @@ def fetch(root, symbol, month, now):
     if target.exists():
         body = target.read_bytes()
     else:
-        request = urllib.request.Request(url, headers={'Referer': 'https://widgets.dukascopy.com/en/historical-data-export', 'User-Agent': 'Mozilla/5.0 SeasonalityApp/1.0', 'Accept': 'application/json'})
+        request = urllib.request.Request(url, headers=SOURCE_HEADERS)
         for attempt in range(3):
             try:
                 with urllib.request.urlopen(request, timeout=35) as response:
@@ -151,7 +153,7 @@ def fetch_daily(root, symbol, year, now):
     relative = f'raw/{symbol}/daily-{year}.json'
     target = root / relative
     target.parent.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(url, headers={'Referer': 'https://widgets.dukascopy.com/en/historical-data-export', 'User-Agent': 'Mozilla/5.0 SeasonalityApp/1.0', 'Accept': 'application/json'})
+    request = urllib.request.Request(url, headers=SOURCE_HEADERS)
     if target.exists():
         body = target.read_bytes()
     else:
