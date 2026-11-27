@@ -11,6 +11,8 @@ try
         return index >= 0 && index + 1 < args.Length ? args[index + 1] : throw new ArgumentException("Missing " + key);
     }
 
+    if (args.Contains("--self-test-localdb")) { await RevisionChecks.Run(); return; }
+
     const string database = "seasonality-free-h4-20261118";
     const string rule = "dukascopy-bid-ny17-h1-v1";
     var target = new SqlConnectionStringBuilder(Environment.GetEnvironmentVariable("SEASONALITY_H4_SQL_CONNECTION")) { ConnectTimeout = 120 };
@@ -84,18 +86,7 @@ try
             }
         }
 
-        await using var schema = new SqlCommand("""
-            IF SCHEMA_ID('dukascopy') IS NULL EXEC('CREATE SCHEMA dukascopy');
-            IF OBJECT_ID('dukascopy.Collections','U') IS NULL CREATE TABLE dukascopy.Collections(
-                Id char(64) PRIMARY KEY,ObservedAt datetimeoffset NOT NULL,ReceivedAt datetimeoffset NOT NULL DEFAULT SYSUTCDATETIME(),CollectionUtf8 varbinary(max) NOT NULL);
-            IF OBJECT_ID('dukascopy.Sources','U') IS NULL CREATE TABLE dukascopy.Sources(
-                Sha256 char(64) PRIMARY KEY,PayloadUtf8 varbinary(max) NOT NULL);
-            IF OBJECT_ID('dukascopy.Bars','U') IS NULL CREATE TABLE dukascopy.Bars(
-                Symbol varchar(16) NOT NULL,Interval varchar(2) NOT NULL CHECK(Interval IN('H4','D1')),StartUnix bigint NOT NULL,
-                [Open] decimal(28,10) NOT NULL,[High] decimal(28,10) NOT NULL,[Low] decimal(28,10) NOT NULL,[Close] decimal(28,10) NOT NULL,Volume decimal(28,10) NOT NULL,
-                CollectionId char(64) NOT NULL REFERENCES dukascopy.Collections(Id),PRIMARY KEY(Symbol,Interval,StartUnix));
-            CREATE TABLE #Incoming(Symbol varchar(16),Interval varchar(2),StartUnix bigint,[Open] decimal(28,10),[High] decimal(28,10),[Low] decimal(28,10),[Close] decimal(28,10),Volume decimal(28,10),PRIMARY KEY(Symbol,Interval,StartUnix));
-            """, db) { CommandTimeout = 180 };
+        await using var schema = new SqlCommand(RevisionPolicy.Schema, db) { CommandTimeout = 180 };
         await schema.ExecuteNonQueryAsync();
         using (var bulk = new SqlBulkCopy(db) { DestinationTableName = "#Incoming", BulkCopyTimeout = 180 })
         {
@@ -104,23 +95,18 @@ try
         }
         await using var tx = (SqlTransaction)await db.BeginTransactionAsync(IsolationLevel.Serializable);
         var id = Hash(bytes);
-        await using var commit = new SqlCommand("""
-            DECLARE @lock int;
-            EXEC @lock=sys.sp_getapplock @Resource='Dukascopy:Commit',@LockMode='Exclusive',@LockOwner='Transaction',@LockTimeout=30000;
-            IF @lock<0 THROW 50001,'Dukascopy writer lock unavailable',1;
-            IF EXISTS(SELECT 1 FROM #Incoming i JOIN dukascopy.Bars b ON b.Symbol=i.Symbol AND b.Interval=i.Interval AND b.StartUnix=i.StartUnix
-                WHERE b.[Open]<>i.[Open] OR b.[High]<>i.[High] OR b.[Low]<>i.[Low] OR b.[Close]<>i.[Close])
-                THROW 50002,'Dukascopy immutable OHLC overlap conflict',1;
-            IF NOT EXISTS(SELECT 1 FROM dukascopy.Collections WHERE Id=@id)
-                INSERT dukascopy.Collections(Id,ObservedAt,CollectionUtf8) VALUES(@id,@observed,@bytes);
-            INSERT dukascopy.Bars SELECT i.*,@id FROM #Incoming i WHERE NOT EXISTS(
-                SELECT 1 FROM dukascopy.Bars b WHERE b.Symbol=i.Symbol AND b.Interval=i.Interval AND b.StartUnix=i.StartUnix);
-            SELECT @@ROWCOUNT;
-            """, db, tx) { CommandTimeout = 180 };
+        await using var commit = new SqlCommand(RevisionPolicy.Commit, db, tx) { CommandTimeout = 180 };
         commit.Parameters.AddWithValue("@id", id);
         commit.Parameters.AddWithValue("@observed", observed);
         commit.Parameters.Add("@bytes", SqlDbType.VarBinary, -1).Value = bytes;
-        var inserted = Convert.ToInt32(await commit.ExecuteScalarAsync());
+        int inserted, revisionsObserved, revisionsRecorded;
+        await using (var result = await commit.ExecuteReaderAsync())
+        {
+            await result.ReadAsync();
+            inserted = result.GetInt32(0);
+            revisionsObserved = result.GetInt32(1);
+            revisionsRecorded = result.GetInt32(2);
+        }
         foreach (var (hash, raw) in sources)
         {
             await using var save = new SqlCommand("IF NOT EXISTS(SELECT 1 FROM dukascopy.Sources WHERE Sha256=@hash) INSERT dukascopy.Sources VALUES(@hash,@raw);", db, tx);
@@ -129,7 +115,7 @@ try
             await save.ExecuteNonQueryAsync();
         }
         await tx.CommitAsync();
-        Console.WriteLine(JsonSerializer.Serialize(new { database, provider = "Dukascopy", receiptId = id, inserted, observed, originalSources = sources.Count }));
+        Console.WriteLine(JsonSerializer.Serialize(new { database, provider = "Dukascopy", receiptId = id, inserted, revisionsObserved, revisionsRecorded, revisionPolicy = "preserve-first-observation", observed, originalSources = sources.Count }));
     }
 
     if (args.Contains("--export"))
